@@ -1,26 +1,128 @@
 @import "tailwindcss";
 
+/* ─── Design Tokens ──────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg:          #0c0c10;
+  --bg-card:     rgba(255, 255, 255, 0.03);
+  --bg-card-h:   rgba(255, 255, 255, 0.055);
+  --border:      rgba(255, 255, 255, 0.07);
+  --border-h:    rgba(129, 140, 248, 0.25);
+
+  --accent:      #818cf8;        /* soft indigo */
+  --accent-dim:  rgba(129, 140, 248, 0.12);
+  --accent-glow: rgba(129, 140, 248, 0.2);
+
+  --text-1:      #f1f5f9;        /* near-white */
+  --text-2:      #94a3b8;        /* slate-400 */
+  --text-3:      #475569;        /* slate-600 */
+
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body:    "Inter", sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* ─── Reset ──────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text-2);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track { background: #0c0c10; }
+::-webkit-scrollbar-thumb { background: rgba(129,140,248,0.3); border-radius: 9999px; }
+::selection { background: rgba(129,140,248,0.25); color: #fff; }
+
+/* ─── Custom Cursor ──────────────────────────────────────────── */
+.cursor-dot {
+  width: 6px; height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  position: fixed; top: 0; left: 0;
+  pointer-events: none; z-index: 99999999;
+  transform: translate(-50%, -50%);
+}
+.cursor-ring {
+  width: 32px; height: 32px;
+  border: 1.5px solid rgba(129,140,248,0.4);
+  border-radius: 50%;
+  position: fixed; top: 0; left: 0;
+  pointer-events: none; z-index: 99999998;
+  transform: translate(-50%, -50%);
+  transition: width .2s, height .2s, border-color .2s;
+}
+.cursor-ring.hovering {
+  width: 48px; height: 48px;
+  border-color: var(--accent);
+  background: rgba(129,140,248,0.05);
+}
+
+/* ─── Grid pattern ───────────────────────────────────────────── */
+.grid-pattern {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+/* ─── Animations ───────────────────────────────────────────── */
+@keyframes fadeUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  opacity: 0;
+  animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+.delay-4 { animation-delay: 0.4s; }
+.delay-5 { animation-delay: 0.5s; }
+.delay-6 { animation-delay: 0.6s; }
+.delay-7 { animation-delay: 0.7s; }
+.delay-8 { animation-delay: 0.8s; }
+
+/* ─── Glass Card ─────────────────────────────────────────────── */
+.glass-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  transition: background .25s, border-color .25s, transform .25s;
+}
+.glass-card:hover {
+  background: var(--bg-card-h);
+  border-color: var(--border-h);
+}
+
+/* ─── Navbar ─────────────────────────────────────────────────── */
+.navbar-glass {
+  background: rgba(12, 12, 16, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+/* ─── Pulse dot ──────────────────────────────────────────────── */
+@keyframes ping-slow {
+  0%   { transform: scale(1); opacity: .5; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+.ping-slow { animation: ping-slow 2s ease-out infinite; }
+
+/* ─── Scroll arrow bounce ────────────────────────────────────── */
+@keyframes bounce-y {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(6px); }
+}
+.bounce-y { animation: bounce-y 1.6s ease-in-out infinite; }
+
+/* ─── Blob ───────────────────────────────────────────────────── */
+.blob {
+  position: absolute; border-radius: 50%;
+  filter: blur(90px); pointer-events: none;
 }
