@@ -35,14 +35,9 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Funny copyright */}
+        {/* Standard copyright */}
         <p style={{ color: "var(--text-3)", fontSize: "0.85rem", lineHeight: 1.6, maxWidth: "600px", margin: "0 auto" }}>
-          &copy; {year} Rutvik Bhanderi. All rights reserved, except my sleep schedule, which I gave up for this project.
-        </p>
-
-        {/* Tiny Easter Egg */}
-        <p style={{ color: "#475569", fontSize: "0.65rem", marginTop: "16px", fontStyle: "italic" }}>
-          If you read this far, you deserve a cookie 🍪 (not a real one, sorry, this is a website)
+          &copy; {year} Rutvik Bhanderi. All rights reserved.
         </p>
       </div>
     </footer>
