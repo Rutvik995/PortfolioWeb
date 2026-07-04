@@ -17,7 +17,7 @@ const projects = [
   },
   {
     id: "deep-agent",
-    title: "Deep Agent",
+    title: "Autonomous Agentic Architecture and Compound AI System",
     tagline: "Autonomous multi-agent AI platform",
     description:
       "A LangGraph-based autonomous AI platform for multi-domain goal and task tracking. Re-architected to support multiple isolated goals per user via compound namespace keys. Features a self-learning memory system with reflection nodes, multi-tenant isolation, and a full web platform layer.",
