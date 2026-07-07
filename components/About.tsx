@@ -83,9 +83,7 @@ export default function About() {
             <p style={{ fontFamily: "var(--font-display)", fontSize: "1.25rem", fontWeight: 700, color: "#f8fafc", marginBottom: "8px" }}>
               Rutvik Bhanderi
             </p>
-            <p style={{ color: "#94a3b8", fontSize: "0.95rem", marginBottom: "24px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              MSC Data Science · AI Engineer
-            </p>
+
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
               <span style={{ position: "relative", display: "flex", width: "6px", height: "6px" }}>
                 <span className="ping-slow" style={{ position: "absolute", width: "100%", height: "100%", borderRadius: "50%", background: "#34d399", opacity: 0.75 }} />

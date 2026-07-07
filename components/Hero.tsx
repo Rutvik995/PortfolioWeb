@@ -5,9 +5,9 @@ import GithubIcon from "@/components/icons/GithubIcon";
 import LinkedinIcon from "@/components/icons/LinkedinIcon";
 
 const socials = [
-  { icon: GithubIcon,   href: "https://github.com/Rutvik995",                   label: "GitHub" },
-  { icon: LinkedinIcon, href: "https://www.linkedin.com/in/rutvikbhanderi",                 label: "LinkedIn" },
-  { icon: Mail,         href: "mailto:rutvik.professional@gmail.com", label: "Email" },
+  { icon: GithubIcon, href: "https://github.com/Rutvik995", label: "GitHub" },
+  { icon: LinkedinIcon, href: "https://www.linkedin.com/in/rutvikbhanderi", label: "LinkedIn" },
+  { icon: Mail, href: "mailto:rutvik.professional@gmail.com", label: "Email" },
 ];
 
 export default function Hero() {
@@ -20,6 +20,7 @@ export default function Hero() {
         paddingBottom: "150px",
         display: "flex",
         flexDirection: "column",
+
         alignItems: "center",
         justifyContent: "center",
         minHeight: "100vh",
@@ -46,7 +47,7 @@ export default function Hero() {
 
       {/* Main Content */}
       <div style={{ position: "relative", zIndex: 10, textAlign: "center", maxWidth: "800px", margin: "0 auto", width: "100%" }}>
-        
+
         {/* Badge */}
         <div
           className="animate-fade-up delay-1"
@@ -99,7 +100,7 @@ export default function Hero() {
             maxWidth: "600px", margin: "0 auto 48px auto",
           }}
         >
-          Building autonomous AI agents, NL-to-SQL pipelines, and ML-powered platforms. 
+          Building autonomous AI agents, NL-to-SQL pipelines, and ML-powered platforms.
           I turn complex data into clean, functional, and minimal real-world systems.
         </p>
 
