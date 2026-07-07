@@ -84,16 +84,16 @@ export default function Projects() {
             marginBottom: "24px", lineHeight: 1.2, letterSpacing: "-0.02em"
           }}
         >
-          Things I&apos;ve <span style={{ color: "#818cf8" }}>built</span>
+          Major <span style={{ color: "#818cf8" }}>Projects</span>
         </motion.h2>
 
         <motion.p
           initial={{ opacity: 0 }}
           animate={inView ? { opacity: 1 } : {}}
           transition={{ duration: 0.6, delay: 0.2 }}
-          style={{ color: "#94a3b8", fontSize: "1.05rem", marginBottom: "64px" }}
+          style={{ color: "#94a3b8", fontSize: "1.05rem", marginBottom: "64px", maxWidth: "600px", margin: "0 auto 64px auto" }}
         >
-          Each project is a self-contained system — designed, built, and shipped solo.
+          A selection of my best work. In total, I have designed and shipped <strong>5+ intelligent systems</strong> that are actively helping businesses solve complex data and automation challenges.
         </motion.p>
       </div>
 

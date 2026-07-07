@@ -55,7 +55,7 @@ export default function About() {
           <p style={{ marginBottom: "20px" }}>
             I&apos;m a developer and data scientist passionate about building intelligent systems.
             I completed my <span style={{ color: "#e2e8f0" }}>BCA</span> and am currently
-            pursuing a <span style={{ color: "#e2e8f0" }}>Masters in Data Science</span>,
+            pursuing an <span style={{ color: "#e2e8f0" }}>MSC DATA SCIENCE</span>,
             focusing on autonomous agents, deep learning, and accessible AI.
           </p>
           <p>
@@ -83,8 +83,8 @@ export default function About() {
             <p style={{ fontFamily: "var(--font-display)", fontSize: "1.25rem", fontWeight: 700, color: "#f8fafc", marginBottom: "8px" }}>
               Rutvik Bhanderi
             </p>
-            <p style={{ color: "#94a3b8", fontSize: "0.95rem", marginBottom: "24px" }}>
-              MSc Data Science · AI Engineer
+            <p style={{ color: "#94a3b8", fontSize: "0.95rem", marginBottom: "24px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              MSC Data Science · AI Engineer
             </p>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
               <span style={{ position: "relative", display: "flex", width: "6px", height: "6px" }}>
