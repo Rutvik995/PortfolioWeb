@@ -87,14 +87,40 @@ export default function Projects() {
           Major <span style={{ color: "#818cf8" }}>Projects</span>
         </motion.h2>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={inView ? { opacity: 1 } : {}}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={inView ? { opacity: 1, scale: 1 } : {}}
           transition={{ duration: 0.6, delay: 0.2 }}
-          style={{ color: "#94a3b8", fontSize: "1.05rem", marginBottom: "64px", maxWidth: "600px", margin: "0 auto 64px auto" }}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "20px",
+            background: "rgba(129,140,248,0.05)",
+            border: "1px solid rgba(129,140,248,0.15)",
+            padding: "20px 32px",
+            borderRadius: "20px",
+            marginBottom: "64px",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.1)"
+          }}
         >
-          A selection of my best work. In total, I have designed and shipped <strong>5+ intelligent systems</strong> that are actively helping businesses solve complex data and automation challenges.
-        </motion.p>
+          <div style={{ 
+            fontSize: "clamp(2rem, 4vw, 3rem)", 
+            fontWeight: 800, 
+            color: "#818cf8", 
+            fontFamily: "var(--font-display)",
+            lineHeight: 1
+          }}>
+            5+
+          </div>
+          <div style={{ textAlign: "left", display: "flex", flexDirection: "column", gap: "4px" }}>
+            <span style={{ color: "#f8fafc", fontWeight: 700, fontSize: "1.1rem", fontFamily: "var(--font-display)" }}>
+              Intelligent Systems Shipped
+            </span>
+            <span style={{ color: "#94a3b8", fontSize: "0.95rem" }}>
+              Helping businesses solve complex data and automation challenges.
+            </span>
+          </div>
+        </motion.div>
       </div>
 
       {/* Stacked Cards */}
