@@ -5,45 +5,45 @@ import { motion, useInView } from "framer-motion";
 
 const skillGroups = [
   {
-    title: "Languages & Frameworks",
+    title: "Core Languages & Platforms",
     skills: [
-      { name: "Python", level: 90 },
-      { name: "TypeScript / JavaScript", level: 78 },
-      { name: "SQL", level: 85 },
-      { name: "React / Next.js", level: 75 },
+      { name: "Python", level: 92 },
+      { name: "SQL / PostgreSQL", level: 88 },
+      { name: "Power BI (Business Analytics)", level: 80 },
     ],
   },
   {
-    title: "AI / ML",
+    title: "Agentic AI & ML Engineering",
     skills: [
-      { name: "LangGraph / LangChain", level: 88 },
-      { name: "TensorFlow / Keras", level: 80 },
-      { name: "scikit-learn", level: 85 },
-      { name: "NLP / Transformers", level: 75 },
+      { name: "Agentic AI / Multi-Agent Systems", level: 90 },
+      { name: "LangGraph (Agent Orchestration)", level: 90 },
+      { name: "Machine Learning / Deep Learning", level: 85 },
+      { name: "RAG (Retrieval-Augmented Generation)", level: 85 },
     ],
   },
   {
-    title: "Data & Infrastructure",
+    title: "Data & AI Infrastructure",
     skills: [
-      { name: "PostgreSQL / MySQL", level: 82 },
-      { name: "FastAPI", level: 85 },
-      { name: "Redis", level: 70 },
-      { name: "REST / WebSocket APIs", level: 80 },
+      { name: "Vector Databases (Pinecone / Chroma)", level: 82 },
+      { name: "Harness of Agents (Agent Coordination)", level: 88 },
+      { name: "LangChain / LLM Integration", level: 87 },
+      { name: "FastAPI / REST / WebSocket APIs", level: 84 },
     ],
   },
 ];
 
 const tools = [
-  "Git & GitHub", "VS Code", "Jupyter", "Docker",
-  "Pandas", "NumPy", "Plotly", "Matplotlib",
-  "yFinance", "Vercel", "Postman", "Linux",
+  "LangGraph", "LangChain", "OpenAI API", "RAG Pipelines",
+  "Pinecone", "ChromaDB", "PostgreSQL", "Power BI",
+  "FastAPI", "Redis", "Docker", "Git & GitHub",
+  "Pandas", "NumPy", "TensorFlow", "scikit-learn",
 ];
 
 function SkillBar({ name, level }: { name: string; level: number }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true });
   return (
-    <div ref={ref} style={{ marginBottom: "20px", maxWidth: "400px", margin: "0 auto 20px auto" }}>
+    <div ref={ref} style={{ marginBottom: "20px", maxWidth: "500px", margin: "0 auto 20px auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
         <span style={{ fontSize: "0.9rem", fontWeight: 500, color: "#94a3b8" }}>{name}</span>
         <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#64748b" }}>{level}%</span>
@@ -100,13 +100,25 @@ export default function Skills() {
             marginBottom: "24px", lineHeight: 1.2, letterSpacing: "-0.02em"
           }}
         >
-          What I work <span style={{ color: "#818cf8" }}>with</span>
+          Technical <span style={{ color: "#818cf8" }}>Expertise</span>
         </motion.h2>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.15 }}
+          style={{
+            color: "#64748b", fontSize: "1rem", lineHeight: 1.8,
+            maxWidth: "520px", margin: "0 auto"
+          }}
+        >
+          Specialized in Agentic AI, machine learning engineering, and intelligent data systems.
+        </motion.p>
       </div>
 
       {/* Stacked Skill Cards */}
       <div style={{ maxWidth: "800px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "32px" }}>
-        
+
         {skillGroups.map((group, gi) => (
           <motion.div
             key={group.title}
@@ -134,7 +146,7 @@ export default function Skills() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.6 }}
+          transition={{ duration: 0.6, delay: 0.65 }}
           className="glass-card"
           style={{ padding: "48px 32px", width: "100%", textAlign: "center" }}
         >
@@ -144,7 +156,7 @@ export default function Skills() {
           }}>
             Tools &amp; Ecosystem
           </p>
-          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "12px", maxWidth: "600px", margin: "0 auto" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "12px", maxWidth: "620px", margin: "0 auto" }}>
             {tools.map((t) => (
               <span key={t} style={{
                 padding: "8px 16px", borderRadius: "99px", fontSize: "0.85rem", fontWeight: 500,

@@ -2,22 +2,12 @@
 
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import { Database, Bot, TrendingUp } from "lucide-react";
+import { Database, Bot, TrendingUp, Network, Sun, Cpu } from "lucide-react";
 
-const projects = [
-  {
-    id: "analytics-dashboard",
-    title: "AI-Powered Business Analytics Dashboard",
-    tagline: "Talk to your database in plain English",
-    description:
-      "A full-stack platform that translates natural language questions into SQL, executes them against a live database, and renders results on an interactive dashboard — making business data accessible to non-technical stakeholders.",
-    tech: ["Python", "FastAPI", "React", "PostgreSQL", "OpenAI API", "Chart.js"],
-    icon: Database,
-    label: "Full-Stack · NLP · SQL",
-  },
+const featuredProjects = [
   {
     id: "deep-agent",
-    title: "Autonomous Agentic Architecture and Compound AI System",
+    title: "Autonomous Agentic Architecture & Compound AI System",
     tagline: "Autonomous multi-agent AI platform",
     description:
       "A LangGraph-based autonomous AI platform for multi-domain goal and task tracking. Re-architected to support multiple isolated goals per user via compound namespace keys. Features a self-learning memory system with reflection nodes, multi-tenant isolation, and a full web platform layer.",
@@ -33,15 +23,50 @@ const projects = [
     featured: true,
   },
   {
+    id: "analytics-dashboard",
+    title: "AI-Powered Business Analytics Dashboard",
+    tagline: "Talk to your database in plain English",
+    description:
+      "A full-stack platform that translates natural language questions into SQL, executes them against a live database, and renders results on an interactive dashboard — making business data accessible to non-technical stakeholders.",
+    tech: ["Python", "FastAPI", "React", "PostgreSQL", "OpenAI API", "Power BI"],
+    icon: Database,
+    label: "Full-Stack · NLP · SQL",
+  },
+  {
+    id: "solar-analysis",
+    title: "Solar Power Plant Analysis Agent",
+    tagline: "Intelligent energy analytics for renewable infrastructure",
+    description:
+      "An agentic system designed for solar power plant performance monitoring and anomaly detection. Processes telemetry data through autonomous analysis pipelines, identifies underperforming panels, and generates actionable insights for plant operators.",
+    tech: ["Python", "LangGraph", "PostgreSQL", "Pandas", "RAG", "FastAPI"],
+    icon: Sun,
+    label: "Agentic AI · Energy Analytics",
+  },
+  {
+    id: "network-analysis",
+    title: "Network Analysis Agentic System",
+    tagline: "AI-driven network intelligence and diagnostics",
+    description:
+      "An autonomous agent system for real-time network topology analysis, fault detection, and performance optimization. Leverages graph-based reasoning and AI orchestration to identify bottlenecks and recommend remediation strategies.",
+    tech: ["Python", "LangGraph", "NetworkX", "PostgreSQL", "Vector DB", "FastAPI"],
+    icon: Network,
+    label: "Agentic AI · Network Intelligence",
+  },
+  {
     id: "stock-market-app",
-    title: "Stock Market Web App",
+    title: "Stock Market Intelligence Platform",
     tagline: "LSTM meets Technical Analysis",
     description:
-      "A full-stack platform combining an LSTM deep learning model for stock price prediction with a technical-indicator engine (RSI, MACD) for swing trade signals and a portfolio tracker. Built to compare deep learning forecasts against classical technical analysis.",
+      "A full-stack platform combining an LSTM deep learning model for stock price prediction with a technical-indicator engine (RSI, MACD) for swing trade signals and a portfolio tracker.",
     tech: ["Python", "TensorFlow", "Pandas", "React", "PostgreSQL", "yFinance"],
     icon: TrendingUp,
     label: "ML · Finance · Full-Stack",
   },
+];
+
+const additionalAgents = [
+  "Business Analysis Agentic System",
+  "3+ more specialized agentic systems",
 ];
 
 export default function Projects() {
@@ -84,55 +109,32 @@ export default function Projects() {
             marginBottom: "24px", lineHeight: 1.2, letterSpacing: "-0.02em"
           }}
         >
-          Major <span style={{ color: "#818cf8" }}>Projects</span>
+          Selected <span style={{ color: "#818cf8" }}>Work</span>
         </motion.h2>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={inView ? { opacity: 1, scale: 1 } : {}}
-          transition={{ duration: 0.6, delay: 0.2 }}
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.15 }}
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "20px",
-            background: "rgba(129,140,248,0.05)",
-            border: "1px solid rgba(129,140,248,0.15)",
-            padding: "20px 32px",
-            borderRadius: "20px",
-            marginBottom: "64px",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.1)"
+            color: "#64748b", fontSize: "1rem", lineHeight: 1.8,
+            maxWidth: "560px", margin: "0 auto 64px auto"
           }}
         >
-          <div style={{ 
-            fontSize: "clamp(2rem, 4vw, 3rem)", 
-            fontWeight: 800, 
-            color: "#818cf8", 
-            fontFamily: "var(--font-display)",
-            lineHeight: 1
-          }}>
-            5+
-          </div>
-          <div style={{ textAlign: "left", display: "flex", flexDirection: "column", gap: "4px" }}>
-            <span style={{ color: "#f8fafc", fontWeight: 700, fontSize: "1.1rem", fontFamily: "var(--font-display)" }}>
-              Intelligent Systems Shipped
-            </span>
-            <span style={{ color: "#94a3b8", fontSize: "0.95rem" }}>
-              Helping businesses solve complex data and automation challenges.
-            </span>
-          </div>
-        </motion.div>
+          A curated selection of production-grade AI systems, agentic platforms, and intelligent data solutions.
+        </motion.p>
       </div>
 
       {/* Stacked Cards */}
       <div style={{ maxWidth: "800px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "32px" }}>
-        {projects.map((project, i) => {
+        {featuredProjects.map((project, i) => {
           const Icon = project.icon;
           return (
             <motion.div
               key={project.id}
               initial={{ opacity: 0, y: 30 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: 0.2 + i * 0.15 }}
+              transition={{ duration: 0.6, delay: 0.2 + i * 0.12 }}
               className="glass-card"
               style={{ padding: "48px 32px", width: "100%", textAlign: "center" }}
             >
@@ -157,7 +159,7 @@ export default function Projects() {
                       color: "#a5b4fc", fontSize: "0.7rem", padding: "4px 10px", borderRadius: "99px",
                       fontFamily: "var(--font-display)", fontWeight: 600
                     }}>
-                      Most Complex
+                      Flagship Project
                     </span>
                   )}
                 </div>
@@ -200,6 +202,39 @@ export default function Projects() {
             </motion.div>
           );
         })}
+
+        {/* Additional Agentic Systems Summary Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.2 + featuredProjects.length * 0.12 }}
+          className="glass-card"
+          style={{
+            padding: "40px 32px", width: "100%", textAlign: "center",
+            borderStyle: "dashed",
+          }}
+        >
+          <div style={{
+            width: "48px", height: "48px", borderRadius: "14px",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(129,140,248,0.07)", border: "1px solid rgba(129,140,248,0.15)",
+            margin: "0 auto 20px auto"
+          }}>
+            <Cpu size={22} style={{ color: "#818cf8", opacity: 0.7 }} />
+          </div>
+
+          <p style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "#64748b", fontFamily: "var(--font-display)", marginBottom: "12px" }}>
+            Also in my portfolio
+          </p>
+
+          <h3 style={{ fontSize: "1.3rem", fontWeight: 700, fontFamily: "var(--font-display)", color: "#94a3b8", marginBottom: "20px" }}>
+            + Business Analysis Agentic System &amp; <span style={{ color: "#818cf8" }}>3+ more</span> specialized agentic systems
+          </h3>
+
+          <p style={{ fontSize: "0.9rem", color: "#475569", lineHeight: 1.7, maxWidth: "500px", margin: "0 auto" }}>
+            Additional autonomous AI platforms spanning enterprise intelligence, process automation, and domain-specific reasoning pipelines.
+          </p>
+        </motion.div>
       </div>
     </section>
   );

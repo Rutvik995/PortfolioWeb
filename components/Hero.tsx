@@ -20,7 +20,6 @@ export default function Hero() {
         paddingBottom: "150px",
         display: "flex",
         flexDirection: "column",
-
         alignItems: "center",
         justifyContent: "center",
         minHeight: "100vh",
@@ -89,7 +88,7 @@ export default function Hero() {
             marginBottom: "32px", letterSpacing: "0.01em"
           }}
         >
-          MSc Data Science · AI Engineer · Full-Stack Developer
+          AI/ML Engineer · Agentic AI Architect · Data Scientist
         </p>
 
         {/* Description */}
@@ -100,8 +99,8 @@ export default function Hero() {
             maxWidth: "600px", margin: "0 auto 48px auto",
           }}
         >
-          Building autonomous AI agents, NL-to-SQL pipelines, and ML-powered platforms.
-          I turn complex data into clean, functional, and minimal real-world systems.
+          Designing autonomous AI agents, compound multi-agent systems, and ML-powered platforms.
+          I engineer intelligent systems that solve real-world problems at scale.
         </p>
 
         {/* Actions */}
