@@ -35,8 +35,8 @@ const skillGroups = [
 const tools = [
   "LangGraph", "LangChain", "OpenAI API", "RAG Pipelines",
   "Pinecone", "ChromaDB", "PostgreSQL", "Power BI",
-  "FastAPI", "Redis", "Docker", "Git & GitHub",
-  "Pandas", "NumPy", "TensorFlow", "scikit-learn",
+  "FastAPI", "Next.js", "React Native", "TypeScript",
+  "Redis", "Docker", "Git & GitHub", "Pandas",
 ];
 
 function SkillBar({ name, level }: { name: string; level: number }) {
