@@ -120,7 +120,9 @@ export default function Navbar() {
           {/* ── Hire Me — right ──────────────────────── */}
           <div className="hidden md:flex">
             <a
-              href="mailto:rutvik.professional@gmail.com"
+              href="https://mail.google.com/mail/?view=cm&fs=1&to=rutvik.professional@gmail.com"
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 display: "inline-flex", alignItems: "center",
                 padding: "9px 22px", borderRadius: "11px",
@@ -197,7 +199,9 @@ export default function Navbar() {
             ))}
             <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", marginTop: "8px", paddingTop: "10px" }}>
               <a
-                href="mailto:rutvik.professional@gmail.com"
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=rutvik.professional@gmail.com"
+                target="_blank"
+                rel="noopener noreferrer"
                 style={{
                   display: "block", textAlign: "center", padding: "11px",
                   background: "#818cf8", borderRadius: "10px",

@@ -7,7 +7,7 @@ import LinkedinIcon from "@/components/icons/LinkedinIcon";
 const socials = [
   { icon: GithubIcon, href: "https://github.com/Rutvik995", label: "GitHub" },
   { icon: LinkedinIcon, href: "https://www.linkedin.com/in/rutvikbhanderi", label: "LinkedIn" },
-  { icon: Mail, href: "mailto:rutvik.professional@gmail.com", label: "Email" },
+  { icon: Mail, href: "https://mail.google.com/mail/?view=cm&fs=1&to=rutvik.professional@gmail.com", label: "Email" },
 ];
 
 export default function Hero() {

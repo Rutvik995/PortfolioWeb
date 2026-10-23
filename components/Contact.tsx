@@ -1,18 +1,22 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
-import { Mail, Send, MapPin } from "lucide-react";
+import { Mail, Send, MapPin, Copy, Check, ExternalLink } from "lucide-react";
 import GithubIcon from "@/components/icons/GithubIcon";
 import LinkedinIcon from "@/components/icons/LinkedinIcon";
+
+const GMAIL_URL = "https://mail.google.com/mail/?view=cm&fs=1&to=rutvik.professional@gmail.com";
+const EMAIL_ADDRESS = "rutvik.professional@gmail.com";
 
 const contacts = [
   {
     id: "email-link",
     icon: Mail,
-    label: "Email",
-    value: "rutvik.professional@gmail.com",
-    href: "mailto:rutvik.professional@gmail.com",
+    label: "Email (Opens Directly in Gmail)",
+    value: EMAIL_ADDRESS,
+    href: GMAIL_URL,
+    isEmail: true,
   },
   {
     id: "github-link",
@@ -20,6 +24,7 @@ const contacts = [
     label: "GitHub",
     value: "github.com/Rutvik995",
     href: "https://github.com/Rutvik995",
+    isEmail: false,
   },
   {
     id: "linkedin-link",
@@ -27,12 +32,22 @@ const contacts = [
     label: "LinkedIn",
     value: "linkedin.com/in/rutvikbhanderi",
     href: "https://www.linkedin.com/in/rutvikbhanderi",
+    isEmail: false,
   },
 ];
 
 export default function Contact() {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigator.clipboard.writeText(EMAIL_ADDRESS);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2200);
+  };
 
   return (
     <section id="contact" style={{ position: "relative", padding: "160px 24px" }}>
@@ -105,85 +120,158 @@ export default function Contact() {
             </span>
           </div>
           
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "40px", color: "#64748b" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "36px", color: "#64748b" }}>
             <MapPin size={16} />
             <span style={{ fontSize: "0.95rem" }}>India · Remote-friendly</span>
           </div>
           
-          <a
-            id="hire-me-btn"
-            href="mailto:rutvik.professional@gmail.com"
-            style={{
-              display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "10px",
-              background: "#818cf8", color: "#fff",
-              padding: "16px 40px", borderRadius: "12px",
-              fontFamily: "var(--font-display)", fontWeight: 600, fontSize: "1rem",
-              textDecoration: "none", transition: "opacity 0.2s, transform 0.2s"
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "translateY(0)"; }}
-          >
-            <Send size={16} />
-            Send Me an Email
-          </a>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: "14px" }}>
+            <a
+              id="hire-me-btn"
+              href={GMAIL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "10px",
+                background: "#818cf8", color: "#fff",
+                padding: "16px 36px", borderRadius: "12px",
+                fontFamily: "var(--font-display)", fontWeight: 600, fontSize: "1rem",
+                textDecoration: "none", transition: "opacity 0.2s, transform 0.2s",
+                boxShadow: "0 4px 20px rgba(129,140,248,0.25)"
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "translateY(0)"; }}
+            >
+              <Send size={16} />
+              Send Email (Gmail)
+            </a>
+
+            <button
+              type="button"
+              onClick={handleCopy}
+              style={{
+                display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                background: copied ? "rgba(52, 211, 153, 0.12)" : "rgba(255,255,255,0.03)",
+                color: copied ? "#34d399" : "#cbd5e1",
+                border: copied ? "1px solid rgba(52, 211, 153, 0.4)" : "1px solid rgba(255,255,255,0.1)",
+                padding: "16px 24px", borderRadius: "12px",
+                fontFamily: "var(--font-display)", fontWeight: 600, fontSize: "0.95rem",
+                cursor: "pointer", transition: "all 0.2s"
+              }}
+              onMouseEnter={(e) => {
+                if (!copied) {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!copied) {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }
+              }}
+            >
+              {copied ? <Check size={16} /> : <Copy size={16} />}
+              {copied ? "Copied to Clipboard!" : "Copy Address"}
+            </button>
+          </div>
         </motion.div>
 
         {/* Links Array */}
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          {contacts.map(({ id, icon: Icon, label, value, href }, i) => (
-            <motion.a
+          {contacts.map(({ id, icon: Icon, label, value, href, isEmail }, i) => (
+            <motion.div
               key={id}
-              id={id}
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
               initial={{ opacity: 0, y: 20 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.4 + i * 0.1 }}
               className="glass-card"
               style={{
-                display: "flex", alignItems: "center", gap: "24px", padding: "24px 32px",
-                textDecoration: "none", transition: "background 0.2s, transform 0.2s, border-color 0.2s",
-                width: "100%"
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateX(6px)";
-                e.currentTarget.style.borderColor = "rgba(129,140,248,0.3)";
-                const arrow = e.currentTarget.querySelector('.contact-arrow') as HTMLElement;
-                if (arrow) arrow.style.opacity = "1";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateX(0)";
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)";
-                const arrow = e.currentTarget.querySelector('.contact-arrow') as HTMLElement;
-                if (arrow) arrow.style.opacity = "0";
+                display: "flex", alignItems: "center", gap: "20px", padding: "20px 28px",
+                width: "100%", position: "relative"
               }}
             >
-              <div
+              <a
+                id={id}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
                 style={{
-                  width: "48px", height: "48px", borderRadius: "14px",
-                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                  background: "rgba(129,140,248,0.1)", border: "1px solid rgba(129,140,248,0.2)"
+                  display: "flex", alignItems: "center", gap: "20px",
+                  textDecoration: "none", flex: 1, minWidth: 0,
+                }}
+                onMouseEnter={(e) => {
+                  const arrow = e.currentTarget.parentElement?.querySelector('.contact-arrow') as HTMLElement;
+                  if (arrow) arrow.style.opacity = "1";
+                }}
+                onMouseLeave={(e) => {
+                  const arrow = e.currentTarget.parentElement?.querySelector('.contact-arrow') as HTMLElement;
+                  if (arrow) arrow.style.opacity = "0.7";
                 }}
               >
-                <Icon size={20} style={{ color: "#818cf8" }} />
-              </div>
-              
-              <div style={{ minWidth: 0, flex: 1, textAlign: "left" }}>
-                <p style={{ fontSize: "0.8rem", fontWeight: 600, color: "#64748b", marginBottom: "4px", letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                  {label}
-                </p>
-                <p style={{ fontSize: "1.1rem", fontWeight: 600, color: "#f8fafc", fontFamily: "var(--font-display)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {value}
-                </p>
-              </div>
+                <div
+                  style={{
+                    width: "48px", height: "48px", borderRadius: "14px",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    background: "rgba(129,140,248,0.1)", border: "1px solid rgba(129,140,248,0.2)"
+                  }}
+                >
+                  <Icon size={20} style={{ color: "#818cf8" }} />
+                </div>
+                
+                <div style={{ minWidth: 0, flex: 1, textAlign: "left" }}>
+                  <p style={{ fontSize: "0.8rem", fontWeight: 600, color: "#64748b", marginBottom: "4px", letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                    {label}
+                  </p>
+                  <p style={{ fontSize: "1.05rem", fontWeight: 600, color: "#f8fafc", fontFamily: "var(--font-display)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {value}
+                  </p>
+                </div>
+              </a>
 
-              <Send 
-                size={18} 
-                className="contact-arrow"
-                style={{ marginLeft: "auto", color: "#818cf8", opacity: 0, transition: "opacity 0.2s" }} 
-              />
-            </motion.a>
+              {/* Action buttons on the right */}
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+                {isEmail && (
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    title="Copy email to clipboard"
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: "6px",
+                      padding: "8px 14px", borderRadius: "10px",
+                      background: copied ? "rgba(52, 211, 153, 0.15)" : "rgba(255,255,255,0.04)",
+                      border: copied ? "1px solid rgba(52, 211, 153, 0.4)" : "1px solid rgba(255,255,255,0.08)",
+                      color: copied ? "#34d399" : "#94a3b8",
+                      fontSize: "0.8rem", fontFamily: "var(--font-display)", fontWeight: 500,
+                      cursor: "pointer", transition: "all 0.2s"
+                    }}
+                  >
+                    {copied ? <Check size={14} /> : <Copy size={14} />}
+                    <span className="hidden sm:inline">{copied ? "Copied" : "Copy"}</span>
+                  </button>
+                )}
+
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="contact-arrow"
+                  title="Open directly"
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    width: "36px", height: "36px", borderRadius: "10px",
+                    background: "rgba(129,140,248,0.08)",
+                    border: "1px solid rgba(129,140,248,0.18)",
+                    color: "#818cf8", textDecoration: "none",
+                    opacity: 0.7, transition: "opacity 0.2s, background 0.2s"
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.background = "rgba(129,140,248,0.18)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.7"; e.currentTarget.style.background = "rgba(129,140,248,0.08)"; }}
+                >
+                  <ExternalLink size={16} />
+                </a>
+              </div>
+            </motion.div>
           ))}
         </div>
 
