@@ -47,6 +47,23 @@ export default function TiltCard({
     setRotY(0);
   };
 
+  // Decompose style to avoid mixing shorthand 'border' with 'borderColor' in React 19
+  const { border, borderColor: customBorderColor, borderWidth, borderStyle, ...restStyle } = style;
+
+  let baseBorderColor = "var(--border)";
+  if (border && typeof border === "string") {
+    const parts = border.split(" ");
+    if (parts.length >= 3) {
+      baseBorderColor = parts.slice(2).join(" ");
+    }
+  } else if (customBorderColor) {
+    baseBorderColor = customBorderColor as string;
+  }
+
+  const hoverBorderColor = glowColor
+    ? glowColor.replace(/[\d\.]+\)$/, "0.45)")
+    : "rgba(129, 140, 248, 0.4)";
+
   return (
     <div
       style={{
@@ -64,15 +81,19 @@ export default function TiltCard({
           transform: isHovered
             ? `rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg) translateY(-4px) scale3d(1.015, 1.015, 1.015)`
             : "rotateX(0deg) rotateY(0deg) translateY(0px) scale3d(1, 1, 1)",
-          transition: isHovered ? "transform 0.08s ease-out, border-color 0.25s, box-shadow 0.25s" : "all 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
+          transition: isHovered
+            ? "transform 0.08s ease-out, border-color 0.25s, box-shadow 0.25s"
+            : "all 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
           transformStyle: "preserve-3d",
           position: "relative",
           overflow: "hidden",
+          borderWidth: (borderWidth as string) || "1px",
+          borderStyle: (borderStyle as string) || "solid",
+          borderColor: isHovered ? hoverBorderColor : baseBorderColor,
           boxShadow: isHovered
             ? `0 16px 40px -12px rgba(0, 0, 0, 0.6), 0 0 24px 0 ${glowColor}`
             : "0 8px 30px rgba(0, 0, 0, 0.35)",
-          borderColor: isHovered ? "rgba(129, 140, 248, 0.35)" : "var(--border)",
-          ...style,
+          ...restStyle,
         }}
       >
         {/* Holographic Cursor Spotlight Glare */}
