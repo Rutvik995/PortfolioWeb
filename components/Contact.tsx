@@ -5,6 +5,7 @@ import { motion, useInView } from "framer-motion";
 import { Mail, Send, MapPin, Copy, Check, ExternalLink } from "lucide-react";
 import GithubIcon from "@/components/icons/GithubIcon";
 import LinkedinIcon from "@/components/icons/LinkedinIcon";
+import TiltCard from "./TiltCard";
 
 const GMAIL_URL = "https://mail.google.com/mail/?view=cm&fs=1&to=rutvik.professional@gmail.com";
 const EMAIL_ADDRESS = "rutvik.professional@gmail.com";
@@ -13,7 +14,7 @@ const contacts = [
   {
     id: "email-link",
     icon: Mail,
-    label: "Email (Opens Directly in Gmail)",
+    label: "Direct Email (Opens in Gmail)",
     value: EMAIL_ADDRESS,
     href: GMAIL_URL,
     isEmail: true,
@@ -21,7 +22,7 @@ const contacts = [
   {
     id: "github-link",
     icon: GithubIcon,
-    label: "GitHub",
+    label: "GitHub Profile",
     value: "github.com/Rutvik995",
     href: "https://github.com/Rutvik995",
     isEmail: false,
@@ -29,7 +30,7 @@ const contacts = [
   {
     id: "linkedin-link",
     icon: LinkedinIcon,
-    label: "LinkedIn",
+    label: "LinkedIn Network",
     value: "linkedin.com/in/rutvikbhanderi",
     href: "https://www.linkedin.com/in/rutvikbhanderi",
     isEmail: false,
@@ -55,7 +56,7 @@ export default function Contact() {
         className="blob"
         style={{
           width: "400px", height: "400px", opacity: 0.05,
-          background: "radial-gradient(circle, #818cf8, transparent 70%)",
+          background: "radial-gradient(circle, #00f2fe, transparent 70%)",
           bottom: "-5%", right: "-5%"
         }}
       />
@@ -68,11 +69,11 @@ export default function Contact() {
           transition={{ duration: 0.6 }}
           style={{
             fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.2em",
-            textTransform: "uppercase", color: "#818cf8", fontFamily: "var(--font-display)",
+            textTransform: "uppercase", color: "#00f2fe", fontFamily: "monospace",
             marginBottom: "16px"
           }}
         >
-          Contact
+          COMMUNICATION // SECURE CHANNEL
         </motion.p>
         
         <motion.h2
@@ -85,7 +86,7 @@ export default function Contact() {
             marginBottom: "24px", lineHeight: 1.2, letterSpacing: "-0.02em"
           }}
         >
-          Let&apos;s build something <span style={{ color: "#818cf8" }}>together.</span>
+          Let&apos;s engineer something <span style={{ color: "#00f2fe" }}>extraordinary.</span>
         </motion.h2>
 
         <motion.p
@@ -94,29 +95,30 @@ export default function Contact() {
           transition={{ duration: 0.6, delay: 0.2 }}
           style={{ color: "#94a3b8", fontSize: "1.05rem", lineHeight: 1.85, maxWidth: "600px", margin: "0 auto" }}
         >
-          I&apos;m open to full-time roles, freelance projects, or just a good
-          conversation about AI and data systems.
+          Available for AI/ML engineering roles, Agentic AI architect contracts, or collaborative research on intelligent systems.
         </motion.p>
       </div>
 
-      {/* Stacked Cards */}
+      {/* Stacked 3D Cards */}
       <div style={{ maxWidth: "800px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "24px" }}>
 
-        {/* CTA Block */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="glass-card"
-          style={{ padding: "64px 32px", width: "100%", textAlign: "center" }}
+        {/* CTA 3D Tilt Card */}
+        <TiltCard
+          maxTilt={5}
+          glowColor="rgba(0, 242, 254, 0.22)"
+          style={{
+            padding: "56px 32px", width: "100%", textAlign: "center",
+            background: "linear-gradient(180deg, rgba(12, 16, 32, 0.9) 0%, rgba(7, 9, 20, 0.95) 100%)",
+            border: "1px solid rgba(0, 242, 254, 0.25)",
+          }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", marginBottom: "16px" }}>
             <span style={{ position: "relative", display: "flex", width: "8px", height: "8px" }}>
-              <span className="ping-slow" style={{ position: "absolute", width: "100%", height: "100%", borderRadius: "50%", background: "#34d399", opacity: 0.75 }} />
-              <span style={{ position: "relative", width: "8px", height: "8px", borderRadius: "50%", background: "#34d399" }} />
+              <span className="ping-slow" style={{ position: "absolute", width: "100%", height: "100%", borderRadius: "50%", background: "#00f2fe", opacity: 0.75 }} />
+              <span style={{ position: "relative", width: "8px", height: "8px", borderRadius: "50%", background: "#00f2fe", boxShadow: "0 0 8px #00f2fe" }} />
             </span>
             <span style={{ fontSize: "1rem", fontWeight: 600, color: "#cbd5e1" }}>
-              Available for opportunities
+              Available for immediate impact
             </span>
           </div>
           
@@ -133,17 +135,18 @@ export default function Contact() {
               rel="noopener noreferrer"
               style={{
                 display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "10px",
-                background: "#818cf8", color: "#fff",
+                background: "linear-gradient(135deg, #00f2fe 0%, #818cf8 100%)",
+                color: "#060913",
                 padding: "16px 36px", borderRadius: "12px",
-                fontFamily: "var(--font-display)", fontWeight: 600, fontSize: "1rem",
-                textDecoration: "none", transition: "opacity 0.2s, transform 0.2s",
-                boxShadow: "0 4px 20px rgba(129,140,248,0.25)"
+                fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "1rem",
+                textDecoration: "none", transition: "transform 0.2s, box-shadow 0.2s",
+                boxShadow: "0 0 25px rgba(0, 242, 254, 0.35)"
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "translateY(0)"; }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; }}
             >
               <Send size={16} />
-              Send Email (Gmail)
+              Launch Direct Email (Gmail)
             </a>
 
             <button
@@ -175,20 +178,20 @@ export default function Contact() {
               {copied ? "Copied to Clipboard!" : "Copy Address"}
             </button>
           </div>
-        </motion.div>
+        </TiltCard>
 
-        {/* Links Array */}
+        {/* Links Array with 3D Tilt */}
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          {contacts.map(({ id, icon: Icon, label, value, href, isEmail }, i) => (
-            <motion.div
+          {contacts.map(({ id, icon: Icon, label, value, href, isEmail }) => (
+            <TiltCard
               key={id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: 0.4 + i * 0.1 }}
-              className="glass-card"
+              maxTilt={6}
+              glowColor="rgba(129, 140, 248, 0.2)"
               style={{
                 display: "flex", alignItems: "center", gap: "20px", padding: "20px 28px",
-                width: "100%", position: "relative"
+                width: "100%", position: "relative",
+                background: "rgba(10, 14, 28, 0.8)",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
               }}
             >
               <a
@@ -199,14 +202,6 @@ export default function Contact() {
                 style={{
                   display: "flex", alignItems: "center", gap: "20px",
                   textDecoration: "none", flex: 1, minWidth: 0,
-                }}
-                onMouseEnter={(e) => {
-                  const arrow = e.currentTarget.parentElement?.querySelector('.contact-arrow') as HTMLElement;
-                  if (arrow) arrow.style.opacity = "1";
-                }}
-                onMouseLeave={(e) => {
-                  const arrow = e.currentTarget.parentElement?.querySelector('.contact-arrow') as HTMLElement;
-                  if (arrow) arrow.style.opacity = "0.7";
                 }}
               >
                 <div
@@ -263,15 +258,15 @@ export default function Contact() {
                     background: "rgba(129,140,248,0.08)",
                     border: "1px solid rgba(129,140,248,0.18)",
                     color: "#818cf8", textDecoration: "none",
-                    opacity: 0.7, transition: "opacity 0.2s, background 0.2s"
+                    opacity: 0.8, transition: "all 0.2s"
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.background = "rgba(129,140,248,0.18)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.7"; e.currentTarget.style.background = "rgba(129,140,248,0.08)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.8"; e.currentTarget.style.background = "rgba(129,140,248,0.08)"; }}
                 >
                   <ExternalLink size={16} />
                 </a>
               </div>
-            </motion.div>
+            </TiltCard>
           ))}
         </div>
 

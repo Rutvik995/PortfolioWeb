@@ -20,6 +20,7 @@ import {
   MessageSquareCode,
   TrendingUp,
 } from "lucide-react";
+import TiltCard from "./TiltCard";
 
 // ── 7+ Agentic AI Projects ─────────────────────────────────────────
 const agenticProjects = [
@@ -185,7 +186,7 @@ export default function Projects() {
         className="blob"
         style={{
           width: "400px", height: "400px", opacity: 0.03,
-          background: "radial-gradient(circle, #38bdf8, transparent 70%)",
+          background: "radial-gradient(circle, #00f2fe, transparent 70%)",
           bottom: "10%", right: "-5%"
         }}
       />
@@ -200,11 +201,11 @@ export default function Projects() {
             transition={{ duration: 0.6 }}
             style={{
               fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.2em",
-              textTransform: "uppercase", color: "#818cf8", fontFamily: "var(--font-display)",
+              textTransform: "uppercase", color: "#00f2fe", fontFamily: "monospace",
               marginBottom: "16px"
             }}
           >
-            Portfolio &amp; Solutions
+            PORTFOLIO // PRODUCTION SYSTEMS
           </motion.p>
 
           <motion.h2
@@ -217,7 +218,7 @@ export default function Projects() {
               marginBottom: "20px", lineHeight: 1.2, letterSpacing: "-0.02em"
             }}
           >
-            Featured <span style={{ color: "#818cf8" }}>Projects</span>
+            Engineering &amp; <span style={{ color: "#00f2fe" }}>AI Solutions</span>
           </motion.h2>
 
           <motion.p
@@ -261,13 +262,13 @@ export default function Projects() {
                   padding: "10px 20px", borderRadius: "12px",
                   fontSize: "0.85rem", fontWeight: 600, fontFamily: "var(--font-display)",
                   cursor: "pointer", transition: "all 0.2s",
-                  background: active ? "rgba(129,140,248,0.18)" : "rgba(255,255,255,0.03)",
-                  border: active ? "1px solid rgba(129,140,248,0.4)" : "1px solid rgba(255,255,255,0.08)",
-                  color: active ? "#f1f5f9" : "#94a3b8",
-                  boxShadow: active ? "0 0 20px rgba(129,140,248,0.15)" : "none",
+                  background: active ? "rgba(0, 242, 254, 0.15)" : "rgba(255,255,255,0.03)",
+                  border: active ? "1px solid rgba(0, 242, 254, 0.45)" : "1px solid rgba(255,255,255,0.08)",
+                  color: active ? "#00f2fe" : "#94a3b8",
+                  boxShadow: active ? "0 0 20px rgba(0, 242, 254, 0.2)" : "none",
                 }}
               >
-                <Icon size={15} style={{ color: active ? "#818cf8" : "#64748b" }} />
+                <Icon size={15} style={{ color: active ? "#00f2fe" : "#64748b" }} />
                 {tab.label}
               </button>
             );
@@ -319,20 +320,21 @@ export default function Projects() {
                   style={{
                     padding: "6px 14px", borderRadius: "99px",
                     background: "rgba(129,140,248,0.1)", border: "1px solid rgba(129,140,248,0.25)",
-                    color: "#a5b4fc", fontSize: "0.75rem", fontWeight: 600, fontFamily: "var(--font-display)"
+                    color: "#a5b4fc", fontSize: "0.75rem", fontWeight: 600, fontFamily: "monospace"
                   }}
                 >
-                  7+ Projects Shipped
+                  7+ PRODUCTION AGENTS
                 </span>
               </div>
 
-              {/* ── Flagship Project Card ── */}
-              <div
-                className="glass-card"
+              {/* ── Flagship Project 3D Tilt Card ── */}
+              <TiltCard
+                maxTilt={6}
+                glowColor="rgba(129, 140, 248, 0.3)"
                 style={{
                   padding: "44px 36px", marginBottom: "32px",
-                  border: "1px solid rgba(129,140,248,0.28)",
-                  background: "linear-gradient(180deg, rgba(129,140,248,0.06) 0%, rgba(255,255,255,0.02) 100%)",
+                  border: "1px solid rgba(129,140,248,0.35)",
+                  background: "linear-gradient(180deg, rgba(14, 18, 36, 0.85) 0%, rgba(9, 11, 24, 0.95) 100%)",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "20px" }}>
@@ -341,13 +343,13 @@ export default function Projects() {
                       display: "inline-flex", alignItems: "center", gap: "6px",
                       padding: "5px 12px", borderRadius: "99px",
                       background: "rgba(129,140,248,0.15)", border: "1px solid rgba(129,140,248,0.3)",
-                      color: "#c7d2fe", fontSize: "0.75rem", fontWeight: 700, fontFamily: "var(--font-display)"
+                      color: "#c7d2fe", fontSize: "0.75rem", fontWeight: 700, fontFamily: "monospace"
                     }}
                   >
                     <Sparkles size={13} style={{ color: "#818cf8" }} />
                     FLAGSHIP AGENTIC ARCHITECTURE
                   </span>
-                  <span style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: 600, fontFamily: "var(--font-display)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  <span style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: 600, fontFamily: "monospace", textTransform: "uppercase" }}>
                     {flagshipAgent.category}
                   </span>
                 </div>
@@ -373,20 +375,20 @@ export default function Projects() {
                     }}
                   >
                     {flagshipAgent.highlights.map((h) => (
-                    <div
-                      key={h}
-                      style={{
-                        display: "flex", alignItems: "flex-start", gap: "10px",
-                        padding: "12px 16px", borderRadius: "12px",
-                        background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)"
-                      }}
-                    >
-                      <CheckCircle2 size={16} style={{ color: "#34d399", marginTop: "2px", flexShrink: 0 }} />
-                      <span style={{ fontSize: "0.85rem", color: "#cbd5e1", lineHeight: 1.5 }}>{h}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+                      <div
+                        key={h}
+                        style={{
+                          display: "flex", alignItems: "flex-start", gap: "10px",
+                          padding: "12px 16px", borderRadius: "12px",
+                          background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)"
+                        }}
+                      >
+                        <CheckCircle2 size={16} style={{ color: "#34d399", marginTop: "2px", flexShrink: 0 }} />
+                        <span style={{ fontSize: "0.85rem", color: "#cbd5e1", lineHeight: 1.5 }}>{h}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
                   {flagshipAgent.tech.map((t) => (
@@ -402,9 +404,9 @@ export default function Projects() {
                     </span>
                   ))}
                 </div>
-              </div>
+              </TiltCard>
 
-              {/* ── 6 Additional Agentic Projects in Clean 2-Column Grid ── */}
+              {/* ── 6 Additional Agentic Projects with 3D Tilt ── */}
               <div
                 style={{
                   display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
@@ -414,12 +416,14 @@ export default function Projects() {
                 {otherAgenticProjects.map((p, idx) => {
                   const Icon = p.icon;
                   return (
-                    <div
+                    <TiltCard
                       key={p.id}
-                      className="glass-card"
+                      maxTilt={8}
+                      glowColor="rgba(129, 140, 248, 0.2)"
                       style={{
                         padding: "28px 24px", display: "flex", flexDirection: "column",
-                        transition: "all 0.25s",
+                        background: "rgba(12, 16, 32, 0.75)",
+                        border: "1px solid rgba(129, 140, 248, 0.15)",
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
@@ -435,10 +439,10 @@ export default function Projects() {
                         <span
                           style={{
                             fontSize: "0.72rem", fontWeight: 700, color: "#64748b",
-                            fontFamily: "var(--font-display)", textTransform: "uppercase", letterSpacing: "0.05em"
+                            fontFamily: "monospace", textTransform: "uppercase"
                           }}
                         >
-                          Agentic System #{idx + 2}
+                          AGENT #{idx + 2} // 0{idx + 2}
                         </span>
                       </div>
 
@@ -468,7 +472,7 @@ export default function Projects() {
                           </span>
                         ))}
                       </div>
-                    </div>
+                    </TiltCard>
                   );
                 })}
               </div>
@@ -500,11 +504,11 @@ export default function Projects() {
                   <div
                     style={{
                       width: "36px", height: "36px", borderRadius: "10px",
-                      background: "rgba(56,189,248,0.12)", border: "1px solid rgba(56,189,248,0.25)",
+                      background: "rgba(0, 242, 254, 0.12)", border: "1px solid rgba(0, 242, 254, 0.25)",
                       display: "flex", alignItems: "center", justifyContent: "center"
                     }}
                   >
-                    <Globe size={18} style={{ color: "#38bdf8" }} />
+                    <Globe size={18} style={{ color: "#00f2fe" }} />
                   </div>
                   <div>
                     <h3 style={{ fontSize: "1.35rem", fontWeight: 700, fontFamily: "var(--font-display)", color: "#f8fafc" }}>
@@ -519,11 +523,11 @@ export default function Projects() {
                 <span
                   style={{
                     padding: "6px 14px", borderRadius: "99px",
-                    background: "rgba(56,189,248,0.1)", border: "1px solid rgba(56,189,248,0.25)",
-                    color: "#7dd3fc", fontSize: "0.75rem", fontWeight: 600, fontFamily: "var(--font-display)"
+                    background: "rgba(0, 242, 254, 0.1)", border: "1px solid rgba(0, 242, 254, 0.25)",
+                    color: "#00f2fe", fontSize: "0.75rem", fontWeight: 600, fontFamily: "monospace"
                   }}
                 >
-                  Full-Stack Platforms
+                  FULL-STACK WEB PLATFORMS
                 </span>
               </div>
 
@@ -532,15 +536,16 @@ export default function Projects() {
                   const Icon = p.icon;
                   const isInvoice = p.id === "invoice-webapp";
                   return (
-                    <div
+                    <TiltCard
                       key={p.id}
-                      className="glass-card"
+                      maxTilt={6}
+                      glowColor="rgba(0, 242, 254, 0.25)"
                       style={{
                         padding: "36px 32px",
-                        border: isInvoice ? "1px solid rgba(56,189,248,0.3)" : "1px solid var(--border)",
+                        border: isInvoice ? "1px solid rgba(0, 242, 254, 0.35)" : "1px solid var(--border)",
                         background: isInvoice
-                          ? "linear-gradient(180deg, rgba(56,189,248,0.05) 0%, rgba(255,255,255,0.02) 100%)"
-                          : "var(--bg-card)",
+                          ? "linear-gradient(180deg, rgba(8, 18, 30, 0.85) 0%, rgba(6, 12, 22, 0.95) 100%)"
+                          : "rgba(10, 14, 26, 0.8)",
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "16px" }}>
@@ -549,17 +554,17 @@ export default function Projects() {
                             style={{
                               width: "44px", height: "44px", borderRadius: "12px",
                               display: "flex", alignItems: "center", justifyContent: "center",
-                              background: "rgba(56,189,248,0.12)", border: "1px solid rgba(56,189,248,0.25)"
+                              background: "rgba(0, 242, 254, 0.12)", border: "1px solid rgba(0, 242, 254, 0.25)"
                             }}
                           >
-                            <Icon size={20} style={{ color: "#38bdf8" }} />
+                            <Icon size={20} style={{ color: "#00f2fe" }} />
                           </div>
                           <div>
                             <span
                               style={{
                                 padding: "4px 10px", borderRadius: "99px",
-                                background: "rgba(56,189,248,0.1)", border: "1px solid rgba(56,189,248,0.2)",
-                                color: "#7dd3fc", fontSize: "0.72rem", fontWeight: 700, fontFamily: "var(--font-display)"
+                                background: "rgba(0, 242, 254, 0.1)", border: "1px solid rgba(0, 242, 254, 0.2)",
+                                color: "#00f2fe", fontSize: "0.72rem", fontWeight: 700, fontFamily: "monospace"
                               }}
                             >
                               {p.badge}
@@ -576,7 +581,7 @@ export default function Projects() {
                         {p.name}
                       </h4>
 
-                      <p style={{ fontSize: "0.95rem", fontWeight: 600, color: "#38bdf8", marginBottom: "16px" }}>
+                      <p style={{ fontSize: "0.95rem", fontWeight: 600, color: "#00f2fe", marginBottom: "16px" }}>
                         {p.tagline}
                       </p>
 
@@ -600,7 +605,7 @@ export default function Projects() {
                                 background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)"
                               }}
                             >
-                              <CheckCircle2 size={15} style={{ color: "#38bdf8", marginTop: "2px", flexShrink: 0 }} />
+                              <CheckCircle2 size={15} style={{ color: "#00f2fe", marginTop: "2px", flexShrink: 0 }} />
                               <span style={{ fontSize: "0.85rem", color: "#cbd5e1" }}>{h}</span>
                             </div>
                           ))}
@@ -621,7 +626,7 @@ export default function Projects() {
                           </span>
                         ))}
                       </div>
-                    </div>
+                    </TiltCard>
                   );
                 })}
               </div>
@@ -673,23 +678,24 @@ export default function Projects() {
                   style={{
                     padding: "6px 14px", borderRadius: "99px",
                     background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.25)",
-                    color: "#6ee7b7", fontSize: "0.75rem", fontWeight: 600, fontFamily: "var(--font-display)"
+                    color: "#6ee7b7", fontSize: "0.75rem", fontWeight: 600, fontFamily: "monospace"
                   }}
                 >
-                  Mobile Platform
+                  MOBILE ARCHITECTURE
                 </span>
               </div>
 
               {mobileProjects.map((p) => {
                 const Icon = p.icon;
                 return (
-                  <div
+                  <TiltCard
                     key={p.id}
-                    className="glass-card"
+                    maxTilt={6}
+                    glowColor="rgba(52, 211, 153, 0.25)"
                     style={{
                       padding: "36px 32px",
-                      border: "1px solid rgba(52,211,153,0.3)",
-                      background: "linear-gradient(180deg, rgba(52,211,153,0.05) 0%, rgba(255,255,255,0.02) 100%)",
+                      border: "1px solid rgba(52,211,153,0.35)",
+                      background: "linear-gradient(180deg, rgba(8, 22, 18, 0.85) 0%, rgba(6, 16, 13, 0.95) 100%)",
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "16px" }}>
@@ -708,7 +714,7 @@ export default function Projects() {
                             style={{
                               padding: "4px 10px", borderRadius: "99px",
                               background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.2)",
-                              color: "#6ee7b7", fontSize: "0.72rem", fontWeight: 700, fontFamily: "var(--font-display)"
+                              color: "#6ee7b7", fontSize: "0.72rem", fontWeight: 700, fontFamily: "monospace"
                             }}
                           >
                             {p.badge}
@@ -768,7 +774,7 @@ export default function Projects() {
                         </span>
                       ))}
                     </div>
-                  </div>
+                  </TiltCard>
                 );
               })}
             </motion.div>

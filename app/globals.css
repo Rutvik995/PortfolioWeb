@@ -1,18 +1,20 @@
 @import "tailwindcss";
 
-/* ─── Design Tokens ──────────────────────────────────────────── */
+/* ─── Quantum Neural Design Tokens ──────────────────────────── */
 :root {
-  --bg:          #0c0c10;
-  --bg-card:     rgba(255, 255, 255, 0.03);
-  --bg-card-h:   rgba(255, 255, 255, 0.055);
-  --border:      rgba(255, 255, 255, 0.07);
-  --border-h:    rgba(129, 140, 248, 0.25);
+  --bg:          #060810;        /* deep cyber-obsidian */
+  --bg-card:     rgba(13, 17, 32, 0.65);
+  --bg-card-h:   rgba(20, 26, 48, 0.85);
+  --border:      rgba(129, 140, 248, 0.12);
+  --border-h:    rgba(0, 242, 254, 0.4);
 
-  --accent:      #818cf8;        /* soft indigo */
+  --accent:      #818cf8;        /* electric violet */
+  --accent-cyan: #00f2fe;        /* cyber cyan */
   --accent-dim:  rgba(129, 140, 248, 0.12);
-  --accent-glow: rgba(129, 140, 248, 0.2);
+  --accent-glow: rgba(129, 140, 248, 0.25);
+  --cyan-glow:   rgba(0, 242, 254, 0.2);
 
-  --text-1:      #f1f5f9;        /* near-white */
+  --text-1:      #f8fafc;        /* crisp white */
   --text-2:      #94a3b8;        /* slate-400 */
   --text-3:      #475569;        /* slate-600 */
 
@@ -33,22 +35,23 @@ body {
 
 /* ─── Scrollbar ──────────────────────────────────────────────── */
 ::-webkit-scrollbar       { width: 4px; }
-::-webkit-scrollbar-track { background: #0c0c10; }
-::-webkit-scrollbar-thumb { background: rgba(129,140,248,0.3); border-radius: 9999px; }
-::selection { background: rgba(129,140,248,0.25); color: #fff; }
+::-webkit-scrollbar-track { background: #060810; }
+::-webkit-scrollbar-thumb { background: rgba(0, 242, 254, 0.35); border-radius: 9999px; }
+::selection { background: rgba(0, 242, 254, 0.25); color: #fff; }
 
-/* ─── Custom Cursor ──────────────────────────────────────────── */
+/* ─── Custom Cyber Cursor ─────────────────────────────────────── */
 .cursor-dot {
   width: 6px; height: 6px;
-  background: var(--accent);
+  background: var(--accent-cyan);
   border-radius: 50%;
   position: fixed; top: 0; left: 0;
   pointer-events: none; z-index: 99999999;
   transform: translate(-50%, -50%);
+  box-shadow: 0 0 10px var(--accent-cyan);
 }
 .cursor-ring {
   width: 32px; height: 32px;
-  border: 1.5px solid rgba(129,140,248,0.4);
+  border: 1.5px solid rgba(0, 242, 254, 0.45);
   border-radius: 50%;
   position: fixed; top: 0; left: 0;
   pointer-events: none; z-index: 99999998;
@@ -57,16 +60,17 @@ body {
 }
 .cursor-ring.hovering {
   width: 48px; height: 48px;
-  border-color: var(--accent);
-  background: rgba(129,140,248,0.05);
+  border-color: var(--accent-cyan);
+  background: rgba(0, 242, 254, 0.08);
+  box-shadow: 0 0 20px rgba(0, 242, 254, 0.25);
 }
 
-/* ─── Grid pattern ───────────────────────────────────────────── */
+/* ─── Neural Grid Pattern ─────────────────────────────────────── */
 .grid-pattern {
   background-image:
-    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-  background-size: 56px 56px;
+    linear-gradient(rgba(129, 140, 248, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(129, 140, 248, 0.035) 1px, transparent 1px);
+  background-size: 60px 60px;
 }
 
 /* ─── Animations ───────────────────────────────────────────── */
@@ -87,12 +91,14 @@ body {
 .delay-7 { animation-delay: 0.7s; }
 .delay-8 { animation-delay: 0.8s; }
 
-/* ─── Glass Card ─────────────────────────────────────────────── */
+/* ─── Glass Card & Holographic Tilt ──────────────────────────── */
 .glass-card {
   background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border);
   border-radius: 20px;
-  transition: background .25s, border-color .25s, transform .25s;
+  transition: background .25s, border-color .25s, transform .25s, box-shadow .25s;
 }
 .glass-card:hover {
   background: var(--bg-card-h);
@@ -101,7 +107,7 @@ body {
 
 /* ─── Navbar ─────────────────────────────────────────────────── */
 .navbar-glass {
-  background: rgba(12, 12, 16, 0.8);
+  background: rgba(6, 8, 16, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
@@ -109,8 +115,8 @@ body {
 
 /* ─── Pulse dot ──────────────────────────────────────────────── */
 @keyframes ping-slow {
-  0%   { transform: scale(1); opacity: .5; }
-  100% { transform: scale(1.9); opacity: 0; }
+  0%   { transform: scale(1); opacity: .6; }
+  100% { transform: scale(2); opacity: 0; }
 }
 .ping-slow { animation: ping-slow 2s ease-out infinite; }
 
@@ -121,8 +127,8 @@ body {
 }
 .bounce-y { animation: bounce-y 1.6s ease-in-out infinite; }
 
-/* ─── Blob ───────────────────────────────────────────────────── */
+/* ─── Neural Glow Orb ────────────────────────────────────────── */
 .blob {
   position: absolute; border-radius: 50%;
-  filter: blur(90px); pointer-events: none;
+  filter: blur(100px); pointer-events: none;
 }
