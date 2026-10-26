@@ -18,7 +18,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Rutvik Bhanderi — Data Science & AI Engineer",
   description:
-    "Portfolio of Rutvik Bhanderi — MSc Data Science student building intelligent systems, NL-to-SQL pipelines, autonomous AI agents, and ML-powered financial platforms.",
+    "Portfolio of Rutvik Bhanderi — AI/ML Engineer & Agentic AI Architect building intelligent systems, compound multi-agent workflows, autonomous LangGraph pipelines, and enterprise data solutions.",
   keywords: [
     "Rutvik Bhanderi",
     "Data Science",

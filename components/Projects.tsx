@@ -21,6 +21,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import TiltCard from "./TiltCard";
+import GithubIcon from "@/components/icons/GithubIcon";
 
 // ── 7+ Agentic AI Projects ─────────────────────────────────────────
 const agenticProjects = [
@@ -780,6 +781,69 @@ export default function Projects() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* GitHub Repositories Banner */}
+        <div style={{ marginTop: "48px" }}>
+          <TiltCard
+            maxTilt={4}
+            glowColor="rgba(129, 140, 248, 0.2)"
+            style={{
+              padding: "24px 32px",
+              background: "linear-gradient(180deg, rgba(14, 18, 36, 0.7) 0%, rgba(9, 12, 26, 0.85) 100%)",
+              border: "1px solid rgba(129, 140, 248, 0.2)",
+            }}
+          >
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-5 w-full">
+              <div className="flex items-center gap-4 text-left">
+                <div
+                  style={{
+                    width: "48px", height: "48px", borderRadius: "12px",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    background: "rgba(129, 140, 248, 0.12)", border: "1px solid rgba(129, 140, 248, 0.3)",
+                    boxShadow: "0 0 16px rgba(129, 140, 248, 0.15)"
+                  }}
+                >
+                  <GithubIcon size={22} style={{ color: "#818cf8" }} />
+                </div>
+                <div>
+                  <p style={{ fontSize: "1.05rem", fontWeight: 700, color: "#f8fafc", fontFamily: "var(--font-display)", marginBottom: "3px" }}>
+                    Looking for more codebase implementations?
+                  </p>
+                  <p style={{ fontSize: "0.85rem", color: "#94a3b8" }}>
+                    Explore all open-source AI pipelines, model weights, and tools on GitHub.
+                  </p>
+                </div>
+              </div>
+
+              <a
+                href="https://github.com/Rutvik995?tab=repositories"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: "8px",
+                  padding: "10px 22px", borderRadius: "10px",
+                  background: "rgba(129, 140, 248, 0.14)",
+                  border: "1px solid rgba(129, 140, 248, 0.35)",
+                  color: "#c7d2fe",
+                  fontSize: "0.85rem", fontFamily: "var(--font-display)", fontWeight: 600,
+                  textDecoration: "none", transition: "all 0.2s", flexShrink: 0
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(129, 140, 248, 0.24)";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(129, 140, 248, 0.14)";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }}
+              >
+                <GithubIcon size={15} />
+                <span>View Repositories</span>
+                <ExternalLink size={15} />
+              </a>
+            </div>
+          </TiltCard>
+        </div>
 
       </div>
     </section>
