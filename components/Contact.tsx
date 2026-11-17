@@ -1,418 +1,203 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { motion, useInView } from "framer-motion";
-import { Mail, Copy, Check, ExternalLink, MapPin, Sparkles } from "lucide-react";
-import GithubIcon from "@/components/icons/GithubIcon";
-import LinkedinIcon from "@/components/icons/LinkedinIcon";
-import TiltCard from "./TiltCard";
-
-const GMAIL_URL = "https://mail.google.com/mail/?view=cm&fs=1&to=rutvik.professional@gmail.com";
-const EMAIL_ADDRESS = "rutvik.professional@gmail.com";
-const GITHUB_URL = "https://github.com/Rutvik995";
-const LINKEDIN_URL = "https://www.linkedin.com/in/rutvikbhanderi";
+import { useState } from "react";
+import { profile } from "@/content/profile";
 
 export default function Contact() {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-100px" });
   const [copied, setCopied] = useState(false);
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
 
-  const handleCopy = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    navigator.clipboard.writeText(EMAIL_ADDRESS);
+  const handleCopyEmail = () => {
+    navigator.clipboard.writeText(profile.email);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2200);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.email || !formData.message) return;
+    // Client-side confirmation state (can be hooked to a Server Action / Resend)
+    setFormSubmitted(true);
   };
 
   return (
-    <section id="contact" style={{ position: "relative", padding: "160px 24px" }}>
-      {/* Background Glow */}
-      <div
-        className="blob"
-        style={{
-          width: "450px", height: "450px", opacity: 0.05,
-          background: "radial-gradient(circle, #00f2fe, transparent 70%)",
-          bottom: "-5%", right: "-5%"
-        }}
-      />
-
-      <div style={{ maxWidth: "860px", margin: "0 auto" }} ref={ref}>
+    <section id="contact" aria-labelledby="contact-title" className="py-20 md:py-32 rule-b">
+      <div className="container-grid">
         {/* Section Header */}
-        <div style={{ textAlign: "center", marginBottom: "56px" }}>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6 }}
-            style={{
-              fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.2em",
-              textTransform: "uppercase", color: "#00f2fe", fontFamily: "monospace",
-              marginBottom: "16px"
-            }}
-          >
-            COMMUNICATION // SECURE CHANNEL
-          </motion.p>
-          
-          <motion.h2
-            initial={{ opacity: 0, y: 25 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            style={{
-              fontSize: "clamp(2rem, 5vw, 2.75rem)", fontWeight: 700,
-              fontFamily: "var(--font-display)", color: "#f8fafc",
-              marginBottom: "20px", lineHeight: 1.2, letterSpacing: "-0.02em"
-            }}
-          >
-            Let&apos;s build something <span style={{ color: "#00f2fe" }}>extraordinary.</span>
-          </motion.h2>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={inView ? { opacity: 1 } : {}}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            style={{ color: "#94a3b8", fontSize: "1.05rem", lineHeight: 1.85, maxWidth: "620px", margin: "0 auto 28px auto" }}
-          >
-            Available for AI/ML engineering positions, Agentic AI architect contracts, or technical collaborations on intelligent systems.
-          </motion.p>
-
-          {/* Status Pill */}
-          <div
-            style={{
-              display: "inline-flex", alignItems: "center", gap: "10px",
-              padding: "8px 20px", borderRadius: "99px",
-              background: "rgba(0, 242, 254, 0.05)", border: "1px solid rgba(0, 242, 254, 0.2)",
-              color: "#cbd5e1", fontSize: "0.82rem", fontWeight: 600, fontFamily: "var(--font-display)"
-            }}
-          >
-            <span style={{ position: "relative", display: "flex", width: "8px", height: "8px" }}>
-              <span className="ping-slow" style={{ position: "absolute", width: "100%", height: "100%", borderRadius: "50%", background: "#00f2fe", opacity: 0.75 }} />
-              <span style={{ position: "relative", width: "8px", height: "8px", borderRadius: "50%", background: "#00f2fe", boxShadow: "0 0 8px #00f2fe" }} />
-            </span>
-            <span>Available for opportunities</span>
-            <span style={{ color: "#64748b" }}>·</span>
-            <span style={{ color: "#94a3b8" }}>India · Remote-friendly</span>
-          </div>
+        <div className="flex items-center justify-between text-xs font-mono text-[var(--graphite)] mb-6">
+          <span>06 / DIRECT CHANNEL</span>
+          <span>Rajkot (UTC +05:30)</span>
         </div>
 
-        {/* 3 Perfectly Aligned Contact Channels */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+          {/* Left Column: Direct Contact & Links (Cols 1-7) */}
+          <div className="lg:col-span-7 space-y-8">
+            <h2 id="contact-title" className="display-hero text-[var(--ink)] font-normal">
+              Have something worth automating?{" "}
+              <em className="font-serif italic text-[var(--accent)] font-normal">
+                Let&apos;s talk.
+              </em>
+            </h2>
 
-          {/* 1. Direct Email Card */}
-          <TiltCard
-            maxTilt={5}
-            glowColor="rgba(0, 242, 254, 0.25)"
-            style={{
-              padding: "26px 32px",
-              background: "linear-gradient(180deg, rgba(12, 18, 34, 0.9) 0%, rgba(8, 12, 24, 0.96) 100%)",
-              border: "1px solid rgba(0, 242, 254, 0.3)",
-            }}
-          >
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 w-full">
-              {/* Left: Icon & Details */}
-              <div style={{ display: "flex", alignItems: "center", gap: "20px", minWidth: 0, flex: 1 }}>
+            <p className="text-base md:text-lg text-[var(--graphite)] leading-relaxed max-w-xl">
+              I am open to full-time AI/ML engineering roles, agentic system architect contracts,
+              and select freelance engineering projects.
+            </p>
+
+            {/* Prominent Copy-to-Clipboard Email Action */}
+            <div className="paper-card p-6 rule-all">
+              <span className="text-xs font-mono uppercase text-[var(--graphite)] tracking-wider block mb-2">
+                Primary Direct Email
+              </span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <a
-                  href={GMAIL_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Send Email via Gmail"
-                  style={{
-                    width: "54px", height: "54px", borderRadius: "14px",
-                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                    background: "rgba(0, 242, 254, 0.12)", border: "1px solid rgba(0, 242, 254, 0.3)",
-                    boxShadow: "0 0 16px rgba(0, 242, 254, 0.15)",
-                    transition: "transform 0.2s, background 0.2s",
-                    textDecoration: "none"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "scale(1.05)";
-                    e.currentTarget.style.background = "rgba(0, 242, 254, 0.2)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "scale(1)";
-                    e.currentTarget.style.background = "rgba(0, 242, 254, 0.12)";
-                  }}
+                  href={`mailto:${profile.email}`}
+                  className="font-serif text-2xl md:text-3xl text-[var(--ink)] hover:text-[var(--accent)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)] break-all"
                 >
-                  <Mail size={22} style={{ color: "#00f2fe" }} />
+                  {profile.email}
                 </a>
 
-                <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#00f2fe", marginBottom: "4px", letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "monospace" }}>
-                    DIRECT EMAIL // PRIMARY INBOX
-                  </p>
-                  <a
-                    href={GMAIL_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      fontSize: "1.1rem", fontWeight: 700, color: "#f8fafc",
-                      fontFamily: "var(--font-display)", wordBreak: "break-all",
-                      textDecoration: "none", transition: "color 0.2s"
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#00f2fe")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "#f8fafc")}
-                  >
-                    {EMAIL_ADDRESS}
-                  </a>
-                </div>
-              </div>
-
-              {/* Right: Aligned Action Buttons */}
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0, flexWrap: "wrap" }}>
                 <button
                   type="button"
-                  onClick={handleCopy}
-                  style={{
-                    display: "inline-flex", alignItems: "center", gap: "6px",
-                    padding: "10px 18px", borderRadius: "10px",
-                    background: copied ? "rgba(52, 211, 153, 0.18)" : "rgba(255, 255, 255, 0.04)",
-                    border: copied ? "1px solid rgba(52, 211, 153, 0.45)" : "1px solid rgba(255, 255, 255, 0.12)",
-                    color: copied ? "#34d399" : "#cbd5e1",
-                    fontSize: "0.85rem", fontFamily: "var(--font-display)", fontWeight: 600,
-                    cursor: "pointer", transition: "all 0.2s"
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!copied) e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!copied) e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
-                  }}
+                  onClick={handleCopyEmail}
+                  className="text-xs font-mono px-4 py-2 rule-all bg-[var(--surface)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors cursor-pointer self-start sm:self-auto flex items-center gap-2"
                 >
-                  {copied ? <Check size={15} /> : <Copy size={15} />}
-                  <span>{copied ? "Copied!" : "Copy Address"}</span>
+                  {copied ? (
+                    <>
+                      <span className="w-2 h-2 rounded-full bg-[var(--pine)]" />
+                      <span>Copied to clipboard</span>
+                    </>
+                  ) : (
+                    <span>[ Copy Address ]</span>
+                  )}
                 </button>
+              </div>
+            </div>
 
+            {/* Quick Outbound Links */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 text-xs font-mono">
+              <div className="p-4 rule-all bg-[var(--surface)]">
+                <span className="text-[var(--graphite)] block mb-1">Source Code</span>
                 <a
-                  href={GMAIL_URL}
+                  href={profile.github}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{
-                    display: "inline-flex", alignItems: "center", gap: "8px",
-                    padding: "10px 22px", borderRadius: "10px",
-                    background: "linear-gradient(135deg, #00f2fe 0%, #818cf8 100%)",
-                    color: "#060913",
-                    fontSize: "0.85rem", fontFamily: "var(--font-display)", fontWeight: 700,
-                    textDecoration: "none", transition: "transform 0.2s, box-shadow 0.2s",
-                    boxShadow: "0 0 20px rgba(0, 242, 254, 0.3)"
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; }}
+                  className="editorial-link font-medium text-[var(--ink)]"
                 >
-                  <span>Open in Gmail</span>
-                  <ExternalLink size={15} />
+                  github.com/Rutvik995 &rarr;
+                </a>
+              </div>
+
+              <div className="p-4 rule-all bg-[var(--surface)]">
+                <span className="text-[var(--graphite)] block mb-1">Network</span>
+                <a
+                  href={profile.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="editorial-link font-medium text-[var(--ink)]"
+                >
+                  linkedin/rutvikbhanderi &rarr;
+                </a>
+              </div>
+
+              <div className="p-4 rule-all bg-[var(--surface)]">
+                <span className="text-[var(--graphite)] block mb-1">Curriculum Vitae</span>
+                <a
+                  href={profile.resumeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="editorial-link font-medium text-[var(--accent)]"
+                >
+                  Download PDF &rarr;
                 </a>
               </div>
             </div>
-          </TiltCard>
+          </div>
 
-          {/* 2. GitHub Profile Card */}
-          <TiltCard
-            maxTilt={5}
-            glowColor="rgba(129, 140, 248, 0.22)"
-            style={{
-              padding: "26px 32px",
-              background: "linear-gradient(180deg, rgba(14, 16, 32, 0.9) 0%, rgba(9, 11, 22, 0.96) 100%)",
-              border: "1px solid rgba(129, 140, 248, 0.25)",
-            }}
-          >
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 w-full">
-              {/* Left: Icon & Details */}
-              <div style={{ display: "flex", alignItems: "center", gap: "20px", minWidth: 0, flex: 1 }}>
-                <a
-                  href={GITHUB_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Visit GitHub Profile"
-                  style={{
-                    width: "54px", height: "54px", borderRadius: "14px",
-                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                    background: "rgba(129, 140, 248, 0.12)", border: "1px solid rgba(129, 140, 248, 0.3)",
-                    boxShadow: "0 0 16px rgba(129, 140, 248, 0.15)",
-                    transition: "transform 0.2s, background 0.2s",
-                    textDecoration: "none"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "scale(1.05)";
-                    e.currentTarget.style.background = "rgba(129, 140, 248, 0.2)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "scale(1)";
-                    e.currentTarget.style.background = "rgba(129, 140, 248, 0.12)";
-                  }}
-                >
-                  <GithubIcon size={22} style={{ color: "#818cf8" }} />
-                </a>
+          {/* Right Column: Minimal Clean Contact Form (Cols 8-12) */}
+          <div className="lg:col-span-5">
+            <div className="paper-card p-6 md:p-8 rule-all">
+              <h3 className="font-mono text-xs uppercase tracking-wider text-[var(--graphite)] mb-6 rule-b pb-3">
+                Send a Dispatch
+              </h3>
 
-                <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#818cf8", marginBottom: "4px", letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "monospace" }}>
-                    GITHUB // OPEN SOURCE REPOSITORIES
+              {formSubmitted ? (
+                <div className="p-6 bg-[var(--code-bg)] text-xs font-mono text-[var(--ink)] leading-relaxed space-y-3">
+                  <p className="font-semibold text-sm text-[var(--pine)]">
+                    &check; Dispatch Received
                   </p>
-                  <a
-                    href={GITHUB_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      fontSize: "1.1rem", fontWeight: 700, color: "#f8fafc",
-                      fontFamily: "var(--font-display)", wordBreak: "break-all",
-                      textDecoration: "none", transition: "color 0.2s"
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#818cf8")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "#f8fafc")}
-                  >
-                    github.com/Rutvik995
-                  </a>
-                </div>
-              </div>
-
-              {/* Right: Aligned Action Buttons */}
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0, flexWrap: "wrap" }}>
-                <a
-                  href="https://github.com/Rutvik995?tab=repositories"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: "inline-flex", alignItems: "center", gap: "6px",
-                    padding: "10px 18px", borderRadius: "10px",
-                    background: "rgba(255, 255, 255, 0.04)",
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                    color: "#cbd5e1",
-                    fontSize: "0.85rem", fontFamily: "var(--font-display)", fontWeight: 600,
-                    textDecoration: "none", transition: "all 0.2s"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
-                    e.currentTarget.style.color = "#fff";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
-                    e.currentTarget.style.color = "#cbd5e1";
-                  }}
-                >
-                  <span>Repositories</span>
-                </a>
-
-                <a
-                  href={GITHUB_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: "inline-flex", alignItems: "center", gap: "8px",
-                    padding: "10px 22px", borderRadius: "10px",
-                    background: "rgba(129, 140, 248, 0.14)",
-                    border: "1px solid rgba(129, 140, 248, 0.4)",
-                    color: "#c7d2fe",
-                    fontSize: "0.85rem", fontFamily: "var(--font-display)", fontWeight: 600,
-                    textDecoration: "none", transition: "all 0.2s",
-                    boxShadow: "0 0 16px rgba(129, 140, 248, 0.15)"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(129, 140, 248, 0.24)";
-                    e.currentTarget.style.transform = "translateY(-1px)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(129, 140, 248, 0.14)";
-                    e.currentTarget.style.transform = "translateY(0)";
-                  }}
-                >
-                  <GithubIcon size={15} />
-                  <span>Visit GitHub</span>
-                  <ExternalLink size={15} />
-                </a>
-              </div>
-            </div>
-          </TiltCard>
-
-          {/* 3. LinkedIn Network Card */}
-          <TiltCard
-            maxTilt={5}
-            glowColor="rgba(56, 189, 248, 0.22)"
-            style={{
-              padding: "26px 32px",
-              background: "linear-gradient(180deg, rgba(10, 16, 32, 0.9) 0%, rgba(7, 11, 22, 0.96) 100%)",
-              border: "1px solid rgba(56, 189, 248, 0.25)",
-            }}
-          >
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 w-full">
-              {/* Left: Icon & Details */}
-              <div style={{ display: "flex", alignItems: "center", gap: "20px", minWidth: 0, flex: 1 }}>
-                <a
-                  href={LINKEDIN_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Connect on LinkedIn"
-                  style={{
-                    width: "54px", height: "54px", borderRadius: "14px",
-                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                    background: "rgba(56, 189, 248, 0.12)", border: "1px solid rgba(56, 189, 248, 0.3)",
-                    boxShadow: "0 0 16px rgba(56, 189, 248, 0.15)",
-                    transition: "transform 0.2s, background 0.2s",
-                    textDecoration: "none"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "scale(1.05)";
-                    e.currentTarget.style.background = "rgba(56, 189, 248, 0.2)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "scale(1)";
-                    e.currentTarget.style.background = "rgba(56, 189, 248, 0.12)";
-                  }}
-                >
-                  <LinkedinIcon size={22} style={{ color: "#38bdf8" }} />
-                </a>
-
-                <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#38bdf8", marginBottom: "4px", letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "monospace" }}>
-                    LINKEDIN // PROFESSIONAL NETWORK
+                  <p>
+                    Thank you. Your message has been logged. You can also reach me directly at{" "}
+                    <a href={`mailto:${profile.email}`} className="underline text-[var(--accent)]">
+                      {profile.email}
+                    </a>.
                   </p>
-                  <a
-                    href={LINKEDIN_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      fontSize: "1.1rem", fontWeight: 700, color: "#f8fafc",
-                      fontFamily: "var(--font-display)", wordBreak: "break-all",
-                      textDecoration: "none", transition: "color 0.2s"
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#38bdf8")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "#f8fafc")}
+                  <button
+                    type="button"
+                    onClick={() => setFormSubmitted(false)}
+                    className="editorial-link text-[11px] text-[var(--graphite)]"
                   >
-                    linkedin.com/in/rutvikbhanderi
-                  </a>
+                    [ Send another message ]
+                  </button>
                 </div>
-              </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-5 text-xs font-mono">
+                  <div>
+                    <label htmlFor="name" className="block text-[var(--graphite)] mb-1.5 uppercase tracking-wider">
+                      Your Name
+                    </label>
+                    <input
+                      id="name"
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Jane Doe"
+                      className="w-full p-2.5 bg-[var(--bg)] rule-all text-[var(--ink)] font-sans text-sm focus:outline-none focus:border-[var(--accent)] rounded-none"
+                    />
+                  </div>
 
-              {/* Right: Aligned Action Button */}
-              <div style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
-                <a
-                  href={LINKEDIN_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: "inline-flex", alignItems: "center", gap: "8px",
-                    padding: "10px 22px", borderRadius: "10px",
-                    background: "rgba(56, 189, 248, 0.14)",
-                    border: "1px solid rgba(56, 189, 248, 0.4)",
-                    color: "#bae6fd",
-                    fontSize: "0.85rem", fontFamily: "var(--font-display)", fontWeight: 600,
-                    textDecoration: "none", transition: "all 0.2s",
-                    boxShadow: "0 0 16px rgba(56, 189, 248, 0.15)"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(56, 189, 248, 0.24)";
-                    e.currentTarget.style.transform = "translateY(-1px)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(56, 189, 248, 0.14)";
-                    e.currentTarget.style.transform = "translateY(0)";
-                  }}
-                >
-                  <LinkedinIcon size={15} />
-                  <span>Connect on LinkedIn</span>
-                  <ExternalLink size={15} />
-                </a>
-              </div>
+                  <div>
+                    <label htmlFor="email" className="block text-[var(--graphite)] mb-1.5 uppercase tracking-wider">
+                      Your Email Address
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="jane@company.com"
+                      className="w-full p-2.5 bg-[var(--bg)] rule-all text-[var(--ink)] font-sans text-sm focus:outline-none focus:border-[var(--accent)] rounded-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="message" className="block text-[var(--graphite)] mb-1.5 uppercase tracking-wider">
+                      Project Objective / Message
+                    </label>
+                    <textarea
+                      id="message"
+                      rows={4}
+                      required
+                      value={formData.message}
+                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                      placeholder="Tell me about what you are building or looking to automate..."
+                      className="w-full p-2.5 bg-[var(--bg)] rule-all text-[var(--ink)] font-sans text-sm focus:outline-none focus:border-[var(--accent)] rounded-none resize-y"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-3 px-4 bg-[var(--ink)] text-[var(--bg)] text-xs font-mono hover:bg-[var(--accent)] hover:text-white transition-colors cursor-pointer rounded-none uppercase tracking-wider font-semibold"
+                  >
+                    Transmit Dispatch &rarr;
+                  </button>
+                </form>
+              )}
             </div>
-          </TiltCard>
-
+          </div>
         </div>
       </div>
     </section>

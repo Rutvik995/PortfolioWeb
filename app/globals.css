@@ -1,134 +1,217 @@
 @import "tailwindcss";
 
-/* ─── Quantum Neural Design Tokens ──────────────────────────── */
+/* ─── Technical Notebook Design System Tokens ───────────────────────── */
 :root {
-  --bg:          #060810;        /* deep cyber-obsidian */
-  --bg-card:     rgba(13, 17, 32, 0.65);
-  --bg-card-h:   rgba(20, 26, 48, 0.85);
-  --border:      rgba(129, 140, 248, 0.12);
-  --border-h:    rgba(0, 242, 254, 0.4);
+  /* Light Theme (Default: Paper, Ink, Vermilion, Pine) */
+  --bg:          #F3EFE7; /* warm paper background */
+  --surface:     #FBF9F4; /* raised cards, callouts, elevated paper */
+  --ink:         #16140F; /* primary editorial typography */
+  --graphite:    #5C574D; /* secondary text, annotations, captions */
+  --rule:        #D9D3C5; /* 1px hairline dividers and borders */
+  --accent:      #D4491F; /* vermilion accent (links, focal highlights) */
+  --pine:        #1F4D3F; /* deep pine (availability, verified checks) */
+  --code-bg:     #EAE4D7; /* code blocks and subtle chips */
 
-  --accent:      #818cf8;        /* electric violet */
-  --accent-cyan: #00f2fe;        /* cyber cyan */
-  --accent-dim:  rgba(129, 140, 248, 0.12);
-  --accent-glow: rgba(129, 140, 248, 0.25);
-  --cyan-glow:   rgba(0, 242, 254, 0.2);
-
-  --text-1:      #f8fafc;        /* crisp white */
-  --text-2:      #94a3b8;        /* slate-400 */
-  --text-3:      #475569;        /* slate-600 */
-
-  --font-display: "Space Grotesk", sans-serif;
-  --font-body:    "Inter", sans-serif;
+  --font-serif:  "Instrument Serif", Georgia, serif;
+  --font-sans:   "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono:   "Geist Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 }
 
-/* ─── Reset ──────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
+html.dark {
+  /* Dark Theme (Warm Obsidian & Aged Paper) */
+  --bg:          #12110E; /* warm dark slate */
+  --surface:     #1A1915; /* dark surface */
+  --ink:         #EDE8DC; /* aged parchment text */
+  --graphite:    #A39C8C; /* muted warm gray */
+  --rule:        #2E2B24; /* subtle 1px divider */
+  --accent:      #E8663C; /* warm vermilion accent */
+  --pine:        #4E9A82; /* sage/pine green */
+  --code-bg:     #23211B; /* dark code block */
+}
+
+/* ─── Base Reset & Foundations ───────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  color-scheme: light dark;
+}
+
 body {
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* ─── Typography Classes ─────────────────────────────────────────────── */
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+.font-sans {
+  font-family: var(--font-sans);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Fluid display sizes */
+.display-hero {
+  font-family: var(--font-serif);
+  font-size: clamp(2.75rem, 6.5vw, 5.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.display-section {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+
+.display-title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  line-height: 1.25;
+}
+
+/* ─── Editorial Elements & Rules ─────────────────────────────────────── */
+.rule-b {
+  border-bottom: 1px solid var(--rule);
+}
+
+.rule-t {
+  border-top: 1px solid var(--rule);
+}
+
+.rule-l {
+  border-left: 1px solid var(--rule);
+}
+
+.rule-r {
+  border-right: 1px solid var(--rule);
+}
+
+.rule-all {
+  border: 1px solid var(--rule);
+}
+
+/* Flat paper cards (no glows, no shadows, no glassmorphism) */
+.paper-card {
+  background-color: var(--surface);
+  border: 1px solid var(--rule);
+}
+
+/* Underline link transition */
+.editorial-link {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--rule);
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+  transition: text-decoration-color 0.2s ease, color 0.2s ease;
+}
+
+.editorial-link:hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}
+
+.accent-link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+  transition: opacity 0.2s ease;
+}
+
+.accent-link:hover {
+  opacity: 0.8;
+}
+
+/* ─── Grid & Layout Container ────────────────────────────────────────── */
+.container-grid {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(1rem, 4vw, 2.5rem);
+  padding-right: clamp(1rem, 4vw, 2.5rem);
+}
+
+/* Margin section index (01, 02, etc.) */
+.section-index {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.05em;
+  color: var(--graphite);
+}
+
+/* ─── Accessibility & Focus Rings ────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.skip-to-content {
+  position: absolute;
+  top: -100px;
+  left: 1rem;
+  z-index: 1000;
+  padding: 0.5rem 1rem;
+  background-color: var(--accent);
+  color: #FFFFFF;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  text-decoration: none;
+  border-radius: 2px;
+  transition: top 0.2s ease;
+}
+
+.skip-to-content:focus {
+  top: 1rem;
+}
+
+/* ─── Custom Minimal Scrollbar ───────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
   background: var(--bg);
-  color: var(--text-2);
-  font-family: var(--font-body);
-  overflow-x: hidden;
-  cursor: none;
 }
 
-/* ─── Scrollbar ──────────────────────────────────────────────── */
-::-webkit-scrollbar       { width: 4px; }
-::-webkit-scrollbar-track { background: #060810; }
-::-webkit-scrollbar-thumb { background: rgba(0, 242, 254, 0.35); border-radius: 9999px; }
-::selection { background: rgba(0, 242, 254, 0.25); color: #fff; }
-
-/* ─── Custom Cyber Cursor ─────────────────────────────────────── */
-.cursor-dot {
-  width: 6px; height: 6px;
-  background: var(--accent-cyan);
-  border-radius: 50%;
-  position: fixed; top: 0; left: 0;
-  pointer-events: none; z-index: 99999999;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 10px var(--accent-cyan);
-}
-.cursor-ring {
-  width: 32px; height: 32px;
-  border: 1.5px solid rgba(0, 242, 254, 0.45);
-  border-radius: 50%;
-  position: fixed; top: 0; left: 0;
-  pointer-events: none; z-index: 99999998;
-  transform: translate(-50%, -50%);
-  transition: width .2s, height .2s, border-color .2s;
-}
-.cursor-ring.hovering {
-  width: 48px; height: 48px;
-  border-color: var(--accent-cyan);
-  background: rgba(0, 242, 254, 0.08);
-  box-shadow: 0 0 20px rgba(0, 242, 254, 0.25);
+::-webkit-scrollbar-thumb {
+  background: var(--rule);
 }
 
-/* ─── Neural Grid Pattern ─────────────────────────────────────── */
-.grid-pattern {
-  background-image:
-    linear-gradient(rgba(129, 140, 248, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(129, 140, 248, 0.035) 1px, transparent 1px);
-  background-size: 60px 60px;
+::-webkit-scrollbar-thumb:hover {
+  background: var(--graphite);
 }
 
-/* ─── Animations ───────────────────────────────────────────── */
-@keyframes fadeUp {
-  0% { opacity: 0; transform: translateY(20px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-.animate-fade-up {
-  opacity: 0;
-  animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-.delay-1 { animation-delay: 0.1s; }
-.delay-2 { animation-delay: 0.2s; }
-.delay-3 { animation-delay: 0.3s; }
-.delay-4 { animation-delay: 0.4s; }
-.delay-5 { animation-delay: 0.5s; }
-.delay-6 { animation-delay: 0.6s; }
-.delay-7 { animation-delay: 0.7s; }
-.delay-8 { animation-delay: 0.8s; }
-
-/* ─── Glass Card & Holographic Tilt ──────────────────────────── */
-.glass-card {
-  background: var(--bg-card);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  transition: background .25s, border-color .25s, transform .25s, box-shadow .25s;
-}
-.glass-card:hover {
-  background: var(--bg-card-h);
-  border-color: var(--border-h);
+::selection {
+  background-color: rgba(212, 73, 31, 0.18);
+  color: var(--ink);
 }
 
-/* ─── Navbar ─────────────────────────────────────────────────── */
-.navbar-glass {
-  background: rgba(6, 8, 16, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
-}
-
-/* ─── Pulse dot ──────────────────────────────────────────────── */
-@keyframes ping-slow {
-  0%   { transform: scale(1); opacity: .6; }
-  100% { transform: scale(2); opacity: 0; }
-}
-.ping-slow { animation: ping-slow 2s ease-out infinite; }
-
-/* ─── Scroll arrow bounce ────────────────────────────────────── */
-@keyframes bounce-y {
-  0%,100% { transform: translateY(0); }
-  50%     { transform: translateY(6px); }
-}
-.bounce-y { animation: bounce-y 1.6s ease-in-out infinite; }
-
-/* ─── Neural Glow Orb ────────────────────────────────────────── */
-.blob {
-  position: absolute; border-radius: 50%;
-  filter: blur(100px); pointer-events: none;
+/* ─── Restrained Motion & Reduced Motion ──────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
