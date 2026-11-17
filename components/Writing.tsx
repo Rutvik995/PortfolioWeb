@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { notes, Note } from "@/content/notes";
+import { notes } from "@/content/notes";
 
 export default function Writing() {
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
@@ -15,7 +15,7 @@ export default function Writing() {
       <div className="container-grid">
         {/* Section Header */}
         <div className="flex items-center justify-between text-xs font-mono text-[var(--graphite)] mb-6">
-          <span>05 / TECHNICAL NOTES &amp; ESSAYS</span>
+          <span>06 / TECHNICAL NOTES &amp; ESSAYS</span>
           <span>Field Notes from Cortex</span>
         </div>
 
@@ -61,7 +61,7 @@ export default function Writing() {
 
                 {/* Expanded Full Article View */}
                 {isOpen && (
-                  <div className="rule-t pt-6 mt-6 prose prose-neutral dark:prose-invert max-w-none text-sm font-sans text-[var(--ink)] leading-relaxed whitespace-pre-line">
+                  <div className="rule-t pt-6 mt-6 max-w-none text-sm font-sans text-[var(--ink)] leading-relaxed whitespace-pre-line">
                     {note.content}
                   </div>
                 )}

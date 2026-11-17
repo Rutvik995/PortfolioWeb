@@ -131,19 +131,16 @@ const graphNodes: GraphNode[] = [
 export default function AgentArchitecture() {
   const [selectedNode, setSelectedNode] = useState<GraphNode>(graphNodes[4]); // default to router
   const [activeStepIndex, setActiveStepIndex] = useState<number>(4);
-  const [isStepping, setIsStepping] = useState<boolean>(false);
 
   const handleNextStep = () => {
     const nextIdx = (activeStepIndex + 1) % graphNodes.length;
     setActiveStepIndex(nextIdx);
     setSelectedNode(graphNodes[nextIdx]);
-    setIsStepping(true);
   };
 
   const handleSelectNode = (node: GraphNode, idx: number) => {
     setSelectedNode(node);
     setActiveStepIndex(idx);
-    setIsStepping(true);
   };
 
   return (
@@ -151,7 +148,7 @@ export default function AgentArchitecture() {
       <div className="container-grid">
         {/* Section Header */}
         <div className="flex items-center justify-between text-xs font-mono text-[var(--graphite)] mb-6">
-          <span>02 / HOW I BUILD AGENTS</span>
+          <span>03 / HOW I BUILD AGENTS</span>
           <span>Figure 1.0 &middot; Cortex StateGraph</span>
         </div>
 
@@ -197,7 +194,6 @@ export default function AgentArchitecture() {
                 className="w-full min-w-[700px] h-auto font-mono text-xs select-none"
                 aria-label="Cortex 10-node StateGraph Diagram"
               >
-                {/* Connecting Edges with Directed Arrows */}
                 <defs>
                   <marker
                     id="arrowhead"
@@ -307,6 +303,18 @@ export default function AgentArchitecture() {
                   {selectedNode.decision}
                 </span>
               </div>
+            </div>
+
+            {/* Accessible Non-JS Textual Degradation List */}
+            <div className="sr-only">
+              <h3>Cortex 10-Node Sequential Architecture</h3>
+              <ol>
+                {graphNodes.map((n) => (
+                  <li key={n.id}>
+                    <strong>{n.label}</strong> ({n.stage}): {n.role} — Design decision: {n.decision}
+                  </li>
+                ))}
+              </ol>
             </div>
           </div>
 

@@ -117,11 +117,26 @@ export default async function CaseStudyPage({ params }: CaseStudyProps) {
               </section>
             )}
 
-            {/* 2. What I Built */}
+            {/* 2. System Flow (Plain-Text Mono Block) */}
+            <section className="rule-t pt-12">
+              <h2 className="font-mono text-xs uppercase tracking-wider text-[var(--graphite)] mb-3">
+                02 / System Execution Flow
+              </h2>
+              <div className="font-serif text-2xl text-[var(--ink)] font-normal mb-4">
+                Sequential State Transitions
+              </div>
+              <div className="p-4 bg-[var(--code-bg)] rule-all overflow-x-auto">
+                <code className="text-xs font-mono text-[var(--ink)] whitespace-nowrap block">
+                  {project.systemFlow}
+                </code>
+              </div>
+            </section>
+
+            {/* 3. What I Built */}
             {project.whatIBuilt && (
               <section className="rule-t pt-12">
                 <h2 className="font-mono text-xs uppercase tracking-wider text-[var(--graphite)] mb-3">
-                  02 / What I Engineered
+                  03 / What I Engineered
                 </h2>
                 <div className="font-serif text-2xl text-[var(--ink)] font-normal mb-4">
                   System Architecture &amp; Delivery
@@ -148,11 +163,35 @@ export default async function CaseStudyPage({ params }: CaseStudyProps) {
               </section>
             )}
 
-            {/* 3. Key Decisions & Trade-offs */}
+            {/* 4. Real Code Excerpt (Where available) */}
+            {project.codeExcerpt && (
+              <section className="rule-t pt-12">
+                <h2 className="font-mono text-xs uppercase tracking-wider text-[var(--graphite)] mb-3">
+                  04 / Implementation Excerpt
+                </h2>
+                <div className="font-serif text-2xl text-[var(--ink)] font-normal mb-4">
+                  Concrete code contract
+                </div>
+                <div className="rule-all bg-[var(--code-bg)] p-5">
+                  <div className="flex items-center justify-between text-[11px] font-mono text-[var(--graphite)] pb-2.5 mb-3 rule-b border-[var(--rule)]">
+                    <span>{project.codeExcerpt.filename}</span>
+                    <span>{project.codeExcerpt.language}</span>
+                  </div>
+                  <pre className="text-xs font-mono text-[var(--ink)] overflow-x-auto leading-relaxed">
+                    <code>{project.codeExcerpt.code}</code>
+                  </pre>
+                  <p className="text-[11px] font-mono text-[var(--graphite)] mt-3 pt-2 rule-t border-[var(--rule)]">
+                    &bull; {project.codeExcerpt.annotation}
+                  </p>
+                </div>
+              </section>
+            )}
+
+            {/* 5. Key Decisions & Trade-offs */}
             {project.keyDecisions && project.keyDecisions.length > 0 && (
               <section className="rule-t pt-12">
                 <h2 className="font-mono text-xs uppercase tracking-wider text-[var(--graphite)] mb-3">
-                  03 / Key Decisions &amp; Trade-offs
+                  05 / Key Decisions &amp; Trade-offs
                 </h2>
                 <div className="font-serif text-2xl text-[var(--ink)] font-normal mb-6">
                   Explicit architectural trade-offs
@@ -183,11 +222,11 @@ export default async function CaseStudyPage({ params }: CaseStudyProps) {
               </section>
             )}
 
-            {/* 4. What Broke and How I Fixed It */}
+            {/* 6. What Broke and How I Fixed It */}
             {project.whatBrokeAndFix && project.whatBrokeAndFix.length > 0 && (
               <section className="rule-t pt-12">
                 <h2 className="font-mono text-xs uppercase tracking-wider text-[var(--accent)] mb-3">
-                  04 / Failure Post-Mortem
+                  06 / Failure Post-Mortem
                 </h2>
                 <div className="font-serif text-2xl text-[var(--ink)] font-normal mb-6">
                   What broke in practice and how it was fixed
@@ -215,11 +254,11 @@ export default async function CaseStudyPage({ params }: CaseStudyProps) {
               </section>
             )}
 
-            {/* 5. Known Limitations & What's Next */}
+            {/* 7. Known Limitations & What's Next */}
             {project.knownLimitations && project.knownLimitations.length > 0 && (
               <section className="rule-t pt-12">
                 <h2 className="font-mono text-xs uppercase tracking-wider text-[var(--graphite)] mb-3">
-                  05 / Known Limitations &amp; What Is Next
+                  07 / Known Limitations &amp; What Is Next
                 </h2>
                 <div className="font-serif text-2xl text-[var(--ink)] font-normal mb-4">
                   Honest production boundaries
@@ -232,10 +271,10 @@ export default async function CaseStudyPage({ params }: CaseStudyProps) {
               </section>
             )}
 
-            {/* 6. Stack Summary */}
+            {/* 8. Stack Summary */}
             <section className="rule-t pt-12">
               <h2 className="font-mono text-xs uppercase tracking-wider text-[var(--graphite)] mb-3">
-                06 / Technology Stack
+                08 / Technology Stack
               </h2>
               <div className="flex flex-wrap gap-2 pt-2">
                 {project.stack.map((t) => (
@@ -255,7 +294,7 @@ export default async function CaseStudyPage({ params }: CaseStudyProps) {
             <Link href="/#work" className="editorial-link text-[var(--ink)]">
               &larr; Back to all projects
             </Link>
-            <a href={`mailto:${projects[0].slug ? "rutvik.professional@gmail.com" : ""}`} className="editorial-link text-[var(--accent)]">
+            <a href="mailto:rutvik.professional@gmail.com" className="editorial-link text-[var(--accent)]">
               Discuss this architecture &rarr;
             </a>
           </div>

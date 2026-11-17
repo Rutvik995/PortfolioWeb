@@ -11,6 +11,7 @@ export interface Project {
   demoUrl?: string;
   summary: string;
   stack: string[];
+  systemFlow: string; // Plain-text mono representation of the execution pipeline
   // Deep case-study fields
   problem?: string;
   whatIBuilt?: string;
@@ -25,6 +26,12 @@ export interface Project {
     rootCause: string;
     resolution: string;
   }[];
+  codeExcerpt?: {
+    filename: string;
+    language: string;
+    code: string;
+    annotation: string;
+  };
   knownLimitations?: string[];
   metricsOrScope?: string;
 }
@@ -41,26 +48,27 @@ export const projects: Project[] = [
     repoUrl: "https://github.com/Rutvik995",
     summary:
       "A 10-node LangGraph autonomous agent platform engineered to execute multi-step user goals. Features dynamic tool creation, 4-tier memory digestion, and strict tenant isolation via compound namespace keys.",
+    systemFlow:
+      "request → goal_ingest → namespace_key → decompose → router (JSON) → tool_harness → validator → reflection → digest_store → stream_egress",
     stack: [
       "Python",
       "LangGraph",
       "LangChain",
       "FastAPI",
       "PostgreSQL",
-      "Redis",
-      "Next.js",
+      "React",
       "WebSocket",
     ],
     metricsOrScope: "10-node StateGraph · 4-tier memory engine · Multi-goal isolation",
     problem:
       "Most single-prompt LLM wrappers fail whenever a goal requires more than three sequential steps: they hallucinate tool schemas, lose track of intermediate state in long contexts, and cannot isolate memory across multiple parallel user goals. Additionally, standard agent frameworks combine agent checkpoint state with application business data, creating database deadlocks and making historical execution inspection messy.",
     whatIBuilt:
-      "Designed and implemented Cortex (formerly Deep Agent), an enterprise autonomous platform based on LangGraph. Cortex decomposes incoming user objectives into a DAG of sub-tasks. It uses a dynamic tool harness that allows agents to synthesize specialized Python tools during runtime, sandboxes execution, and enforces multi-tenant goal boundaries. I separated the volatile LangGraph checkpointer storage (Redis/Postgres) from UI-facing customer tables, exposing a streaming WebSocket feed for real-time thought-token tracking.",
+      "Designed and implemented Cortex (formerly Deep Agent), an autonomous platform based on LangGraph. Cortex decomposes incoming user objectives into a DAG of sub-tasks. It uses a dynamic tool harness that allows agents to synthesize specialized Python tools during runtime, sandboxes execution, and enforces multi-tenant goal boundaries. I separated the volatile LangGraph checkpointer storage from UI-facing customer tables, exposing a streaming WebSocket feed for real-time thought-token tracking.",
     architectureNotes: [
       "10-Node StateGraph: Ingestion → Context Retrieval → Plan Decomposition → Dynamic Router → Tool Execution Harness → Schema Validator → Reflection & Critique → Memory Compaction → Response Synthesizer → Stream Egress.",
       "Compound Namespace Keys: Sessions are partitioned by (tenant_id, user_id, goal_id). An agent cannot read or poison the state memory of another active goal.",
       "4-Tier Memory Architecture: (1) Verbatim message history for the active session, (2) Weekly rolling summaries, (3) Monthly semantic archive digests, and (4) Permanent verified facts store.",
-      "Dual-Storage State Separation: Redis handles high-frequency StateGraph step checkpoints; PostgreSQL handles durable user accounts, goals, and chat transcripts.",
+      "Dual-Storage State Separation: Redis / checkpointer handles high-frequency StateGraph step checkpoints; PostgreSQL handles durable user accounts, goals, and chat transcripts.",
     ],
     keyDecisions: [
       {
@@ -80,7 +88,7 @@ export const projects: Project[] = [
       {
         decision: "Separation of LangGraph Checkpointer from User-Facing API Tables",
         reasoning:
-          "The LangGraph checkpointer emits heavy binary/pickled payloads at every node step. Querying this directly from a web frontend caused sluggish REST latency.",
+          "The LangGraph checkpointer emits heavy serialized payloads at every node step. Querying this directly from a web frontend caused sluggish REST latency.",
         tradeoff:
           "Requires an explicit egress node that writes clean, sanitized JSON events into the PostgreSQL chat tables.",
       },
@@ -98,13 +106,29 @@ export const projects: Project[] = [
         rootCause:
           "A failing tool output caused the critique node to return to the router without decrementing a step budget, generating an infinite retry loop.",
         resolution:
-          "Added an explicit `iteration_depth` counter to the StateGraph state. If depth exceeds 5, the execution branch routes to an explicit failure node requesting user intervention.",
+          "Added an explicit iteration_depth counter to the StateGraph state. If depth exceeds 5, the execution branch routes to an explicit failure node requesting user intervention.",
       },
     ],
+    codeExcerpt: {
+      filename: "cortex/orchestration/state.py",
+      language: "python",
+      code: `class AgentState(TypedDict):
+    tenant_id: str
+    user_id: str
+    goal_id: str
+    active_plan: list[SubGoal]
+    current_step_index: int
+    iteration_depth: Annotated[int, operator.add]
+    intermediate_tool_outputs: Annotated[list[ToolOutput], operator.add]
+    error_tripwire: Optional[str]
+    is_terminal: bool`,
+      annotation:
+        "The core StateGraph contract: compound keys ensure isolation, while iteration_depth trips an emergency circuit-breaker if reflection loops exceed 5 iterations.",
+    },
     knownLimitations: [
       "Dynamic tool synthesis currently runs in a restricted subprocess rather than a microVM (e.g. Firecracker or gVisor); hardened sandboxing is in progress.",
       "Parallel DAG branch execution is currently bounded by the single-threaded WebSocket event loop.",
-      "Long-running tasks over 15 minutes require a distributed Celery/Temporal queue rather than keeping the WebSocket connection open.",
+      "Long-running tasks over 15 minutes require a distributed job queue rather than keeping the WebSocket connection open.",
     ],
   },
   {
@@ -118,6 +142,8 @@ export const projects: Project[] = [
     repoUrl: "https://github.com/Rutvik995",
     summary:
       "Autonomous agent pipeline analysing solar generation across a 3-tier hierarchy: finds under-performing or faulted inverters, explains anomalies, and answers operator queries in plain English.",
+    systemFlow:
+      "telemetry_stream → scada_ingest → solar_hierarchy_tree → irradiation_correlator → inverter_anomaly_detector → ast_sql_guard → response_synthesizer",
     stack: [
       "Python",
       "LangGraph",
@@ -163,6 +189,20 @@ export const projects: Project[] = [
           "Added an environmental normalization stage: inverters are benchmarked strictly against neighboring inverters within the same physical block receiving identical ambient irradiation.",
       },
     ],
+    codeExcerpt: {
+      filename: "solar_agent/security/sql_guard.py",
+      language: "python",
+      code: `def validate_generated_query(sql_text: str) -> None:
+    parsed = sqlglot.parse_one(sql_text, read="postgres")
+    forbidden = {exp.Drop, exp.Delete, exp.Insert, exp.Update, exp.Truncate}
+    if any(parsed.find_all(forbidden)):
+        raise DisallowedOperationError("Mutating SQL statements are prohibited.")
+    where_clause = parsed.find(exp.Where)
+    if not where_clause or "date" not in str(where_clause).lower():
+        raise MissingBoundsError("Queries must contain explicit date range predicates.")`,
+      annotation:
+        "The AST SQL guard parses generated SQL before execution: destructive operators trip immediate exceptions, and unbounded queries without date predicates are rejected.",
+    },
     knownLimitations: [
       "Telemetry ingestion currently polls at 15-minute resolution; real-time 1-second inverter fault waveform analysis is planned for v2.",
       "Weather forecast integration relies on open APIs rather than dedicated on-site sky-facing camera models.",
@@ -179,6 +219,8 @@ export const projects: Project[] = [
     repoUrl: "https://github.com/Rutvik995/DataAnalysis_Multi-Agentic-System",
     summary:
       "Enterprise database interrogation system that converts business questions into verified SQL queries, generates charts, and requests clarification when business metrics are ambiguous.",
+    systemFlow:
+      "user_prompt → catalog_inspector → ambiguity_detector → sql_planner → ast_explain_validator → db_executor → chart_synthesizer",
     stack: [
       "Python",
       "LangChain",
@@ -192,12 +234,12 @@ export const projects: Project[] = [
     problem:
       "Business stakeholders constantly queue requests to data engineers for basic analytical reports. Traditional text-to-SQL tools fail when schemas contain ambiguous table names, denormalized JSON columns, or when user questions omit vital filters (e.g. 'What were sales last quarter?' without specifying gross vs. net revenue).",
     whatIBuilt:
-      "Engineered an interactive conversational analytics pipeline demonstrated across two distinct production databases: (1) an analytical sales data warehouse with a star schema (`fact_sales` + date, product, customer, employee, and region dimensions), and (2) an export enterprise database containing nested invoice JSON payloads. The system inspects DB catalogs, generates candidate SQL, validates syntax against dry-run EXPLAIN plans, renders auto-selected charts, and asks explicit clarifying questions when user intent lacks critical parameters.",
+      "Engineered an interactive conversational analytics pipeline demonstrated across two distinct production databases: (1) an analytical sales data warehouse with a star schema (fact_sales + date, product, customer, employee, and region dimensions), and (2) an export enterprise database containing nested invoice JSON payloads. The system inspects DB catalogs, generates candidate SQL, validates syntax against dry-run EXPLAIN plans, renders auto-selected charts, and asks explicit clarifying questions when user intent lacks critical parameters.",
     architectureNotes: [
       "Catalog Introspection: Extracts table structures, foreign keys, column comments, and sample categorical values.",
       "Ambiguity Detection Node: If a prompt has multiple valid business definitions, the agent halts execution and returns a structured clarification question.",
-      "Dry-run EXPLAIN Validation: All queries execute with `EXPLAIN` before running against the database to catch syntax errors and prohibit unindexed table scans.",
-      "Dual Schema Adaptability: Successfully handles both strict 3NF/star-schemas and PostgreSQL `jsonb` document querying.",
+      "Dry-run EXPLAIN Validation: All queries execute with EXPLAIN before running against the database to catch syntax errors and prohibit unindexed table scans.",
+      "Dual Schema Adaptability: Successfully handles both strict 3NF/star-schemas and PostgreSQL jsonb document querying.",
     ],
     keyDecisions: [
       {
@@ -212,11 +254,22 @@ export const projects: Project[] = [
       {
         issue: "JSONB query synthesis failed on nested invoice line items.",
         rootCause:
-          "Standard LLM SQL prompts generate relational joins that break when querying `jsonb_array_elements`.",
+          "Standard LLM SQL prompts generate relational joins that break when querying jsonb_array_elements.",
         resolution:
-          "Constructed targeted few-shot examples for PostgreSQL JSON accessor operators (`->`, `->>`, `#>>`) and lateral joins.",
+          "Constructed targeted few-shot examples for PostgreSQL JSON accessor operators (->, ->>, #>>) and lateral joins.",
       },
     ],
+    codeExcerpt: {
+      filename: "analyst/graph/clarification.py",
+      language: "python",
+      code: `class QueryAmbiguityCheck(BaseModel):
+    is_ambiguous: bool = Field(description="True if business terms have multiple definitions")
+    missing_parameters: list[str] = Field(description="List of unstated filters like date range or currency")
+    clarification_question: Optional[str] = Field(description="Question to present to user if ambiguous")
+    suggested_interpretations: list[str]`,
+      annotation:
+        "Ambiguity detector: prevents the agent from guessing whether 'sales' means gross invoiced or net collected.",
+    },
     knownLimitations: [
       "Currently optimized for PostgreSQL; cross-database syntax dialect switching (e.g. Snowflake/BigQuery) requires additional dialect mapping.",
     ],
@@ -232,6 +285,8 @@ export const projects: Project[] = [
     repoUrl: "https://github.com/Rutvik995/STOCK-ALGO",
     summary:
       "Quantitative trading scanner for Indian markets: features multi-indicator RSI screening, LSTM directional price forecasts, and automated portfolio risk scoring.",
+    systemFlow:
+      "market_feed → technical_scanner (RSI/MACD) → sequence_normalizer → lstm_forecast_engine → drift_boundary_evaluator → portfolio_risk_ui",
     stack: [
       "Python",
       "TensorFlow / Keras (LSTM)",
@@ -266,7 +321,9 @@ export const projects: Project[] = [
     featured: false,
     repoUrl: "https://github.com/Rutvik995/Aquaserve",
     summary:
-      "A cross-platform logistics system managing on-demand water canister dispatch, recurring subscriber deliveries, driver turn-by-turn routing, and customer billing ledgers.",
+      "A logistics system managing on-demand water canister dispatch, recurring subscriber deliveries, driver turn-by-turn routing, and customer billing ledgers.",
+    systemFlow:
+      "customer_order → dispatch_optimizer → ward_clusterer → driver_turn_by_turn → offline_dropoff_logger → ledger_settlement",
     stack: [
       "Android / Kotlin",
       "Node.js",
@@ -300,6 +357,8 @@ export const projects: Project[] = [
     repoUrl: "https://github.com/Rutvik995",
     summary:
       "Financial workflow platform featuring dynamic tax/discount calculations, client ledger management, PDF invoice generation, and automated revenue tracking.",
+    systemFlow:
+      "line_items_input → tax_calculator (GST/CGST/SGST) → ledger_entry_creator → pdf_vector_renderer → document_archive_store",
     stack: [
       "React",
       "Next.js",
@@ -312,7 +371,7 @@ export const projects: Project[] = [
     problem:
       "Small consulting and export businesses frequently struggle with overly complicated accounting software that requires extensive training and lacks clean PDF export customization.",
     whatIBuilt:
-      "Designed and deployed a lean, full-stack invoicing application that simplifies billing workflows. Provides customizable templates, dynamic multi-tier tax computations (including Indian GST CGST/SGST/IGST breakdown), PDF rendering, payment status tracking (Paid, Pending, Overdue), and a monthly receivables dashboard.",
+      "Designed and deployed a full-stack invoicing application that simplifies billing workflows. Provides customizable templates, dynamic multi-tier tax computations (including Indian GST CGST/SGST/IGST breakdown), PDF rendering, payment status tracking (Paid, Pending, Overdue), and a monthly receivables dashboard.",
     architectureNotes: [
       "Headless PDF Generation: Client-side vector PDF generation paired with server-side document archiving.",
       "Client Ledger: Comprehensive ledger tracking total invoiced, payments logged, and outstanding balances.",
@@ -329,6 +388,8 @@ export const projects: Project[] = [
     repoUrl: "https://github.com/Rutvik995/Power-BI-Dashboards",
     summary:
       "Collection of production business intelligence dashboards featuring advanced DAX modeling, star-schema warehousing, and executive revenue trend forecasting.",
+    systemFlow:
+      "erp_extracts → power_query_etl → star_schema_model → dax_vectorized_measures → dynamic_executive_visuals",
     stack: [
       "Power BI",
       "DAX",
@@ -357,6 +418,8 @@ export const projects: Project[] = [
     repoUrl: "https://github.com/Rutvik995/Travel_AI_Agent",
     summary:
       "Autonomous travel planning agent that synthesizes personalized day-by-day itineraries based on user timeframes, activity preferences, budget ceilings, and geographic routing.",
+    systemFlow:
+      "user_constraints → geographic_clusterer → places_api_validator → budget_iteration_loop → formatted_itinerary_egress",
     stack: [
       "Python",
       "LangChain",

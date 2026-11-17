@@ -17,7 +17,6 @@ export default function Contact() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.email || !formData.message) return;
-    // Client-side confirmation state (can be hooked to a Server Action / Resend)
     setFormSubmitted(true);
   };
 
@@ -26,7 +25,7 @@ export default function Contact() {
       <div className="container-grid">
         {/* Section Header */}
         <div className="flex items-center justify-between text-xs font-mono text-[var(--graphite)] mb-6">
-          <span>06 / DIRECT CHANNEL</span>
+          <span>07 / DIRECT CHANNEL</span>
           <span>Rajkot (UTC +05:30)</span>
         </div>
 

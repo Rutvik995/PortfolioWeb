@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import SelectedWork from "@/components/SelectedWork";
+import Experience from "@/components/Experience";
 import AgentArchitecture from "@/components/AgentArchitecture";
 import TechStack from "@/components/TechStack";
 import About from "@/components/About";
@@ -15,6 +16,7 @@ export default function Home() {
       <main id="main-content">
         <Hero />
         <SelectedWork />
+        <Experience />
         <AgentArchitecture />
         <TechStack />
         <About />

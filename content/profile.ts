@@ -1,3 +1,13 @@
+export interface ExperienceItem {
+  role: string;
+  company: string;
+  period: string;
+  location: string;
+  mode: "On-site" | "Remote" | "Hybrid";
+  bullets: string[];
+  skillsLine: string;
+}
+
 export interface Profile {
   name: string;
   role: string;
@@ -8,24 +18,26 @@ export interface Profile {
   githubRepos: string;
   linkedin: string;
   resumeUrl: string;
+  showPhoto: boolean; // Config flag: off by default per strict NO IMAGES rule
   bio: string[];
   principles: {
     number: string;
     title: string;
     body: string;
   }[];
+  experiences: ExperienceItem[];
   stackGroups: {
     category: string;
     qualifier: string;
     items: string[];
   }[];
-  timeline: {
+  education: {
+    degree: string;
+    institution: string;
     year: string;
-    role: string;
-    organization: string;
-    description: string;
-    isEducation?: boolean;
-  }[];
+    note: string;
+  };
+  certifications: string[];
   dryWit: {
     currently: string;
     footerNote: string;
@@ -43,6 +55,7 @@ export const profile: Profile = {
   githubRepos: "https://github.com/Rutvik995?tab=repositories",
   linkedin: "https://www.linkedin.com/in/rutvikbhanderi",
   resumeUrl: "/resume.pdf", // [[FILL: replace with your actual resume path or link]]
+  showPhoto: false, // Strict NO IMAGES rule: false by default
   bio: [
     "I'm an AI systems engineer based in Rajkot, India. I specialize in taking autonomous multi-agent systems out of research notebooks and engineering the databases, state machines, APIs, and interfaces required to make them operate reliably in production.",
     "My focus centers on compound AI architectures: building deterministic multi-step pipelines with LangGraph, designing tiered memory compaction engines that preserve context windows, and isolating tenant execution via compound state keys.",
@@ -70,6 +83,35 @@ export const profile: Profile = {
       body: "Agentic systems cannot be validated by manual chatting. Every critical prompt, conditional edge, and tool call is tested against version-controlled golden traces and AST-verified query assertions.",
     },
   ],
+  experiences: [
+    {
+      role: "Artificial Intelligence Engineer (Internship)",
+      company: "Innovation Intellect Pvt Ltd",
+      period: "Apr 2026 – Jun 2026",
+      location: "Bhuj, Gujarat",
+      mode: "On-site",
+      bullets: [
+        "Built autonomous multi-agent systems for real-time data analysis and workflow automation, connecting IoT systems directly to natural-language interfaces.",
+        "Engineered natural-language IoT control pipelines enabling operators to command industrial hardware and trigger live telemetry operations in both English and Hindi.",
+        "Formulated predictive analytics models to forecast operational trends, coupled with dynamic data visualizations that transform live sensor telemetry into actionable operator decisions.",
+        "Constructed knowledge-base querying systems for automated root-cause troubleshooting and operational decision support.",
+      ],
+      skillsLine: "Agentic AI development, data analysis, NLP, IoT interfaces, predictive modeling [[FILL: additional LinkedIn skills]]",
+    },
+    {
+      role: "Android Developer (Internship)",
+      company: "Shreesoftech",
+      period: "Dec 2025 – Feb 2026",
+      location: "Bhuj, Gujarat",
+      mode: "Remote",
+      bullets: [
+        "Developed native Android client features with Kotlin, implementing reactive UI state flows and RESTful endpoint synchronization.",
+        "Collaborated on mobile architecture, offline-first data caching, and asynchronous background services for enterprise field applications.",
+        "[[FILL: 2-3 additional sentences on what you built at Shreesoftech from LinkedIn]]",
+      ],
+      skillsLine: "Android, Kotlin, Mobile Architecture, REST APIs, SQLite / Room [[FILL]]",
+    },
+  ],
   stackGroups: [
     {
       category: "Orchestration & Agent Engines",
@@ -89,39 +131,19 @@ export const profile: Profile = {
     {
       category: "Product & Infrastructure",
       qualifier: "Production APIs, full-stack web and mobile interfaces, deployment containers",
-      items: ["FastAPI", "Next.js", "React", "TypeScript", "Tailwind CSS", "Node.js", "Docker", "Git"],
+      items: ["FastAPI", "Next.js", "React", "TypeScript", "Tailwind CSS", "Android / Kotlin", "Docker", "Git"],
     },
   ],
-  timeline: [
-    {
-      year: "2024 — Present",
-      role: "Lead Agentic AI Architect & Builder",
-      organization: "Independent Systems Engineering",
-      description:
-        "Architecting Cortex, a 10-node autonomous LangGraph agent platform featuring tiered memory digestion and compound tenant isolation. Consulting on enterprise NL-to-SQL data pipelines and custom agent harnesses.",
-    },
-    {
-      year: "2024 — 2025",
-      role: "ML & Diagnostics Engineer",
-      organization: "Solar Generation Telemetry Project",
-      description:
-        "Developed hierarchical plant → block → inverter diagnostic pipeline covering 5 utility-scale solar farms across 113 days of SCADA data. Built golden SQL test suites and automated degradation detection.",
-    },
-    {
-      year: "2023 — 2024",
-      role: "Full-Stack & Mobile Developer",
-      organization: "Logistics & Invoicing Applications",
-      description:
-        "Engineered AquaServe water delivery subscription and driver GPS routing platform. Developed Invoice Web App with automated GST tax calculation and dynamic client ledger tracking.",
-    },
-    {
-      year: "2022 — 2024",
-      role: "MSc in Data Science",
-      organization: "Academic Degree",
-      description:
-        "Specialized in high-dimensional statistical modeling, deep learning architectures, time-series forecasting, and relational database systems.",
-      isEducation: true,
-    },
+  education: {
+    degree: "MSc in Data Science",
+    institution: "Academic Graduate Program",
+    year: "2022 — 2024",
+    note: "Specialized in high-dimensional statistical modeling, time-series forecasting, and relational database systems. [[ASK RUTVIK: display or omit]]",
+  },
+  certifications: [
+    "Deep Learning Specialization (DeepLearning.AI) [[CONFIRM]]",
+    "PostgreSQL Database Administration & High Availability [[CONFIRM]]",
+    "LangChain & LangGraph Production Systems Certification [[CONFIRM]]",
   ],
   dryWit: {
     currently: "Currently: hardening Cortex, a multi-tenant agent platform, before launch.",

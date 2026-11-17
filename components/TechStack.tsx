@@ -6,7 +6,7 @@ export default function TechStack() {
       <div className="container-grid">
         {/* Section Header */}
         <div className="flex items-center justify-between text-xs font-mono text-[var(--graphite)] mb-6">
-          <span>03 / TECHNICAL STACK</span>
+          <span>04 / TECHNICAL STACK</span>
           <span>Verified Toolchain</span>
         </div>
 

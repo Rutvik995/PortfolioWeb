@@ -1,87 +1,43 @@
-# Content Verification & Placeholder Checklist (`CONTENT.md`)
+# Master Content & Placeholders Checklist (`CONTENT.md`)
 
-This document lists every placeholder marked `[[FILL]]` or `[[CONFIRM]]` across the codebase. As requested in the specification, all placeholder items are compiled here so Rutvik can easily review, customize, and supply exact real data.
+This document lists every item marked `[[FILL]]`, `[[CONFIRM]]`, or `[[ASK RUTVIK]]` across the codebase. Every item is cross-referenced with its exact source file for quick editing.
 
 ---
 
-## 1. Global & Profile Details (`content/profile.ts`)
+## 1. Professional Experience & Career (`content/profile.ts`)
 
-| Location | Item | Current Setting | Action Required / What Rutvik Must Provide |
+| Location | Item | Current Text / Setting | Action Required by Rutvik |
 | :--- | :--- | :--- | :--- |
-| `content/profile.ts` | **Résumé PDF** | `/resume.pdf` | Place your finalized PDF résumé in `portfolio-web/public/resume.pdf` or update `resumeUrl` with your Google Drive / hosted link. |
-| `content/profile.ts` | **Production Domain** | `https://rutvikbhanderi.dev` | If your custom domain differs (e.g., `rutvikbhanderi.com`), update `baseUrl` in `app/sitemap.ts`, `app/robots.ts`, and `app/layout.tsx`. |
-| `components/About.tsx` | **Natural Portrait Photo** | Photo placeholder | Place an unfiltered, natural headshot in `portfolio-web/public/rutvik.jpg`. The component currently displays an editorial monogram card `RB`. |
-| `content/profile.ts` | **Education in Timeline** | `MSc in Data Science` | Listed under experience. *Note*: If you prefer not to display academic details publicly, simply remove the `isEducation` entry from `content/profile.ts`. |
+| `content/profile.ts` | **Shreesoftech Internship Description** | `[[FILL: 2-3 additional sentences on what you built at Shreesoftech from LinkedIn]]` | Add 2–3 sentences describing your work on mobile features, background caching, or client APIs. |
+| `content/profile.ts` | **Shreesoftech Skills Line** | `Android, Kotlin, Mobile Architecture, REST APIs, SQLite / Room [[FILL]]` | Add any specific libraries or Android tools listed on your LinkedIn. |
+| `content/profile.ts` | **Innovation Intellect Skills Line** | `Agentic AI development, data analysis, NLP, IoT interfaces, predictive modeling [[FILL]]` | Complete with the exact skills tagged on your LinkedIn profile. |
+| `content/profile.ts` | **Certifications List** | `Deep Learning Specialization`, `PostgreSQL Database Admin`, `LangChain Certification [[CONFIRM]]` | Confirm names of verified certifications or remove/replace with your actual certificates. |
+| `content/profile.ts` | **Education Display** | `MSc in Data Science (2022 — 2024)` | **[[ASK RUTVIK]]**: Confirm whether you wish to display your academic degree publicly in the About section or omit it to emphasize a pure industry engineering background. |
 
 ---
 
-## 2. Project Verification & Placeholders (`content/projects.ts`)
+## 2. Projects & Systems Verification (`content/projects.ts`)
 
-### Project 1: Cortex (`content/projects.ts` -> `slug: "cortex"`)
-- **Redis Checkpointer**:
-  - *Current Status*: Documented as `Redis + PostgreSQL` dual storage.
-  - *Action*: Confirm whether Redis is actively used in your deployment or if PostgreSQL serves as both the checkpointer and relational store.
-- **Repository Link**:
-  - *Current Setting*: `https://github.com/Rutvik995`
-  - *Action*: If Cortex has a dedicated private or public repo name (e.g. `https://github.com/Rutvik995/Cortex-Agent`), update `repoUrl`.
-- **Known Limitations**:
-  - Documented: Subprocess vs. microVM sandboxing, single-thread WebSocket event loop, long-running job queue. Confirm these accurately represent current staging boundaries.
-
-### Project 2: Solar Power Plant Analysis Agent (`slug: "solar-agent"`)
-- **Telemetry Dataset Scale**:
-  - *Current Setting*: `5 utility-scale plants · 113 days of telemetry · 13k+ sensor rows · 232-test regression suite`.
-  - *Action*: Confirm or update the exact row count and plant count if new data has been added.
-- **Repository Link**:
-  - *Current Setting*: `https://github.com/Rutvik995`
-  - *Action*: Update `repoUrl` if there is a direct public repository link.
-
-### Project 3: Natural-Language-to-SQL Data Analyst (`slug: "nl-to-sql"`)
-- **Repository Link**:
-  - *Current Setting*: `https://github.com/Rutvik995/DataAnalysis_Multi-Agentic-System`
-  - *Action*: Verified valid GitHub repo URL.
-
-### Project 4: ARVEX Stock Analysis (`slug: "arvex-stock"`)
-- **Repository Link**:
-  - *Current Setting*: `https://github.com/Rutvik995/STOCK-ALGO`
-  - *Action*: Verified valid GitHub repo URL.
-- **Methodology Note**:
-  - Documented: Autoregressive drift limitations over >5-day horizons.
-
-### Project 5: AquaServe (`slug: "aquaserve"`)
-- **Technology Stack Confirmation**:
-  - *Current Setting*: `Android / Kotlin`, `Node.js`, `Express`, `PostgreSQL`, `Google Maps SDK`.
-  - *Action*: Confirm whether this was implemented natively in Kotlin or with React Native. (Current code reflects Native Android/Kotlin as noted in GitHub).
-
-### Project 6: Invoice Web App (`slug: "invoice-webapp"`)
-- **Stack & Link**:
-  - *Current Setting*: `React / Next.js`, `TypeScript`, `Node.js`, `PostgreSQL`.
-  - *Action*: Supply public GitHub repository link or live demo URL if available.
-
-### Project 7: Power BI Enterprise Dashboards (`slug: "power-bi-dashboards"`)
-- **Repository Link**:
-  - *Current Setting*: `https://github.com/Rutvik995/Power-BI-Dashboards`
-  - *Action*: Verified valid GitHub repo URL.
-
-### Project 8: Travel AI Agent (`slug: "travel-ai-agent"`)
-- **Repository Link**:
-  - *Current Setting*: `https://github.com/Rutvik995/Travel_AI_Agent`
-  - *Action*: Verified valid GitHub repo URL.
-
-### Project 9 (Optional): Document RAG Q&A Engine
-- *Action*: Confirm whether you want to include a dedicated card for your long-form Document RAG system. It is currently available to be toggled in `content/projects.ts`.
+| Project Slug | Item | Current Setting | Action Required |
+| :--- | :--- | :--- | :--- |
+| `cortex` | **Redis Checkpointer** | Dual-storage: Redis + PostgreSQL | **[[CONFIRM]]**: Confirm if Redis is actively deployed as the volatile checkpointer or if PostgreSQL handles both state and chat history. |
+| `cortex` | **Repository Link** | `https://github.com/Rutvik995` | Update `repoUrl` if Cortex has a distinct repository name. |
+| `solar-agent` | **SCADA Telemetry Scale** | `5 plants, 113 days, 13k+ rows, 232 tests` | **[[FILL]]**: Update numbers if the dataset or test suite has grown. |
+| `solar-agent` | **Repository Link** | `https://github.com/Rutvik995` | Update `repoUrl` if you have a public repository URL. |
+| `nl-to-sql` | **Repository Link** | `DataAnalysis_Multi-Agentic-System` | Verified valid GitHub URL. |
+| `arvex-stock` | **Repository Link** | `STOCK-ALGO` | Verified valid GitHub URL. |
+| `aquaserve` | **Stack Confirmation** | Native Android in Kotlin, Node.js, Express | **[[CONFIRM]]**: GitHub shows native Android in Kotlin (old site previously claimed React Native). Confirm Kotlin is accurate. |
+| `invoice-webapp` | **Repository & Demo Link** | `https://github.com/Rutvik995` | **[[CONFIRM]]**: Supply the specific repository link and/or live deployment URL. |
+| `power-bi-dashboards`| **Repository Link** | `Power-BI-Dashboards` | Verified valid GitHub URL. |
+| `travel-ai-agent` | **Repository Link** | `Travel_AI_Agent` | Verified valid GitHub URL. |
+| *Optional System* | **Document RAG Q&A Engine** | Omitted from active list | **[[ASK RUTVIK]]**: Confirm whether to include a 9th project entry for your long-form Document RAG system. |
 
 ---
 
-## 3. Contact Form & Email Integration (`components/Contact.tsx`)
+## 3. General Site Settings & Assets (`content/profile.ts`)
 
-- **Primary Email**: `rutvik.professional@gmail.com` (Verified active).
-- **Form Dispatch Action**:
-  - Currently includes accessible client-side confirmation feedback.
-  - *Optional Upgrade*: If you wish to receive form submissions via email automatically, connect Resend or Formspree in a Next.js Server Action in `app/actions/contact.ts`.
-
----
-
-## 4. Media & Screenshots
-
-- *Current State*: The site utilizes clean, high-precision typographic placeholders and technical SVG diagrams. No stock art or AI-generated fake UI mockups are used.
-- *When Ready*: Place real production screenshots of Cortex, the Solar Inverter dashboard, or AquaServe in `/public/projects/[slug].png` to replace the placeholders.
+| Location | Item | Current Setting | Action Required |
+| :--- | :--- | :--- | :--- |
+| `content/profile.ts` | **Résumé PDF** | `/resume.pdf` | Place your PDF résumé at `portfolio-web/public/resume.pdf` or link to your cloud document. |
+| `content/profile.ts` | **Production Domain** | `https://rutvikbhanderi.dev` | If your custom domain differs (e.g. `rutvikbhanderi.com`), update `metadataBase` in `app/layout.tsx`, `app/sitemap.ts`, and `app/robots.ts`. |
+| `content/profile.ts` | **Photo Config Flag** | `showPhoto: false` | Strictly adheres to the **NO IMAGES RULE**. If you ever choose to show a natural personal headshot in the future, set to `true` and provide `/public/rutvik.jpg`. |

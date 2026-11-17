@@ -6,10 +6,10 @@ import ThemeToggle from "./ThemeToggle";
 
 const navLinks = [
   { label: "Work", href: "#work" },
+  { label: "Experience", href: "#experience" },
   { label: "Approach", href: "#approach" },
   { label: "Stack", href: "#stack" },
   { label: "About", href: "#about" },
-  { label: "Notes", href: "#notes" },
   { label: "Contact", href: "#contact" },
 ];
 
