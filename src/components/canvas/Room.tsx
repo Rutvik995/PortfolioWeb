@@ -6,266 +6,242 @@ import { DeskSetup } from './DeskSetup'
 import { DeveloperAvatar } from './DeveloperAvatar'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Room — Clean Architectural Corner Diorama (2-Wall Cutaway)
-// Flawlessly aligned walls with zero roof, open interior, and rich warm lighting.
+// Room — Exact match to Image 5 Reference:
+// - Crisp, open-top 2-wall isometric corner room cutaway (NO roof/ceiling)
+// - Thick beveled dark-slate exterior base slab (#1e293b)
+// - Warm oak wood plank floor (#6b442a) + navy-purple woven rug (#251e3e)
+// - Thick matte slate-blue interior walls (#2c3553) with wooden baseboards
+// - Back-Left Wall: 2 tiers of floating shelves with upright colorful books,
+//   miniature potted green succulents, small dark router, & realistic hanging
+//   dark cables (TubeGeometry catenary curves) draped beneath lower shelf.
+// - Back-Right Wall: Large 4-pane recessed window with white mullions, softly
+//   pleated beige-grey curtains (#b8b5c0), and strictly contained night skyline.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const WALL_COLOR   = '#151326' // Rich dark midnight room wall
-const FLOOR_COLOR  = '#20160d' // Warm rich hardwood
-const BASEBOARD    = '#100e1c'
+const SLATE_BASE     = '#1e293b' // Thick beveled exterior base slab
+const OAK_FLOOR      = '#6b442a' // Warm oak wood plank floor
+const OAK_PLANK_ALT  = '#5e3a22'
+const RUG_COLOR      = '#251e3e' // Dark navy-purple woven rug
+const RUG_BORDER     = '#312752'
+const SLATE_BLUE_WALL= '#2c3553' // Matte slate-blue interior walls
+const WOOD_BASEBOARD = '#452b1a'
 
-function WoodFloor() {
+function BaseSlabAndFloor() {
   const planks = useMemo(() =>
-    Array.from({ length: 10 }).map((_, i) => ({
-      z: -2.3 + i * 0.52,
-      color: i % 2 === 0 ? '#261b10' : '#1d140b',
+    Array.from({ length: 11 }).map((_, i) => ({
+      z: -2.0 + i * 0.42,
+      color: i % 2 === 0 ? OAK_FLOOR : OAK_PLANK_ALT,
     }))
   , [])
 
   return (
     <group>
-      {/* Floor Slab Foundation */}
-      <mesh position={[0, -0.06, 0]} receiveShadow>
-        <boxGeometry args={[5.6, 0.12, 5.6]} />
-        <meshStandardMaterial color="#0c0907" roughness={0.9} />
+      {/* ── Thick Beveled Dark-Slate Exterior Base Slab (#1e293b) ── */}
+      <mesh position={[0, -0.09, 0]} receiveShadow>
+        <boxGeometry args={[4.8, 0.18, 4.8]} />
+        <meshStandardMaterial color={SLATE_BASE} roughness={0.7} metalness={0.2} />
       </mesh>
-      {/* Top Wood Finish */}
+      {/* Slab beveled lower edge */}
+      <mesh position={[0, -0.19, 0]}>
+        <boxGeometry args={[4.96, 0.04, 4.96]} />
+        <meshStandardMaterial color="#0f172a" roughness={0.8} />
+      </mesh>
+
+      {/* ── Warm Oak Wood Plank Floor (#6b442a) ── */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]} receiveShadow>
-        <planeGeometry args={[5.5, 5.5]} />
-        <meshStandardMaterial color={FLOOR_COLOR} roughness={0.88} />
+        <planeGeometry args={[4.68, 4.68]} />
+        <meshStandardMaterial color={OAK_FLOOR} roughness={0.75} />
       </mesh>
-      {/* Hardwood Plank Seams */}
+      {/* Oak Plank Seams */}
       {planks.map((p, i) => (
         <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, p.z]} receiveShadow>
-          <planeGeometry args={[5.45, 0.46]} />
-          <meshStandardMaterial color={p.color} roughness={0.9} />
+          <planeGeometry args={[4.65, 0.38]} />
+          <meshStandardMaterial color={p.color} roughness={0.78} />
         </mesh>
       ))}
 
-      {/* Modern Woven Area Rug Under Workstation */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-0.4, 0.005, 0.1]} receiveShadow>
-        <planeGeometry args={[2.8, 2.2]} />
-        <meshStandardMaterial color="#1a122e" roughness={0.98} />
+      {/* ── Dark Navy-Purple Woven Rug (#251e3e) Under Desk & Chair ── */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-0.7, 0.006, 0.12]} receiveShadow>
+        <planeGeometry args={[2.5, 2.1]} />
+        <meshStandardMaterial color={RUG_COLOR} roughness={0.96} />
       </mesh>
-      {/* Rug Inner Accent Border */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-0.4, 0.006, 0.1]}>
-        <planeGeometry args={[2.64, 2.04]} />
-        <meshStandardMaterial color="#231742" roughness={0.98} />
+      {/* Rug woven border trim */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-0.7, 0.007, 0.12]}>
+        <planeGeometry args={[2.36, 1.96]} />
+        <meshStandardMaterial color={RUG_BORDER} roughness={0.96} />
       </mesh>
     </group>
   )
 }
 
-function PerfectlyAlignedWalls() {
-  // Back wall: centered at [0, 1.9, -2.675], width 5.5, height 3.8, depth 0.15
-  // Extends X from -2.75 to +2.75, flush with Left Wall
-  // Left wall: centered at [-2.675, 1.9, 0.075], width 0.15, height 3.8, depth 5.35
-  // Meets Back Wall at corner [-2.75, Y, -2.75] with zero gap or overhang!
+function ArchitecturalWalls() {
+  // Back-Left Wall: at x = -2.28 (runs along Z from -2.34 to +2.34)
+  // Back-Right Wall: at z = -2.28 (runs along X from -2.34 to +2.34)
+  // Corner meets seamlessly at [-2.34, Y, -2.34]
   return (
     <group>
-      {/* ── BACK WALL ── */}
-      <mesh position={[0, 1.9, -2.675]} receiveShadow>
-        <boxGeometry args={[5.5, 3.8, 0.15]} />
-        <meshStandardMaterial color={WALL_COLOR} roughness={0.92} />
+      {/* ── Back-Left Interior Wall (#2c3553) ── */}
+      <mesh position={[-2.34, 1.75, 0]} receiveShadow>
+        <boxGeometry args={[0.14, 3.5, 4.68]} />
+        <meshStandardMaterial color={SLATE_BLUE_WALL} roughness={0.92} />
       </mesh>
-      {/* Back Wall Baseboard */}
-      <mesh position={[0, 0.05, -2.59]}>
-        <boxGeometry args={[5.5, 0.1, 0.04]} />
-        <meshStandardMaterial color={BASEBOARD} roughness={0.6} />
+      {/* Baseboard trim */}
+      <mesh position={[-2.25, 0.05, 0]}>
+        <boxGeometry args={[0.04, 0.1, 4.68]} />
+        <meshStandardMaterial color={WOOD_BASEBOARD} roughness={0.65} />
       </mesh>
 
-      {/* ── LEFT WALL ── */}
-      <mesh position={[-2.675, 1.9, 0.075]} receiveShadow>
-        <boxGeometry args={[0.15, 3.8, 5.35]} />
-        <meshStandardMaterial color={new THREE.Color(WALL_COLOR).multiplyScalar(0.9)} roughness={0.92} />
+      {/* ── Back-Right Interior Wall (#2c3553 with window cutout) ── */}
+      <mesh position={[0, 1.75, -2.34]} receiveShadow>
+        <boxGeometry args={[4.68, 3.5, 0.14]} />
+        <meshStandardMaterial color={new THREE.Color(SLATE_BLUE_WALL).multiplyScalar(0.96)} roughness={0.92} />
       </mesh>
-      {/* Left Wall Baseboard */}
-      <mesh position={[-2.59, 0.05, 0.075]}>
-        <boxGeometry args={[0.04, 0.1, 5.35]} />
-        <meshStandardMaterial color={BASEBOARD} roughness={0.6} />
+      {/* Baseboard trim */}
+      <mesh position={[0, 0.05, -2.25]}>
+        <boxGeometry args={[4.68, 0.1, 0.04]} />
+        <meshStandardMaterial color={WOOD_BASEBOARD} roughness={0.65} />
       </mesh>
     </group>
   )
 }
 
-function BlinkLED({ position, color, speed, phase = 0 }: {
-  position: [number, number, number]
-  color: string
-  speed: number
-  phase?: number
-}) {
-  const matRef = useRef<THREE.MeshStandardMaterial>(null!)
-  useFrame(({ clock }) => {
-    if (matRef.current) {
-      matRef.current.emissiveIntensity = Math.sin(clock.getElapsedTime() * speed + phase) > 0.2 ? 2.0 : 0.08
-    }
-  })
-  return (
-    <mesh position={position}>
-      <boxGeometry args={[0.016, 0.016, 0.002]} />
-      <meshStandardMaterial
-        ref={matRef}
-        color={color}
-        emissive={color}
-        emissiveIntensity={1.8}
-      />
-    </mesh>
-  )
-}
+function FloatingShelvesWithCables() {
+  const booksUpper = useMemo(() => [
+    { w: 0.075, h: 0.22, col: '#ef4444' }, // Red
+    { w: 0.065, h: 0.19, col: '#3b82f6' }, // Blue
+    { w: 0.082, h: 0.24, col: '#10b981' }, // Green
+    { w: 0.068, h: 0.20, col: '#f59e0b' }, // Amber
+    { w: 0.078, h: 0.23, col: '#8b5cf6' }, // Purple
+  ], [])
 
-function ServerBox() {
-  return (
-    <group>
-      {/* Server Chassis Body */}
-      <mesh castShadow>
-        <boxGeometry args={[0.3, 0.11, 0.2]} />
-        <meshStandardMaterial color="#0b0e17" roughness={0.35} metalness={0.6} />
-      </mesh>
-      {/* Front Faceplate */}
-      <mesh position={[0, 0, 0.102]}>
-        <boxGeometry args={[0.28, 0.09, 0.004]} />
-        <meshStandardMaterial color="#111827" roughness={0.3} metalness={0.5} />
-      </mesh>
-      {/* Vent Grille Slots */}
-      {[-0.07, -0.02, 0.03].map((x, i) => (
-        <mesh key={i} position={[x, 0, 0.106]}>
-          <boxGeometry args={[0.012, 0.06, 0.001]} />
-          <meshStandardMaterial color="#1f293d" />
-        </mesh>
-      ))}
-      {/* Status LEDs */}
-      <BlinkLED position={[0.1, 0.015, 0.106]} color="#10b981" speed={2.8} />
-      <BlinkLED position={[0.07, 0.015, 0.106]} color="#f59e0b" speed={1.8} phase={1.4} />
-      <BlinkLED position={[0.04, 0.015, 0.106]} color="#00f2fe" speed={3.4} phase={0.6} />
-    </group>
-  )
-}
+  const booksLower = useMemo(() => [
+    { w: 0.072, h: 0.21, col: '#06b6d4' },
+    { w: 0.084, h: 0.25, col: '#ec4899' },
+    { w: 0.066, h: 0.19, col: '#6366f1' },
+    { w: 0.076, h: 0.22, col: '#14b8a6' },
+  ], [])
 
-function WallShelf({ position, books }: {
-  position: [number, number, number]
-  books: Array<{ w: number; h: number; color: string }>
-}) {
-  return (
-    <group position={position}>
-      {/* Solid Wood Shelf Board */}
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[1.2, 0.035, 0.22]} />
-        <meshStandardMaterial color="#2d1c10" roughness={0.7} />
-      </mesh>
-      {/* Steel Brackets */}
-      {[-0.52, 0.52].map((bx, i) => (
-        <mesh key={i} position={[bx, -0.06, 0]}>
-          <boxGeometry args={[0.024, 0.11, 0.2]} />
-          <meshStandardMaterial color="#1f1a14" roughness={0.7} metalness={0.4} />
-        </mesh>
-      ))}
-      {/* Books on Shelf */}
-      {books.reduce((acc, b, i) => {
-        const prev = acc[i - 1]
-        const x = prev ? prev.x + prev.w / 2 + b.w / 2 + 0.015 : -0.46
-        acc.push({ ...b, x })
-        return acc
-      }, [] as Array<{ x: number; w: number; h: number; color: string }>).map((b, i) => (
-        <mesh key={i} position={[b.x, 0.035 + b.h / 2, 0]} castShadow>
-          <boxGeometry args={[b.w, b.h, 0.18]} />
-          <meshStandardMaterial color={b.color} roughness={0.8} />
-        </mesh>
-      ))}
-    </group>
-  )
-}
+  // Realistic catenary hanging dark cables beneath lower shelf (Image 5)
+  const cableGeometries = useMemo(() => {
+    const cables: THREE.TubeGeometry[] = []
+    const cableCurves = [
+      // Cable 1: loose hanging loop
+      [[-0.32, -0.02, 0.08], [-0.28, -0.22, 0.09], [-0.24, -0.34, 0.1], [-0.2, -0.18, 0.09], [-0.16, -0.02, 0.08]],
+      // Cable 2: deeper hanging loop
+      [[-0.18, -0.02, 0.07], [-0.14, -0.28, 0.09], [-0.08, -0.42, 0.1], [-0.02, -0.26, 0.09], [0.04, -0.02, 0.08]],
+      // Cable 3: third draped loop
+      [[0.02, -0.02, 0.08], [0.08, -0.24, 0.09], [0.14, -0.36, 0.1], [0.20, -0.20, 0.09], [0.24, -0.02, 0.08]],
+      // Cable 4: hanging power cord running down toward floor
+      [[0.22, -0.02, 0.07], [0.24, -0.32, 0.08], [0.26, -0.65, 0.07], [0.27, -0.98, 0.06]],
+    ]
 
-function SucculentPlant({ position }: { position: [number, number, number] }) {
+    cableCurves.forEach((pts) => {
+      const curve = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p)))
+      cables.push(new THREE.TubeGeometry(curve, 20, 0.007, 8, false))
+    })
+    return cables
+  }, [])
+
   return (
-    <group position={position}>
-      {/* Ceramic Pot */}
-      <mesh castShadow>
-        <cylinderGeometry args={[0.055, 0.042, 0.08, 16]} />
-        <meshStandardMaterial color="#f1f5f9" roughness={0.3} />
-      </mesh>
-      {/* Soil */}
-      <mesh position={[0, 0.041, 0]}>
-        <cylinderGeometry args={[0.051, 0.051, 0.008, 16]} />
-        <meshStandardMaterial color="#22140a" roughness={0.9} />
-      </mesh>
-      {/* Succulent Leaves */}
-      {[0, 1, 2, 3, 4, 5, 6].map((i) => {
-        const angle = (i / 7) * Math.PI * 2
-        return (
-          <mesh
-            key={i}
-            position={[Math.cos(angle) * 0.03, 0.07, Math.sin(angle) * 0.03]}
-            rotation={[0.45, angle, 0]}
-            castShadow
-          >
-            <capsuleGeometry args={[0.012, 0.05, 4, 8]} />
-            <meshStandardMaterial color="#15803d" roughness={0.7} />
+    // Mounted on Back-Left Wall (x = -2.24)
+    <group position={[-2.24, 2.3, -0.75]} rotation={[0, Math.PI / 2, 0]}>
+
+      {/* ── UPPER FLOATING SHELF ── */}
+      <group position={[0, 0.52, 0]}>
+        {/* Wood shelf board */}
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[1.05, 0.032, 0.22]} />
+          <meshStandardMaterial color="#6b442a" roughness={0.7} />
+        </mesh>
+        {/* Books on upper shelf */}
+        {booksUpper.reduce((acc, b, i) => {
+          const prev = acc[i - 1]
+          const x = prev ? prev.x + prev.w / 2 + b.w / 2 + 0.012 : -0.38
+          acc.push({ ...b, x })
+          return acc
+        }, [] as Array<{ x: number; w: number; h: number; col: string }>).map((b, i) => (
+          <mesh key={i} position={[b.x, 0.032 + b.h / 2, 0]} castShadow>
+            <boxGeometry args={[b.w, b.h, 0.18]} />
+            <meshStandardMaterial color={b.col} roughness={0.8} />
           </mesh>
-        )
-      })}
+        ))}
+        {/* Miniature potted green succulent */}
+        <group position={[0.34, 0.032, 0]}>
+          <mesh castShadow>
+            <cylinderGeometry args={[0.045, 0.035, 0.065, 14]} />
+            <meshStandardMaterial color="#f8fafc" roughness={0.3} />
+          </mesh>
+          <mesh position={[0, 0.05, 0]}>
+            <sphereGeometry args={[0.038, 10, 8]} />
+            <meshStandardMaterial color="#16a34a" roughness={0.7} />
+          </mesh>
+        </group>
+      </group>
+
+      {/* ── LOWER FLOATING SHELF ── */}
+      <group position={[0, 0, 0]}>
+        {/* Wood shelf board */}
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[1.05, 0.032, 0.22]} />
+          <meshStandardMaterial color="#6b442a" roughness={0.7} />
+        </mesh>
+        {/* Books on lower shelf */}
+        {booksLower.reduce((acc, b, i) => {
+          const prev = acc[i - 1]
+          const x = prev ? prev.x + prev.w / 2 + b.w / 2 + 0.012 : -0.38
+          acc.push({ ...b, x })
+          return acc
+        }, [] as Array<{ x: number; w: number; h: number; col: string }>).map((b, i) => (
+          <mesh key={i} position={[b.x, 0.032 + b.h / 2, 0]} castShadow>
+            <boxGeometry args={[b.w, b.h, 0.18]} />
+            <meshStandardMaterial color={b.col} roughness={0.8} />
+          </mesh>
+        ))}
+        {/* Small dark router device on right */}
+        <group position={[0.32, 0.05, 0]}>
+          <mesh castShadow>
+            <boxGeometry args={[0.18, 0.065, 0.15]} />
+            <meshStandardMaterial color="#0f172a" roughness={0.35} metalness={0.6} />
+          </mesh>
+          {/* LED indicators */}
+          <mesh position={[0.06, 0.012, 0.076]}>
+            <boxGeometry args={[0.012, 0.012, 0.002]} />
+            <meshStandardMaterial color="#10b981" emissive="#10b981" emissiveIntensity={2} />
+          </mesh>
+          <mesh position={[0.03, 0.012, 0.076]}>
+            <boxGeometry args={[0.012, 0.012, 0.002]} />
+            <meshStandardMaterial color="#38bdf8" emissive="#38bdf8" emissiveIntensity={2} />
+          </mesh>
+        </group>
+
+        {/* ── Realistic Hanging Dark Cables (TubeGeometry Catenary Curves) ── */}
+        {cableGeometries.map((geo, i) => (
+          <mesh key={i} geometry={geo} castShadow>
+            <meshStandardMaterial color="#0a0e17" roughness={0.6} />
+          </mesh>
+        ))}
+      </group>
     </group>
   )
 }
 
 export function Room() {
-  const booksUpper = useMemo(() => [
-    { w: 0.085, h: 0.24, color: '#dc2626' },
-    { w: 0.075, h: 0.21, color: '#2563eb' },
-    { w: 0.095, h: 0.26, color: '#16a34a' },
-    { w: 0.07,  h: 0.19, color: '#9333ea' },
-    { w: 0.088, h: 0.23, color: '#ea580c' },
-  ], [])
-
-  const booksLower = useMemo(() => [
-    { w: 0.08,  h: 0.20, color: '#0d9488' },
-    { w: 0.092, h: 0.25, color: '#e11d48' },
-    { w: 0.074, h: 0.22, color: '#0284c7' },
-    { w: 0.084, h: 0.19, color: '#7c3aed' },
-  ], [])
-
   return (
     <group>
-      {/* ── ARCHITECTURAL PODIUM FLOOR ── */}
-      <WoodFloor />
+      {/* ── BASE SLAB & FLOOR ── */}
+      <BaseSlabAndFloor />
 
-      {/* ── FLUSH ALIGNED ROOM WALLS (NO OVERHANGS) ── */}
-      <PerfectlyAlignedWalls />
+      {/* ── TWO CRISP MATTE SLATE-BLUE WALLS ── */}
+      <ArchitecturalWalls />
 
-      {/* ── LARGE LOFT WINDOW ON BACK WALL WITH 3D NIGHT SKYLINE ── */}
+      {/* ── BACK-LEFT WALL DETAILS (Shelves, Books, Succulents, Router, Hanging Cables) ── */}
+      <FloatingShelvesWithCables />
+
+      {/* ── BACK-RIGHT WALL (4-Pane Window, Curtains, Contained Night Cityscape) ── */}
       <NightWindow />
 
-      {/* ── FLOATING WALL SHELVES (Back Wall, Right of Window) ── */}
-      <WallShelf position={[1.7, 2.7, -2.58]} books={booksUpper} />
-      <WallShelf position={[1.7, 2.15, -2.58]} books={booksLower} />
-
-      {/* Server / Router Box with Blinking LEDs */}
-      <group position={[1.7, 1.68, -2.5]}>
-        <ServerBox />
-      </group>
-
-      {/* Potted Succulent Plant on Upper Shelf */}
-      <SucculentPlant position={[2.15, 2.75, -2.56]} />
-
-      {/* Framed Wall Art on Back Wall */}
-      <group position={[2.1, 1.4, -2.59]}>
-        <mesh>
-          <planeGeometry args={[0.7, 0.46]} />
-          <meshStandardMaterial color="#0b0f19" emissive="#1e293b" emissiveIntensity={0.3} />
-        </mesh>
-        <mesh position={[0, 0, 0.005]}>
-          <boxGeometry args={[0.74, 0.5, 0.012]} />
-          <meshStandardMaterial color="#1f1610" roughness={0.7} />
-        </mesh>
-      </group>
-
-      {/* ── WORKSTATION (DESK + MONITOR + RUTVIK AVATAR) ──
-          Pivoted at 3/4 isometric angle so the user clearly sees:
-          1. Rutvik's face, hair, glasses, and brown hoodie
-          2. Active typing hands over keyboard
-          3. Bright glowing monitor screen with code
-          4. Window skyline directly in the background!
-      */}
-      <group position={[-0.3, 0, 0.1]} rotation={[0, Math.PI * 0.28, 0]}>
+      {/* ── WORKSTATION & DEVELOPER (Oriented Parallel to Back-Left Wall) ── */}
+      <group>
         <DeskSetup />
         <DeveloperAvatar />
       </group>

@@ -2,88 +2,74 @@ import { useRef, useEffect } from 'react'
 import * as THREE from 'three'
 import { create } from 'zustand'
 
-// ── Lamp Store (toggled by clicking the lamp) ─────────────────────────────
-interface LampStore { lampOn: boolean; toggleLamp: () => void }
+// ── Lamp Store (toggleable by clicking the lamp) ───────────────────────────
+interface LampStore {
+  lampOn: boolean
+  toggleLamp: () => void
+}
+
 export const useLampStore = create<LampStore>((set) => ({
   lampOn: true,
   toggleLamp: () => set((s) => ({ lampOn: !s.lampOn })),
 }))
 
 export function Lighting() {
-  const dirLampRef  = useRef<THREE.DirectionalLight>(null!)
-  const lampPtRef   = useRef<THREE.PointLight>(null!)
-  const rimRef      = useRef<THREE.PointLight>(null!)
+  const lampPtRef = useRef<THREE.PointLight>(null!)
   const lampOn = useLampStore((s) => s.lampOn)
 
   useEffect(() => {
-    if (dirLampRef.current)  dirLampRef.current.visible  = lampOn
-    if (lampPtRef.current)   lampPtRef.current.intensity = lampOn ? 4.5 : 0.6
+    if (lampPtRef.current) {
+      lampPtRef.current.intensity = lampOn ? 5.5 : 0.4
+    }
   }, [lampOn])
+
+  // Coordinates relative to world (room is at [2.1, -0.6, 0])
+  // Desk lamp bulb sits around x = 2.1 - 1.25, y = -0.6 + 1.45, z = 0.55
+  const lampBulbPos: [number, number, number] = [2.1 - 1.25, -0.6 + 1.45, 0.55]
 
   return (
     <>
-      {/* Sky/ground hemisphere — fills everything so nothing is crushed black */}
-      <hemisphereLight args={['#8ab4f8', '#3d2c24', 1.1]} />
+      {/* ── Balanced Ambient & Hemisphere Lighting (No dark crushed shadows) ── */}
+      <ambientLight intensity={0.75} color="#cbd5e1" />
+      <hemisphereLight args={['#93c5fd', '#452c1e', 1.15]} />
 
-      {/* Cool ambient fill — evenly visible across all surfaces */}
-      <ambientLight intensity={0.65} color="#dbeafe" />
-
-      {/* ── Warm desk lamp — SHADOW CASTER (only one) ─────────────── */}
-      {/* Directional component for sharp desk surface shadows */}
-      <directionalLight
-        ref={dirLampRef}
-        color="#ffb74d"
-        intensity={1.8}
-        position={[2.4 + 1.0, 4.2, 0.4]}
-        castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
-        shadow-camera-near={0.5}
-        shadow-camera-far={22}
-        shadow-camera-left={-5}
-        shadow-camera-right={5}
-        shadow-camera-top={5}
-        shadow-camera-bottom={-5}
-        shadow-bias={-0.0005}
-      />
-      {/* Point component for the golden pool of light on desk */}
+      {/* ── Desk Lamp Key Light (ONLY shadow-casting light) ── */}
       <pointLight
         ref={lampPtRef}
-        color="#ffae42"
-        intensity={4.5}
-        position={[2.4 + 0.8, 2.6, -0.1]}
-        distance={9}
-        decay={1.6}
+        position={lampBulbPos}
+        color="#ffb347"
+        intensity={5.5}
+        distance={8}
+        decay={1.5}
+        castShadow
+        shadow-mapSize={[1024, 1024]}
+        shadow-bias={-0.0005}
+      />
+
+      {/* ── Window Moonlight Rim Light (crisp edge on boy's hair, glasses & hoodie) ── */}
+      <directionalLight
+        position={[5, 4, -3]}
+        color="#60a5fa"
+        intensity={1.8}
         castShadow={false}
       />
 
-      {/* ── Mac screen glow — cool blue ───────────────────────────── */}
+      {/* ── Monitor Displays Screen Glow ── */}
       <pointLight
-        color="#4fc3f7"
-        intensity={1.2}
-        position={[2.4 + 0.1, 2.3, -0.6]}
-        distance={3.8}
+        position={[2.1 - 0.7, -0.6 + 1.4, -0.1]}
+        color="#38bdf8"
+        intensity={1.4}
+        distance={4}
         decay={2}
         castShadow={false}
       />
 
-      {/* ── Window/Moon rim light — cool blue back-light on avatar ── */}
+      {/* ── Soft Fill Light for Bookshelf / Left Wall ── */}
       <pointLight
-        ref={rimRef}
-        color="#7dd3fc"
-        intensity={1.4}
-        position={[2.4 - 2.8, 2.8, -0.8]}
-        distance={7}
-        decay={1.8}
-        castShadow={false}
-      />
-
-      {/* ── Moonlight through window ──────────────────────────────── */}
-      <pointLight
-        color="#6ea8fe"
-        intensity={0.8}
-        position={[2.4 - 2.5, 2.4, -1.2]}
-        distance={8}
+        position={[2.1 - 1.5, -0.6 + 2.5, -0.5]}
+        color="#93c5fd"
+        intensity={0.6}
+        distance={5}
         decay={2}
         castShadow={false}
       />
