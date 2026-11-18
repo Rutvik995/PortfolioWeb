@@ -217,46 +217,63 @@ interface LockSpec {
 
 const P = Math.PI;
 const LOCKS: LockSpec[] = [
-  // --- front fringe, side-swept across the forehead (6)
-  { t0: 0.55, p0: 1.05, t1: 1.22, p1: 1.75, amp: 0.09, waves: 1.6, r: 0.026, lift: 0.026, ph: 0.0 },
-  { t0: 0.5, p0: 1.3, t1: 1.2, p1: 2.05, amp: 0.1, waves: 1.4, r: 0.028, lift: 0.03, ph: 1.1 },
-  { t0: 0.45, p0: 1.55, t1: 1.12, p1: 2.35, amp: 0.11, waves: 1.7, r: 0.028, lift: 0.032, ph: 2.0 },
-  { t0: 0.5, p0: 0.8, t1: 1.2, p1: 1.45, amp: 0.08, waves: 1.3, r: 0.024, lift: 0.024, ph: 0.6 },
-  { t0: 0.4, p0: 1.2, t1: 1.05, p1: 1.95, amp: 0.12, waves: 1.5, r: 0.03, lift: 0.04, ph: 2.6 },
-  { t0: 0.35, p0: 1.7, t1: 1.0, p1: 2.7, amp: 0.1, waves: 1.8, r: 0.03, lift: 0.04, ph: 3.3 },
-  // --- top volume (2)
-  { t0: 0.25, p0: 2.4, t1: 0.95, p1: 3.3, amp: 0.1, waves: 1.6, r: 0.03, lift: 0.04, ph: 0.4 },
-  { t0: 0.3, p0: 0.6, t1: 1.05, p1: -0.1, amp: 0.1, waves: 1.5, r: 0.03, lift: 0.04, ph: 1.7 },
-  // --- right side (-X), over the ears (3)
-  { t0: 0.95, p0: 0.4, t1: 2.15, p1: 0.15, amp: 0.08, waves: 2.2, r: 0.024, lift: 0.03, ph: 0.2 },
-  { t0: 1.05, p0: 0.05, t1: 2.25, p1: -0.15, amp: 0.08, waves: 2.0, r: 0.024, lift: 0.032, ph: 1.3 },
-  { t0: 0.85, p0: 0.7, t1: 1.95, p1: 0.5, amp: 0.07, waves: 2.1, r: 0.022, lift: 0.028, ph: 2.4 },
-  // --- left side (+X), over the ears (3)
-  { t0: 0.95, p0: P - 0.4, t1: 2.15, p1: P - 0.15, amp: 0.08, waves: 2.2, r: 0.024, lift: 0.03, ph: 0.9 },
-  { t0: 1.05, p0: P - 0.05, t1: 2.25, p1: P + 0.15, amp: 0.08, waves: 2.0, r: 0.024, lift: 0.032, ph: 2.1 },
-  { t0: 0.85, p0: P - 0.7, t1: 1.95, p1: P - 0.5, amp: 0.07, waves: 2.1, r: 0.022, lift: 0.028, ph: 3.0 },
-  // --- back layers cascading to the nape (6)
-  { t0: 1.0, p0: 4.0, t1: 2.55, p1: 3.85, amp: 0.09, waves: 2.4, r: 0.03, lift: 0.035, ph: 0.5 },
-  { t0: 0.95, p0: 4.4, t1: 2.6, p1: 4.35, amp: 0.09, waves: 2.3, r: 0.032, lift: 0.036, ph: 1.6 },
-  { t0: 0.95, p0: 4.8, t1: 2.6, p1: 4.85, amp: 0.09, waves: 2.5, r: 0.032, lift: 0.036, ph: 2.7 },
-  { t0: 1.0, p0: 5.2, t1: 2.55, p1: 5.45, amp: 0.09, waves: 2.4, r: 0.03, lift: 0.035, ph: 3.6 },
-  { t0: 1.35, p0: 3.7, t1: 2.55, p1: 3.5, amp: 0.08, waves: 2.0, r: 0.026, lift: 0.03, ph: 4.4 },
-  { t0: 1.35, p0: 5.7, t1: 2.55, p1: 5.95, amp: 0.08, waves: 2.0, r: 0.026, lift: 0.03, ph: 5.0 },
+  // ── 1. Front Fringe / Bangs (Sweeping gracefully across forehead, long & wavy) ──
+  // Reaches down over the forehead to brow level (t1 = 1.48 to 1.62)
+  { t0: 0.42, p0: 1.00, t1: 1.54, p1: 1.76, amp: 0.14, waves: 1.6, r: 0.032, lift: 0.038, ph: 0.0 },
+  { t0: 0.38, p0: 1.25, t1: 1.58, p1: 2.05, amp: 0.15, waves: 1.5, r: 0.034, lift: 0.042, ph: 1.2 },
+  { t0: 0.34, p0: 1.50, t1: 1.52, p1: 2.38, amp: 0.16, waves: 1.7, r: 0.034, lift: 0.044, ph: 2.1 },
+  { t0: 0.46, p0: 0.82, t1: 1.50, p1: 1.42, amp: 0.12, waves: 1.4, r: 0.030, lift: 0.034, ph: 0.7 },
+  { t0: 0.30, p0: 1.15, t1: 1.48, p1: 1.95, amp: 0.16, waves: 1.5, r: 0.035, lift: 0.048, ph: 2.8 },
+  { t0: 0.28, p0: 1.65, t1: 1.46, p1: 2.65, amp: 0.14, waves: 1.8, r: 0.034, lift: 0.045, ph: 3.4 },
+  { t0: 0.52, p0: 0.92, t1: 1.60, p1: 1.62, amp: 0.13, waves: 1.5, r: 0.030, lift: 0.036, ph: 1.5 },
+  { t0: 0.44, p0: 1.38, t1: 1.62, p1: 2.18, amp: 0.15, waves: 1.6, r: 0.032, lift: 0.040, ph: 2.4 },
+
+  // ── 2. Top & Crown Voluminous Wave Tufts (Giving height, texture & silhouette) ──
+  { t0: 0.18, p0: 2.30, t1: 1.05, p1: 3.20, amp: 0.14, waves: 1.7, r: 0.036, lift: 0.052, ph: 0.5 },
+  { t0: 0.20, p0: 0.65, t1: 1.12, p1: -0.15, amp: 0.14, waves: 1.6, r: 0.036, lift: 0.052, ph: 1.8 },
+  { t0: 0.12, p0: 1.55, t1: 0.95, p1: 1.90, amp: 0.15, waves: 1.5, r: 0.038, lift: 0.056, ph: 0.9 },
+  { t0: 0.15, p0: 4.20, t1: 1.10, p1: 4.60, amp: 0.14, waves: 1.6, r: 0.036, lift: 0.050, ph: 2.5 },
+  { t0: 0.22, p0: 1.85, t1: 1.18, p1: 2.50, amp: 0.13, waves: 1.8, r: 0.034, lift: 0.048, ph: 3.1 },
+  { t0: 0.24, p0: 0.95, t1: 1.15, p1: 0.45, amp: 0.13, waves: 1.7, r: 0.034, lift: 0.048, ph: 1.4 },
+
+  // ── 3. Right Side (-X, Camera View!), Long wavy locks over temple, ear & jawline ──
+  { t0: 0.85, p0: 0.45, t1: 2.38, p1: 0.18, amp: 0.11, waves: 2.3, r: 0.032, lift: 0.044, ph: 0.3 },
+  { t0: 0.95, p0: 0.08, t1: 2.45, p1: -0.18, amp: 0.11, waves: 2.2, r: 0.032, lift: 0.046, ph: 1.4 },
+  { t0: 0.75, p0: 0.75, t1: 2.28, p1: 0.52, amp: 0.10, waves: 2.2, r: 0.030, lift: 0.042, ph: 2.5 },
+  { t0: 1.05, p0: 0.30, t1: 2.48, p1: 0.05, amp: 0.12, waves: 2.4, r: 0.030, lift: 0.045, ph: 3.2 },
+  { t0: 1.15, p0: 0.60, t1: 2.35, p1: 0.35, amp: 0.10, waves: 2.1, r: 0.028, lift: 0.040, ph: 0.8 },
+
+  // ── 4. Left Side (+X), Long wavy locks over temple, ear & jawline ──
+  { t0: 0.85, p0: P - 0.45, t1: 2.38, p1: P - 0.18, amp: 0.11, waves: 2.3, r: 0.032, lift: 0.044, ph: 1.0 },
+  { t0: 0.95, p0: P - 0.08, t1: 2.45, p1: P + 0.18, amp: 0.11, waves: 2.2, r: 0.032, lift: 0.046, ph: 2.1 },
+  { t0: 0.75, p0: P - 0.75, t1: 2.28, p1: P - 0.52, amp: 0.10, waves: 2.2, r: 0.030, lift: 0.042, ph: 3.0 },
+  { t0: 1.05, p0: P - 0.30, t1: 2.48, p1: P - 0.05, amp: 0.12, waves: 2.4, r: 0.030, lift: 0.045, ph: 3.8 },
+  { t0: 1.15, p0: P - 0.60, t1: 2.35, p1: P - 0.35, amp: 0.10, waves: 2.1, r: 0.028, lift: 0.040, ph: 1.7 },
+
+  // ── 5. Back & Nape Cascading Long Wavy Layers (Reaching down onto hoodie collar) ──
+  { t0: 0.90, p0: 3.95, t1: 2.82, p1: 3.82, amp: 0.12, waves: 2.5, r: 0.036, lift: 0.048, ph: 0.6 },
+  { t0: 0.85, p0: 4.35, t1: 2.86, p1: 4.30, amp: 0.12, waves: 2.4, r: 0.038, lift: 0.050, ph: 1.7 },
+  { t0: 0.85, p0: 4.75, t1: 2.86, p1: 4.80, amp: 0.12, waves: 2.6, r: 0.038, lift: 0.050, ph: 2.8 },
+  { t0: 0.90, p0: 5.15, t1: 2.82, p1: 5.40, amp: 0.12, waves: 2.5, r: 0.036, lift: 0.048, ph: 3.7 },
+  { t0: 1.20, p0: 3.65, t1: 2.78, p1: 3.48, amp: 0.11, waves: 2.2, r: 0.032, lift: 0.042, ph: 4.5 },
+  { t0: 1.20, p0: 5.65, t1: 2.78, p1: 5.90, amp: 0.11, waves: 2.2, r: 0.032, lift: 0.042, ph: 5.1 },
+  { t0: 1.05, p0: 4.55, t1: 2.88, p1: 4.55, amp: 0.13, waves: 2.7, r: 0.038, lift: 0.052, ph: 2.0 },
+  { t0: 1.10, p0: 4.15, t1: 2.84, p1: 4.10, amp: 0.12, waves: 2.5, r: 0.035, lift: 0.046, ph: 1.1 },
 ];
 
 function buildLock(s: LockSpec): THREE.TubeGeometry {
-  const N = 10;
+  const N = 12;
   const pts: THREE.Vector3[] = [];
   for (let i = 0; i <= N; i++) {
     const u = i / N;
     const wave = Math.sin(u * s.waves * TAU + s.ph);
-    const theta = THREE.MathUtils.lerp(s.t0, s.t1, u) + 0.04 * Math.sin(u * s.waves * TAU + s.ph + 1.3);
+    const theta = THREE.MathUtils.lerp(s.t0, s.t1, u) + 0.05 * Math.sin(u * s.waves * TAU + s.ph + 1.3);
     const phi = THREE.MathUtils.lerp(s.p0, s.p1, u) + s.amp * wave * Math.min(1, u * 2);
     const off = 0.008 + s.lift * (Math.sin(u * Math.PI) * 0.6 + 0.4 * u);
-    pts.push(headPoint(Math.min(theta, 2.62), phi, off));
+    pts.push(headPoint(Math.min(theta, 2.92), phi, off));
   }
   const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
-  return taperedTube(curve, 56, 10, (u) => s.r * (1 - 0.5 * u) * roundEnds(u, 0.06));
+  return taperedTube(curve, 60, 10, (u) => s.r * (1 - 0.45 * u) * roundEnds(u, 0.05));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -321,19 +338,6 @@ function buildGeometries() {
       16,
       6,
       (u) => 0.0034 * roundEnds(u, 0.2),
-    );
-
-  const mustache = (s: number) =>
-    taperedTube(
-      new THREE.CatmullRomCurve3([
-        onFace(s * 0.003, -0.044, 0.0085),
-        onFace(s * 0.018, -0.042, 0.0095),
-        onFace(s * 0.034, -0.047, 0.0095),
-        onFace(s * 0.049, -0.058, 0.0085),
-      ]),
-      20,
-      8,
-      (u) => 0.0092 * (1 - 0.55 * u) * roundEnds(u, 0.1),
     );
 
   const lipPts = (yBase: number, curl: number, half: number) =>
@@ -441,17 +445,14 @@ function buildGeometries() {
     glint: new THREE.SphereGeometry(0.0026, 10, 8),
     brows: [brow(-1), brow(1)],
     lids: [lid(-1), lid(1)],
-    mustache: [mustache(-1), mustache(1)],
     upperLip: new THREE.TubeGeometry(lipPts(-0.066, 0.0035, 0.03), 20, 0.0052, 8, false),
     lowerLip: new THREE.TubeGeometry(lipPts(-0.077, 0.0045, 0.022), 20, 0.0058, 8, false),
     noseBridge: new THREE.CapsuleGeometry(0.011, 0.034, 6, 12),
     noseTip: new THREE.SphereGeometry(0.0175, 20, 16),
     nostril: new THREE.SphereGeometry(0.0095, 14, 12),
-    // hair & beard
-    hairCapTop: new THREE.SphereGeometry(HEAD_R * 1.045, 56, 36, 0, TAU, 0, 1.05),
-    hairCapBack: new THREE.SphereGeometry(HEAD_R * 1.055, 56, 36, Math.PI - 0.45, Math.PI + 0.9, 0, 2.35),
-    beardJaw: new THREE.SphereGeometry(HEAD_R * 1.014, 56, 24, 0, Math.PI, 2.08, 0.5),
-    stubble: new THREE.SphereGeometry(HEAD_R * 1.008, 56, 24, 0.15, Math.PI - 0.3, 1.5, 0.6),
+    // hair (expanded cap & 32 long wavy locks)
+    hairCapTop: new THREE.SphereGeometry(HEAD_R * 1.055, 56, 36, 0, TAU, 0, 1.25),
+    hairCapBack: new THREE.SphereGeometry(HEAD_R * 1.065, 56, 36, Math.PI - 0.55, Math.PI + 1.1, 0, 2.65),
     locks: LOCKS.map(buildLock),
     // glasses
     frameLoop: new THREE.TubeGeometry(frameCurve, 140, 0.0052, 10, true),
@@ -501,10 +502,7 @@ function buildMaterials() {
     glint: new THREE.MeshBasicMaterial({ color: '#ffffff' }),
     brow: std('#1a1412', 0.8),
     lid: std('#2a1b14', 0.7),
-    hair: std('#181210', 0.75),
-    mustache: std('#2b1e17', 0.8),
-    beard: std('#241a16', 0.85, 0, { transparent: true, opacity: 0.88, side: THREE.DoubleSide }),
-    stubble: std('#241a16', 0.9, 0, { transparent: true, opacity: 0.3, depthWrite: false, side: THREE.DoubleSide }),
+    hair: std('#140f0d', 0.65, 0.05), // Deep dark brown-black wavy hair with soft specular
     hoodie: std('#4a3022', 0.88, 0, { side: THREE.DoubleSide }),
     hoodieDark: std('#3b2519', 0.9),
     string: std('#d9d2c5', 0.8),
@@ -1122,16 +1120,11 @@ export function DeveloperAvatar({
                 </group>
               );
             })}
-            {/* Mouth, mustache, beard */}
+            {/* Clean Sculpted Lips & Smooth Jawline */}
             <mesh geometry={geo.upperLip} material={mats.lip} {...SHADOWS} />
             <mesh geometry={geo.lowerLip} material={mats.lip} {...SHADOWS} />
-            {geo.mustache.map((g, i) => (
-              <mesh key={i} geometry={g} material={mats.mustache} {...SHADOWS} />
-            ))}
-            <mesh geometry={geo.beardJaw} material={mats.beard} scale={HEAD_SCALE} {...SHADOWS} />
-            <mesh geometry={geo.stubble} material={mats.stubble} scale={HEAD_SCALE} />
 
-            {/* Hair: cap + 20 wavy locks */}
+            {/* Hair: expanded cap + 32 long wavy locks */}
             <mesh geometry={geo.hairCapTop} material={mats.hair} scale={HEAD_SCALE} {...SHADOWS} />
             <mesh geometry={geo.hairCapBack} material={mats.hair} scale={HEAD_SCALE} {...SHADOWS} />
             {geo.locks.map((g, i) => (
