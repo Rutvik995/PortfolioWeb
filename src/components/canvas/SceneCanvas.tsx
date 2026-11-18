@@ -3,49 +3,46 @@ import { OrbitControls, Stars, AdaptiveDpr, AdaptiveEvents } from '@react-three/
 import { Suspense } from 'react'
 import { Lighting } from './Lighting'
 import { Room } from './Room'
-import { DeveloperAvatar } from './DeveloperAvatar'
 
-// Room group is offset to the right side of screen
-// Camera looks at the room center at [2.4, 0.6, 0]
+// Room diorama group is positioned on the right side of the screen
 const ROOM_OFFSET: [number, number, number] = [2.4, 0, 0]
-const ORBIT_TARGET: [number, number, number] = [2.4, 0.9, 0]
+const ORBIT_TARGET: [number, number, number] = [2.4, 0.95, 0]
 
 export function SceneCanvas() {
   return (
     <Canvas
       dpr={[1, 1.75]}
       shadows="soft"
-      camera={{ position: [7.5, 3.8, 7.5], fov: 42 }}
+      camera={{ position: [6.8, 3.2, 6.8], fov: 40 }}
       style={{ background: '#060918', width: '100%', height: '100%' }}
-      gl={{ antialias: true, toneMapping: 2 /* ACESFilmic */, toneMappingExposure: 1.1 }}
+      gl={{ antialias: true, toneMapping: 2 /* ACESFilmic */, toneMappingExposure: 1.15 }}
     >
-      {/* Orbit locked to room center, constrained so floor never clips */}
+      {/* Orbit locked to room center, constrained so floor never clips underneath */}
       <OrbitControls
         target={ORBIT_TARGET}
         enableDamping
         dampingFactor={0.05}
-        minPolarAngle={Math.PI / 10}
+        minPolarAngle={Math.PI / 12}
         maxPolarAngle={Math.PI / 2.15}
-        minAzimuthAngle={-Math.PI / 2.5}
-        maxAzimuthAngle={Math.PI / 2.5}
-        minDistance={4.5}
-        maxDistance={14}
+        minAzimuthAngle={-Math.PI / 2.3}
+        maxAzimuthAngle={Math.PI / 2.3}
+        minDistance={4.2}
+        maxDistance={13}
       />
 
-      {/* Deep starfield behind everything */}
-      <Stars radius={120} depth={60} count={4000} factor={4} fade speed={0.6} />
+      {/* Atmospheric Starfield in the Deep Background */}
+      <Stars radius={120} depth={60} count={3500} factor={4} fade speed={0.5} />
 
       <AdaptiveDpr pixelated />
       <AdaptiveEvents />
 
       <Suspense fallback={null}>
-        {/* Global lighting */}
+        {/* Global ambient, hemisphere & fill lights */}
         <Lighting />
 
-        {/* Everything in the room is offset to the right */}
+        {/* 3D Room Diorama positioned on the right side of the screen */}
         <group position={ROOM_OFFSET}>
           <Room />
-          <DeveloperAvatar />
         </group>
       </Suspense>
     </Canvas>
