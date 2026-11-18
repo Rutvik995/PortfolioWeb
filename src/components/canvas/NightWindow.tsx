@@ -3,56 +3,62 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NightWindow — Exact match to Image 5 Reference:
-// - 4-pane recessed window with clean white/light mullions
-// - Metallic curtain rod with finials & softly pleated beige-grey curtains (#b8b5c0)
-// - Strictly contained exterior chamber: night gradient sky, round full moon
-//   in the upper-right pane, twinkling stars, and layered dark-blue skyscrapers
-//   with warm yellow and cool white lit windows (NO floating buildings).
+// NightWindow — Exact match to Reference Image:
+// - Clean white/slate 4-pane recessed window frame with thin mullions
+// - Horizontal metallic curtain rod with spherical finials (properly rotated)
+// - Softly pleated beige-grey curtains (#b8b5c0) pulled open to the sides
+// - High-transparency clear window glass
+// - Contained vibrant night cityscape behind the glass:
+//     * Deep midnight blue sky
+//     * Glowing luminous round full moon in the upper-right pane with soft halo
+//     * Twinkling starry sky
+//     * Layered skyscrapers with warm golden and cool cyan illuminated windows
+//     * Blinking red aviation warning beacons & architectural roof spires
+//     * Strictly contained so no buildings float into the void!
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MULLION_COLOR = '#e2e8f0' // Clean white/light mullions from Image 5
-const FRAME_COLOR   = '#1e293b' // Deep slate casing
-const SILL_COLOR    = '#334155'
-const CURTAIN_COLOR = '#b8b5c0' // Soft beige-grey curtains from Image 5
+const MULLION_COLOR = '#f1f5f9' // Crisp white/cream mullions
+const FRAME_COLOR   = '#1e2638' // Architectural slate frame
+const SILL_COLOR    = '#334155' // Window sill
+const CURTAIN_COLOR = '#b8b5c0' // Soft beige-grey curtain cloth
 
 function DrapedCurtain({ side, height }: { side: 'left' | 'right'; height: number }) {
   const isLeft = side === 'left'
   const sign = isLeft ? -1 : 1
 
-  // Generate realistic pleated wave folds using vertical capsule columns
+  // Pleat folds along the window edge
   const folds = useMemo(() => [
-    { dx: -0.12, r: 0.038, z: 0.05 },
-    { dx: -0.06, r: 0.042, z: 0.07 },
-    { dx:  0.00, r: 0.045, z: 0.05 },
-    { dx:  0.06, r: 0.042, z: 0.07 },
-    { dx:  0.12, r: 0.038, z: 0.05 },
+    { dx: -0.14, r: 0.038, z: 0.05 },
+    { dx: -0.07, r: 0.044, z: 0.08 },
+    { dx:  0.00, r: 0.046, z: 0.05 },
+    { dx:  0.07, r: 0.044, z: 0.08 },
+    { dx:  0.14, r: 0.038, z: 0.05 },
   ], [])
 
   return (
-    <group position={[sign * 0.98, 0, 0.08]}>
-      {/* Pleat wave cylinders */}
+    <group position={[sign * 1.05, 0, 0.08]}>
+      {/* Pleated vertical fabric columns */}
       {folds.map((f, i) => (
         <mesh key={i} position={[f.dx, 0, f.z]} castShadow receiveShadow>
           <capsuleGeometry args={[f.r, height - f.r * 2, 8, 16]} />
           <meshStandardMaterial
             color={CURTAIN_COLOR}
-            roughness={0.94}
-            metalness={0.05}
+            roughness={0.92}
+            metalness={0.04}
           />
         </mesh>
       ))}
 
-      {/* Main curtain backing fabric */}
+      {/* Main curtain backing drape */}
       <mesh position={[0, 0, 0.02]} castShadow receiveShadow>
-        <boxGeometry args={[0.34, height, 0.04]} />
+        <boxGeometry args={[0.38, height, 0.035]} />
         <meshStandardMaterial color={CURTAIN_COLOR} roughness={0.95} />
       </mesh>
 
       {/* Tie-back brass accent ring */}
-      <mesh position={[-sign * 0.05, -height * 0.12, 0.06]} rotation={[0, 0, Math.PI / 2]}>
-        <torusGeometry args={[0.04, 0.008, 8, 16]} />
-        <meshStandardMaterial color="#d4af37" metalness={0.7} roughness={0.3} />
+      <mesh position={[-sign * 0.06, -height * 0.16, 0.07]} rotation={[0, 0, Math.PI / 2]}>
+        <torusGeometry args={[0.042, 0.009, 8, 16]} />
+        <meshStandardMaterial color="#d4af37" metalness={0.75} roughness={0.25} />
       </mesh>
     </group>
   )
@@ -63,123 +69,136 @@ function ContainedNightCityscape() {
 
   useFrame(({ clock }) => {
     if (beaconRef.current) {
-      beaconRef.current.emissiveIntensity = Math.sin(clock.getElapsedTime() * 4) > 0.3 ? 2.5 : 0.2
+      beaconRef.current.emissiveIntensity = Math.sin(clock.getElapsedTime() * 4) > 0.2 ? 3.0 : 0.2
     }
   })
 
-  // City skyscrapers strictly bounded inside the window's viewable cone
+  // Multiple layers of city skyscrapers strictly behind the window glass
   const towers = useMemo(() => [
-    // Background layer
-    { x: -0.72, h: 2.8, w: 0.34, d: 0.35, z: -2.8, col: '#0a0f1d' },
-    { x: -0.32, h: 3.4, w: 0.42, d: 0.4,  z: -3.0, col: '#080d1a', antenna: true },
-    { x:  0.12, h: 2.6, w: 0.36, d: 0.35, z: -2.7, col: '#0c1222' },
-    { x:  0.55, h: 3.8, w: 0.44, d: 0.42, z: -3.2, col: '#070b16', spire: true },
-    { x:  0.88, h: 2.9, w: 0.38, d: 0.36, z: -2.9, col: '#0a0f1e' },
+    // Far background skyline
+    { x: -0.75, h: 2.8, w: 0.36, d: 0.35, z: -2.8, col: '#0d1527' },
+    { x: -0.35, h: 3.5, w: 0.44, d: 0.40, z: -3.0, col: '#0a1020', antenna: true },
+    { x:  0.10, h: 2.7, w: 0.38, d: 0.35, z: -2.7, col: '#0f172a' },
+    { x:  0.58, h: 3.9, w: 0.46, d: 0.42, z: -3.2, col: '#080d1a', spire: true },
+    { x:  0.92, h: 3.0, w: 0.40, d: 0.36, z: -2.9, col: '#0d1527' },
 
-    // Midground layer
-    { x: -0.55, h: 1.8, w: 0.32, d: 0.32, z: -2.0, col: '#111827' },
-    { x: -0.12, h: 2.1, w: 0.36, d: 0.35, z: -2.1, col: '#141d30' },
-    { x:  0.34, h: 1.9, w: 0.34, d: 0.32, z: -1.9, col: '#121a2c' },
-    { x:  0.72, h: 2.2, w: 0.38, d: 0.34, z: -2.2, col: '#152036' },
+    // Midground skyscrapers
+    { x: -0.60, h: 2.0, w: 0.34, d: 0.32, z: -2.1, col: '#131d33' },
+    { x: -0.15, h: 2.3, w: 0.38, d: 0.35, z: -2.2, col: '#16223b' },
+    { x:  0.32, h: 2.1, w: 0.35, d: 0.32, z: -2.0, col: '#141e35' },
+    { x:  0.75, h: 2.4, w: 0.40, d: 0.34, z: -2.3, col: '#17243e' },
+
+    // Foreground architectural blocks
+    { x: -0.42, h: 1.4, w: 0.32, d: 0.30, z: -1.5, col: '#1e293b' },
+    { x:  0.48, h: 1.5, w: 0.36, d: 0.30, z: -1.6, col: '#1e293b' },
   ], [])
 
   return (
-    <group position={[0, 0, -0.4]}>
-      {/* ── Deep Blue Night Sky Gradient ── */}
+    <group position={[0, 0, -0.2]}>
+      {/* ── Deep Midnight Blue Sky Backdrop ── */}
       <mesh position={[0, 0.4, -3.8]}>
-        <planeGeometry args={[4.5, 4.0]} />
-        <meshStandardMaterial color="#050c1e" roughness={1} />
+        <planeGeometry args={[5.2, 4.4]} />
+        <meshBasicMaterial color="#030714" />
       </mesh>
 
-      {/* ── Glowing Full Moon in Upper-Right Pane (Exact to Image 5) ── */}
-      <group position={[0.42, 0.52, -2.6]}>
-        {/* Crisp luminous moon sphere */}
+      {/* ── Soft Gradient Sky Glow behind the Skyline ── */}
+      <mesh position={[0, -0.2, -3.6]}>
+        <planeGeometry args={[5.0, 2.5]} />
+        <meshBasicMaterial color="#0c1a36" transparent opacity={0.65} />
+      </mesh>
+
+      {/* ── Glowing Luminous Full Moon in Upper-Right Pane (Exact Match) ── */}
+      <group position={[0.46, 0.55, -2.5]}>
+        {/* Crisp glowing moon disc */}
         <mesh>
-          <sphereGeometry args={[0.22, 24, 20]} />
-          <meshStandardMaterial
-            color="#fffde7"
-            emissive="#fef9c3"
-            emissiveIntensity={1.6}
-            roughness={0.8}
-          />
+          <sphereGeometry args={[0.20, 32, 24]} />
+          <meshBasicMaterial color="#fef9c3" />
         </mesh>
-        {/* Soft atmospheric glow halo */}
+        {/* Soft atmospheric lunar glow aura */}
         <mesh position={[0, 0, 0.02]}>
-          <circleGeometry args={[0.38, 24]} />
-          <meshStandardMaterial
+          <circleGeometry args={[0.42, 32]} />
+          <meshBasicMaterial
             color="#93c5fd"
             transparent
-            opacity={0.18}
-            roughness={1}
+            opacity={0.25}
             depthWrite={false}
           />
         </mesh>
-        {/* Cool moonlight cast */}
-        <pointLight color="#93c5fd" intensity={1.5} distance={6} decay={2} />
+        <mesh position={[0, 0, 0.03]}>
+          <circleGeometry args={[0.70, 32]} />
+          <meshBasicMaterial
+            color="#60a5fa"
+            transparent
+            opacity={0.12}
+            depthWrite={false}
+          />
+        </mesh>
       </group>
 
       {/* ── Twinkling Stars in Night Sky ── */}
       {useMemo(() => (
-        Array.from({ length: 45 }).map((_, i) => {
-          const sx = -1.3 + (i % 8) * 0.36 + Math.sin(i * 11) * 0.1
-          const sy = 0.2 + Math.floor(i / 8) * 0.28 + Math.cos(i * 7) * 0.08
-          const sz = -3.4 + Math.sin(i * 3) * 0.2
-          const size = 0.01 + (i % 3) * 0.006
+        Array.from({ length: 60 }).map((_, i) => {
+          const sx = -1.5 + (i % 10) * 0.32 + Math.sin(i * 13) * 0.08
+          const sy = 0.15 + Math.floor(i / 10) * 0.26 + Math.cos(i * 7) * 0.07
+          const sz = -3.4 + Math.sin(i * 5) * 0.15
+          const size = 0.009 + (i % 3) * 0.005
+          const bright = (i % 4 === 0) ? '#e0f2fe' : '#ffffff'
           return (
             <mesh key={i} position={[sx, sy, sz]}>
-              <sphereGeometry args={[size, 4, 4]} />
-              <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={1.4} />
+              <sphereGeometry args={[size, 6, 6]} />
+              <meshBasicMaterial color={bright} />
             </mesh>
           )
         })
       ), [])}
 
-      {/* ── Layered Skyscrapers with Illuminated Windows ── */}
+      {/* ── Layered 3D Skyscrapers with Illuminated Windows ── */}
       {towers.map((b, i) => (
         <group key={i} position={[b.x, -1.0 + b.h / 2, b.z]}>
+          {/* Main building block */}
           <mesh>
             <boxGeometry args={[b.w, b.h, b.d]} />
-            <meshStandardMaterial color={b.col} roughness={0.85} />
+            <meshStandardMaterial color={b.col} roughness={0.85} metalness={0.2} />
           </mesh>
 
-          {/* Roof spire or antenna */}
+          {/* Roof spire */}
           {b.spire && (
-            <mesh position={[0, b.h / 2 + 0.3, 0]}>
-              <coneGeometry args={[0.025, 0.6, 8]} />
+            <mesh position={[0, b.h / 2 + 0.32, 0]}>
+              <coneGeometry args={[0.028, 0.65, 8]} />
               <meshStandardMaterial color="#64748b" metalness={0.8} />
             </mesh>
           )}
+
+          {/* Roof antenna with blinking red beacon */}
           {b.antenna && (
-            <group position={[0, b.h / 2 + 0.2, 0]}>
+            <group position={[0, b.h / 2 + 0.22, 0]}>
               <mesh>
-                <cylinderGeometry args={[0.006, 0.006, 0.4, 6]} />
+                <cylinderGeometry args={[0.006, 0.006, 0.44, 6]} />
                 <meshStandardMaterial color="#475569" metalness={0.8} />
               </mesh>
-              <mesh position={[0, 0.2, 0]}>
-                <sphereGeometry args={[0.018, 8, 6]} />
+              <mesh position={[0, 0.22, 0]}>
+                <sphereGeometry args={[0.022, 10, 8]} />
                 <meshStandardMaterial
-                  ref={i === 1 ? beaconRef : undefined}
+                  ref={beaconRef}
                   color="#ef4444"
                   emissive="#ef4444"
-                  emissiveIntensity={2.5}
+                  emissiveIntensity={3.0}
                 />
               </mesh>
             </group>
           )}
 
-          {/* Windows (warm yellow & cool white lit apartments) */}
-          {Array.from({ length: Math.floor(b.h * 3.4) }).map((_, wi) => {
-            const isWarm = (wi * 5 + i * 7) % 4 !== 0
+          {/* Glowing Windows (warm amber & cool cyan lit apartments) */}
+          {Array.from({ length: Math.floor(b.h * 4) }).map((_, wi) => {
+            const isWarm = (wi * 5 + i * 7) % 3 !== 0
             const wx = ((wi % 3) - 1) * (b.w * 0.28)
-            const wy = -b.h / 2 + 0.16 + wi * 0.22
+            const wy = -b.h / 2 + 0.18 + wi * 0.20
             if (wy > b.h / 2 - 0.16) return null
             return (
-              <mesh key={wi} position={[wx, wy, b.d / 2 + 0.004]}>
-                <boxGeometry args={[0.05, 0.075, 0.003]} />
-                <meshStandardMaterial
-                  color={isWarm ? '#f59e0b' : '#38bdf8'}
-                  emissive={isWarm ? '#fbbf24' : '#e0f2fe'}
-                  emissiveIntensity={1.8}
+              <mesh key={wi} position={[wx, wy, b.d / 2 + 0.005]}>
+                <boxGeometry args={[0.048, 0.072, 0.004]} />
+                <meshBasicMaterial
+                  color={isWarm ? '#fbbf24' : '#67e8f9'}
                 />
               </mesh>
             )
@@ -187,96 +206,107 @@ function ContainedNightCityscape() {
         </group>
       ))}
 
-      {/* Recessed Exterior Chamber Enclosure (Blocks all leakage) */}
-      {/* Top cap */}
-      <mesh position={[0, 1.8, -1.8]}>
-        <boxGeometry args={[2.5, 0.1, 3.8]} />
-        <meshStandardMaterial color="#02040a" />
+      {/* Recessed Exterior Light Enclosure (Prevents leakage into empty space) */}
+      <mesh position={[0, 1.85, -1.8]}>
+        <boxGeometry args={[2.8, 0.1, 4.0]} />
+        <meshBasicMaterial color="#02040a" />
       </mesh>
-      {/* Bottom cap */}
-      <mesh position={[0, -1.3, -1.8]}>
-        <boxGeometry args={[2.5, 0.1, 3.8]} />
-        <meshStandardMaterial color="#02040a" />
+      <mesh position={[0, -1.35, -1.8]}>
+        <boxGeometry args={[2.8, 0.1, 4.0]} />
+        <meshBasicMaterial color="#02040a" />
       </mesh>
-      {/* Left cheek */}
-      <mesh position={[-1.25, 0.25, -1.8]}>
-        <boxGeometry args={[0.1, 3.2, 3.8]} />
-        <meshStandardMaterial color="#02040a" />
+      <mesh position={[-1.4, 0.25, -1.8]}>
+        <boxGeometry args={[0.1, 3.4, 4.0]} />
+        <meshBasicMaterial color="#02040a" />
       </mesh>
-      {/* Right cheek */}
-      <mesh position={[1.25, 0.25, -1.8]}>
-        <boxGeometry args={[0.1, 3.2, 3.8]} />
-        <meshStandardMaterial color="#02040a" />
+      <mesh position={[1.4, 0.25, -1.8]}>
+        <boxGeometry args={[0.1, 3.4, 4.0]} />
+        <meshBasicMaterial color="#02040a" />
       </mesh>
     </group>
   )
 }
 
 export function NightWindow() {
-  const WW = 1.95  // Window width
-  const WH = 2.1   // Window height
-  const MT = 0.045 // Mullion thickness
+  const WW = 2.05  // Window width
+  const WH = 2.15  // Window height
+  const MT = 0.042 // Mullion thickness
+  const FT = 0.065 // Frame thickness
 
   return (
-    // Mounted on Back-Right Wall (centered at x = 0.45, z = -2.18)
-    <group position={[0.45, 1.85, -2.18]}>
-      {/* ── Metallic Curtain Rod with Spherical Finials ── */}
-      <mesh position={[0, WH / 2 + 0.14, 0.12]} rotation={[0, Math.PI / 2, 0]}>
-        <cylinderGeometry args={[0.016, 0.016, WW + 0.7, 12]} />
-        <meshStandardMaterial color="#94a3b8" metalness={0.75} roughness={0.25} />
+    // Mounted on Back-Right Wall (centered at x = 0.425, z = -2.18)
+    <group position={[0.425, 1.85, -2.18]}>
+      {/* ── Horizontal Metallic Curtain Rod with Spherical Finials (FIXED ROTATION) ── */}
+      <mesh position={[0, WH / 2 + 0.12, 0.13]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.016, 0.016, WW + 0.8, 16]} />
+        <meshStandardMaterial color="#94a3b8" metalness={0.8} roughness={0.2} />
       </mesh>
-      {/* Spherical finials */}
-      {[-WW / 2 - 0.32, WW / 2 + 0.32].map((fx, i) => (
-        <mesh key={i} position={[fx, WH / 2 + 0.14, 0.12]}>
-          <sphereGeometry args={[0.03, 12, 10]} />
-          <meshStandardMaterial color="#cbd5e1" metalness={0.8} roughness={0.2} />
+      {/* Spherical finials on rod ends */}
+      {[-WW / 2 - 0.38, WW / 2 + 0.38].map((fx, i) => (
+        <mesh key={i} position={[fx, WH / 2 + 0.12, 0.13]}>
+          <sphereGeometry args={[0.032, 16, 12]} />
+          <meshStandardMaterial color="#cbd5e1" metalness={0.85} roughness={0.18} />
         </mesh>
       ))}
 
       {/* ── Softly Pleated Beige-Grey Curtains Pulled Open (#b8b5c0) ── */}
-      <DrapedCurtain side="left" height={WH + 0.1} />
-      <DrapedCurtain side="right" height={WH + 0.1} />
+      <DrapedCurtain side="left" height={WH + 0.12} />
+      <DrapedCurtain side="right" height={WH + 0.12} />
 
-      {/* ── Clean White 4-Pane Window Frame & Mullions (Image 5) ── */}
-      {/* Outer casing */}
-      <mesh position={[0, 0, 0]}>
-        <boxGeometry args={[WW + 0.08, WH + 0.08, 0.08]} />
-        <meshStandardMaterial color={FRAME_COLOR} roughness={0.4} />
+      {/* ── 4-Piece Window Frame Casing (Open Center, NO solid blocking box!) ── */}
+      {/* Top frame */}
+      <mesh position={[0, WH / 2 + FT / 2, 0.03]}>
+        <boxGeometry args={[WW + FT * 2, FT, 0.10]} />
+        <meshStandardMaterial color={FRAME_COLOR} roughness={0.5} />
+      </mesh>
+      {/* Bottom frame */}
+      <mesh position={[0, -WH / 2 - FT / 2, 0.03]}>
+        <boxGeometry args={[WW + FT * 2, FT, 0.10]} />
+        <meshStandardMaterial color={FRAME_COLOR} roughness={0.5} />
+      </mesh>
+      {/* Left frame */}
+      <mesh position={[-WW / 2 - FT / 2, 0, 0.03]}>
+        <boxGeometry args={[FT, WH, 0.10]} />
+        <meshStandardMaterial color={FRAME_COLOR} roughness={0.5} />
+      </mesh>
+      {/* Right frame */}
+      <mesh position={[WW / 2 + FT / 2, 0, 0.03]}>
+        <boxGeometry args={[FT, WH, 0.10]} />
+        <meshStandardMaterial color={FRAME_COLOR} roughness={0.5} />
       </mesh>
 
+      {/* ── Clean White 4-Pane Mullions (Cross Divider) ── */}
       {/* White vertical center mullion */}
-      <mesh position={[0, 0, 0.02]}>
+      <mesh position={[0, 0, 0.04]}>
         <boxGeometry args={[MT, WH, 0.06]} />
-        <meshStandardMaterial color={MULLION_COLOR} roughness={0.3} />
+        <meshStandardMaterial color={MULLION_COLOR} roughness={0.25} />
       </mesh>
       {/* White horizontal transom divider */}
-      <mesh position={[0, 0.12, 0.02]}>
+      <mesh position={[0, 0.12, 0.04]}>
         <boxGeometry args={[WW, MT, 0.06]} />
-        <meshStandardMaterial color={MULLION_COLOR} roughness={0.3} />
+        <meshStandardMaterial color={MULLION_COLOR} roughness={0.25} />
       </mesh>
 
-      {/* ── Transparent Window Glass Panes ── */}
-      <mesh position={[0, 0, 0.01]}>
-        <planeGeometry args={[WW - 0.04, WH - 0.04]} />
-        <meshPhysicalMaterial
-          color="#ffffff"
+      {/* ── Crystal Clear Window Glass ── */}
+      <mesh position={[0, 0, 0.02]}>
+        <planeGeometry args={[WW, WH]} />
+        <meshStandardMaterial
+          color="#dbeafe"
           transparent
-          opacity={0.06}
-          roughness={0.02}
+          opacity={0.08}
+          roughness={0.04}
           metalness={0.1}
-          transmission={0.96}
-          reflectivity={0.25}
           side={THREE.DoubleSide}
         />
       </mesh>
 
       {/* ── Window Sill ── */}
-      <mesh position={[0, -WH / 2 - 0.028, 0.08]} receiveShadow>
-        <boxGeometry args={[WW + 0.22, 0.045, 0.2]} />
-        <meshStandardMaterial color={SILL_COLOR} roughness={0.6} />
+      <mesh position={[0, -WH / 2 - FT - 0.02, 0.10]} receiveShadow>
+        <boxGeometry args={[WW + FT * 2 + 0.18, 0.046, 0.22]} />
+        <meshStandardMaterial color={SILL_COLOR} roughness={0.65} />
       </mesh>
 
-      {/* ── Strictly Contained 3D Night Skyline Chamber (No Floating Buildings) ── */}
+      {/* ── 3D Night Skyline & Moon (Visible with 100% Clarity through Glass) ── */}
       <ContainedNightCityscape />
     </group>
   )

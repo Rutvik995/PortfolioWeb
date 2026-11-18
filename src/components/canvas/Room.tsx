@@ -251,7 +251,7 @@ export function Room() {
       <group position={[-0.40, 0.50, -0.10]} rotation={[0, -Math.PI / 2 + 0.12, 0]}>
         <DeveloperAvatar standalone={false} />
         {/* Articulated Brass Desk Lamp placed on the desk beside DeveloperAvatar */}
-        <ArticulatedDeskLamp position={[-0.68, 0.103, 0.72]} />
+        <ArticulatedDeskLamp position={[-0.65, 0.105, 0.82]} rotation={[0, Math.PI * 0.95, 0]} />
       </group>
     </group>
   )

@@ -1,78 +1,44 @@
-import { useRef, useEffect } from 'react'
-import * as THREE from 'three'
-import { useLampStore } from './lampStore'
-
 // ─────────────────────────────────────────────────────────────────────────────
-// Lighting — Balanced Atmospheric Lighting Setup:
-// - ONLY ONE dynamic shadow-casting light (the articulated warm yellow desk lamp)
-//   for silky 60 FPS performance.
-// - Soft moonlight directional light streaming through the window, providing a
-//   crisp cool-blue rim highlight on Rutvik's hair, glasses, and brown hoodie.
-// - Soft cyan monitor glow illuminating the keyboard and front of the hoodie.
-// - Balanced ambient and hemisphere lights ensuring no dark crushed blacks.
+// Lighting — Balanced Atmospheric Night Diorama Lighting:
+// - Soft moonlight streaming through the window, providing crisp cool-blue
+//   rim highlights on Rutvik's hair mane, glasses, and brown hoodie.
+// - Balanced ambient and hemisphere lights ensuring clean visibility and no
+//   crushed blacks in room corners or shadows.
+// - Soft monitor fill light illuminating the keyboard and front of the hoodie.
+// - Note: The hero shadow-casting key light is located inside ArticulatedDeskLamp
+//   for 100% physical alignment with the bulb at silky 60 FPS.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function Lighting() {
-  const lampPtRef = useRef<THREE.PointLight>(null!)
-  const lampOn = useLampStore((s) => s.lampOn)
-
-  useEffect(() => {
-    if (lampPtRef.current) {
-      lampPtRef.current.intensity = lampOn ? 5.8 : 0.4
-    }
-  }, [lampOn])
-
-  // Exact world coordinates of the articulated desk lamp bulb:
-  // Room offset: [2.1, -0.6, 0]
-  // Workstation group: [-0.40, 0.50, -0.10], rotation: [0, -Math.PI / 2 + 0.12, 0]
-  // Bulb position in world space: [0.74, 0.42, -0.35]
-  const lampBulbPos: [number, number, number] = [0.74, 0.42, -0.35]
-
-  // Monitor glow in front of the screens:
-  const monitorGlowPos: [number, number, number] = [0.65, 0.45, -0.05]
-
   return (
     <>
       {/* ── Balanced Ambient & Hemisphere Lighting ── */}
-      <ambientLight intensity={0.65} color="#cbd5e1" />
-      <hemisphereLight args={['#93c5fd', '#452c1e', 1.05]} />
+      <ambientLight intensity={0.68} color="#dbeafe" />
+      <hemisphereLight args={['#93c5fd', '#3b2518', 1.10]} />
 
-      {/* ── Hero Warm Yellow Desk Lamp Key Light (ONLY shadow-casting light) ── */}
-      <pointLight
-        ref={lampPtRef}
-        position={lampBulbPos}
-        color="#ffaa3b"
-        intensity={5.8}
-        distance={8.5}
-        decay={1.5}
-        castShadow
-        shadow-mapSize={[1024, 1024]}
-        shadow-bias={-0.0005}
-      />
-
-      {/* ── Window Moonlight Directional Light (Crisp rim light on hair & shoulders) ── */}
+      {/* ── Window Moonlight Directional Light (Crisp cool rim on hair & hoodie) ── */}
       <directionalLight
-        position={[4.8, 4.2, -4.5]}
+        position={[3.8, 4.5, -3.8]}
         color="#818cf8"
-        intensity={1.8}
+        intensity={2.0}
         castShadow={false}
       />
 
-      {/* ── Monitor Displays Screen Glow ── */}
+      {/* ── Soft Monitor Screen Fill Glow ── */}
       <pointLight
-        position={monitorGlowPos}
+        position={[1.65, 0.55, -0.05]}
         color="#22d3ee"
-        intensity={1.6}
-        distance={4.0}
+        intensity={1.8}
+        distance={4.2}
         decay={2}
         castShadow={false}
       />
 
-      {/* ── Soft Fill Light for Bookshelf / Left Wall ── */}
+      {/* ── Back-Left Wall Bookshelf Fill Light ── */}
       <pointLight
-        position={[0.5, 1.8, -0.5]}
+        position={[0.2, 1.9, -0.6]}
         color="#93c5fd"
-        intensity={0.65}
+        intensity={0.7}
         distance={5}
         decay={2}
         castShadow={false}

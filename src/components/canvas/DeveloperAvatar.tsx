@@ -1,34 +1,23 @@
 'use client';
 
 /**
- * DeveloperAvatar
+ * DeveloperAvatar — Rutvik 3D Isometric Developer
  * ---------------------------------------------------------------------------
- * A fully procedural, stylized 3D developer seated at a desk and typing.
- *
- *  - No .glb / .gltf assets, no useGLTF.
- *  - No BoxGeometry anywhere. Everything is Lathe / Tube / Capsule / Torus /
- *    Sphere / Extrude (rounded-rect profiles) / Shape / Plane / Circle.
- *  - Hip pivot of the character is at [0, 0, 0], character faces +Z
- *    (toward the keyboard and the monitors). Floor is at y = -0.5 (local).
- *  - The character's LEFT side is +X, the RIGHT side is -X.
- *
- * Usage:
- *   <Canvas shadows camera={{ position: [2.2, 1.1, 2.4], fov: 35 }}>
- *     <DeveloperAvatar position={[0, -0.2, 0]} scale={1.2} />
- *   </Canvas>
- *
- * The component ships its own soft key light, fill and monitor-glow light so it
- * renders well standalone. Remove them if your scene already provides lighting.
+ * Fully procedural stylized 3D character and workstation matching reference:
+ *  - Thick, luscious, layered wavy swept-back dark brown/black mane
+ *    (voluminous quiff, deep side wave ridges, cascading nape waves onto collar)
+ *  - Clean sculpted South Asian face: defined nose bridge, almond eyes,
+ *    modern black rectangular glasses with horizontal temple arms
+ *  - Crisp sculpted chinstrap beard along the exact jawline rim, trimmed mustache,
+ *    and soul patch — clean smooth cheeks!
+ *  - Chocolate brown oversized hoodie matching reference photo
+ *  - Executive walnut desk with 3-drawer stack, dual glowing screens,
+ *    Herman Miller style ergonomic mesh chair, keyboard with live typing keys
  */
 
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
-
-/* -------------------------------------------------------------------------- */
-/*  Public API                                                                */
-/* -------------------------------------------------------------------------- */
 
 export interface DeveloperAvatarProps {
   position?: [number, number, number];
@@ -37,247 +26,184 @@ export interface DeveloperAvatarProps {
   standalone?: boolean;
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Constants & small helpers                                                 */
-/* -------------------------------------------------------------------------- */
-
 const TAU = Math.PI * 2;
 const V3 = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
 const SHADOWS = { castShadow: true, receiveShadow: true } as const;
 
-/** Head ellipsoid radii (SphereGeometry r=0.15 scaled [0.92, 1.08, 0.98]). */
+/** Head ellipsoid radii */
 const HEAD_R = 0.15;
 const HEAD_SCALE: [number, number, number] = [0.92, 1.08, 0.98];
 const HR = { x: HEAD_R * 0.92, y: HEAD_R * 1.08, z: HEAD_R * 0.98 };
 
-/** Point on the head ellipsoid, same parametrisation as THREE.SphereGeometry. */
-function headPoint(theta: number, phi: number, off = 0): THREE.Vector3 {
-  const st = Math.sin(theta);
-  return V3(
-    -(HR.x + off) * Math.cos(phi) * st,
-    (HR.y + off) * Math.cos(theta),
-    (HR.z + off) * Math.sin(phi) * st,
-  );
-}
-
-/** Z of the front of the face at (x, y), head-local. */
+/** Z of the front of the face at (x, y), head-local */
 function faceZ(x: number, y: number): number {
   const k = 1 - (x / HR.x) ** 2 - (y / HR.y) ** 2;
   return HR.z * Math.sqrt(Math.max(0, k));
 }
 
-/** Point sitting just above the face surface. */
 const onFace = (x: number, y: number, off: number) => V3(x, y, faceZ(x, y) + off);
 
-/** Tube with a custom radius profile along its length (organic, tapered, rounded). */
+/** Custom tube with radius profile */
 function taperedTube(
   curve: THREE.Curve<THREE.Vector3>,
   tubularSegments: number,
   radialSegments: number,
   radius: (u: number) => number,
 ): THREE.TubeGeometry {
-  const geo = new THREE.TubeGeometry(curve, tubularSegments, 1, radialSegments, false);
-  const pos = geo.attributes.position as THREE.BufferAttribute;
-  const c = new THREE.Vector3();
+  const geom = new THREE.TubeGeometry(curve, tubularSegments, 0.01, radialSegments, false);
+  const pos = geom.attributes.position as THREE.BufferAttribute;
+  const frames = curve.computeFrenetFrames(tubularSegments, false);
   const p = new THREE.Vector3();
+
   for (let i = 0; i <= tubularSegments; i++) {
     const u = i / tubularSegments;
-    curve.getPointAt(u, c);
     const r = radius(u);
+    const origin = curve.getPointAt(u);
+    const N = frames.normals[i];
+    const B = frames.binormals[i];
+
     for (let j = 0; j <= radialSegments; j++) {
       const idx = i * (radialSegments + 1) + j;
-      p.fromBufferAttribute(pos, idx).sub(c).multiplyScalar(r).add(c);
+      const v = (j / radialSegments) * TAU;
+      const cx = -Math.cos(v);
+      const cy = Math.sin(v);
+      p.copy(origin)
+        .addScaledVector(N, cx * r)
+        .addScaledVector(B, cy * r);
       pos.setXYZ(idx, p.x, p.y, p.z);
     }
   }
   pos.needsUpdate = true;
-  return geo;
+  geom.computeVertexNormals();
+  return geom;
 }
 
-/** Radius multiplier that rounds off both ends of a tube. */
-const roundEnds = (u: number, span = 0.07) =>
-  Math.min(1, Math.sqrt(Math.max(0, Math.min(u, 1 - u)) / span));
+const roundEnds = (u: number, blend = 0.08) => {
+  const a = Math.min(1, u / blend);
+  const b = Math.min(1, (1 - u) / blend);
+  return Math.sin(a * Math.PI * 0.5) * Math.sin(b * Math.PI * 0.5);
+};
 
-function roundedRectShape(w: number, h: number, r: number): THREE.Shape {
-  const s = new THREE.Shape();
-  const x = -w / 2;
-  const y = -h / 2;
-  s.moveTo(x + r, y);
-  s.lineTo(x + w - r, y);
-  s.absarc(x + w - r, y + r, r, -Math.PI / 2, 0, false);
-  s.lineTo(x + w, y + h - r);
-  s.absarc(x + w - r, y + h - r, r, 0, Math.PI / 2, false);
-  s.lineTo(x + r, y + h);
-  s.absarc(x + r, y + h - r, r, Math.PI / 2, Math.PI, false);
-  s.lineTo(x, y + r);
-  s.absarc(x + r, y + r, r, Math.PI, Math.PI * 1.5, false);
-  return s;
+function capsuleZ(r: number, length: number): THREE.CylinderGeometry {
+  const c = new THREE.CylinderGeometry(r, r, length, 16);
+  c.rotateX(Math.PI / 2);
+  return c;
 }
 
-/** Rounded, bevelled panel in the XY plane, thickness d along Z, centred. */
-function panel(w: number, h: number, d: number, r: number): THREE.ExtrudeGeometry {
-  const b = Math.min(r * 0.4, d * 0.3);
-  const depth = Math.max(0.0001, d - 2 * b);
-  const g = new THREE.ExtrudeGeometry(roundedRectShape(w - 2 * b, h - 2 * b, Math.max(0.001, r - b)), {
-    depth,
-    bevelEnabled: true,
-    bevelThickness: b,
-    bevelSize: b,
-    bevelSegments: 4,
-    curveSegments: 12,
-  });
-  g.translate(0, 0, -depth / 2);
-  return g;
-}
-
-/** Rounded horizontal slab, width x (along X), depth z (along Z), height h (along Y), centred. */
 function slab(w: number, d: number, h: number, r: number): THREE.ExtrudeGeometry {
-  const g = panel(w, d, h, r);
-  g.rotateX(-Math.PI / 2);
-  return g;
+  const shape = new THREE.Shape();
+  const hw = w / 2 - r;
+  const hd = d / 2 - r;
+  shape.moveTo(-hw, -hd - r);
+  shape.lineTo(hw, -hd - r);
+  shape.absarc(hw, -hd, r, -Math.PI / 2, 0, false);
+  shape.lineTo(hw + r, hd);
+  shape.absarc(hw, hd, r, 0, Math.PI / 2, false);
+  shape.lineTo(-hw, hd + r);
+  shape.absarc(-hw, hd, r, Math.PI / 2, Math.PI, false);
+  shape.lineTo(-hw - r, -hd);
+  shape.absarc(-hw, -hd, r, Math.PI, (Math.PI * 3) / 2, false);
+
+  const geom = new THREE.ExtrudeGeometry(shape, {
+    depth: h,
+    bevelEnabled: true,
+    bevelSegments: 4,
+    steps: 1,
+    bevelSize: r * 0.4,
+    bevelThickness: r * 0.4,
+  });
+  geom.rotateX(Math.PI / 2);
+  geom.center();
+  return geom;
 }
 
-/** Capsule lying along +Z (baked). */
-function capsuleZ(radius: number, length: number): THREE.CapsuleGeometry {
-  const g = new THREE.CapsuleGeometry(radius, length, 8, 16);
-  g.rotateX(Math.PI / 2);
-  return g;
+function panel(w: number, h: number, d: number, r: number): THREE.ExtrudeGeometry {
+  const shape = new THREE.Shape();
+  const hw = w / 2 - r;
+  const hh = h / 2 - r;
+  shape.moveTo(-hw, -hh - r);
+  shape.lineTo(hw, -hh - r);
+  shape.absarc(hw, -hh, r, -Math.PI / 2, 0, false);
+  shape.lineTo(hw + r, hh);
+  shape.absarc(hw, hh, r, 0, Math.PI / 2, false);
+  shape.lineTo(-hw, hh + r);
+  shape.absarc(-hw, hh, r, Math.PI / 2, Math.PI, false);
+  shape.lineTo(-hw - r, -hh);
+  shape.absarc(-hw, -hh, r, Math.PI, (Math.PI * 3) / 2, false);
+
+  const geom = new THREE.ExtrudeGeometry(shape, {
+    depth: d,
+    bevelEnabled: true,
+    bevelSegments: 3,
+    steps: 1,
+    bevelSize: 0.004,
+    bevelThickness: 0.004,
+  });
+  geom.center();
+  return geom;
 }
 
-/** Rounded-rectangle (superellipse) loop points. */
-function superellipse(a: number, b: number, n: number, count: number): THREE.Vector3[] {
+function superellipse(a: number, b: number, n: number, steps = 64): THREE.Vector3[] {
   const pts: THREE.Vector3[] = [];
-  for (let i = 0; i < count; i++) {
-    const t = (i / count) * TAU;
-    const c = Math.cos(t);
-    const s = Math.sin(t);
-    pts.push(V3(a * Math.sign(c) * Math.abs(c) ** (2 / n), b * Math.sign(s) * Math.abs(s) ** (2 / n), 0));
+  for (let i = 0; i < steps; i++) {
+    const t = (i / steps) * TAU;
+    const ct = Math.cos(t);
+    const st = Math.sin(t);
+    const x = a * Math.sign(ct) * Math.pow(Math.abs(ct), 2 / n);
+    const y = b * Math.sign(st) * Math.pow(Math.abs(st), 2 / n);
+    pts.push(V3(x, y, 0));
   }
   return pts;
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Torso profile (hoodie)                                                    */
+/*  Torso Profile (Oversized Hoodie)                                          */
 /* -------------------------------------------------------------------------- */
 
-const TORSO_SCALE: [number, number, number] = [1.22, 1, 0.86];
+const TORSO_PROFILE: THREE.Vector2[] = [
+  [0, -0.05],
+  [0.185, -0.05],
+  [0.21, 0.06],
+  [0.235, 0.22],
+  [0.245, 0.38],
+  [0.23, 0.52],
+  [0.17, 0.62],
+  [0.11, 0.64],
+  [0, 0.64],
+].map(([r, y]) => new THREE.Vector2(r, y));
 
-const TORSO_PROFILE: THREE.Vector2[] = (() => {
-  const raw: [number, number][] = [
-    [0.0, -0.035],
-    [0.15, -0.035],
-    [0.185, -0.02], // soft waist hem
-    [0.2, 0.05],
-    [0.198, 0.18], // relaxed waist
-    [0.222, 0.34],
-    [0.236, 0.44], // chest
-    [0.222, 0.53], // rounded shoulders
-    [0.16, 0.6],
-    [0.105, 0.63],
-    [0.0, 0.645],
-  ];
-  const curve = new THREE.CatmullRomCurve3(raw.map(([r, y]) => V3(r, y, 0)), false, 'centripetal');
-  return curve.getPoints(72).map((p) => new THREE.Vector2(Math.max(p.x, 0.0001), p.y));
-})();
+const TORSO_SCALE: [number, number, number] = [1.08, 1.0, 0.88];
 
-function torsoRadiusAt(y: number): number {
-  for (let i = 0; i < TORSO_PROFILE.length - 1; i++) {
-    const a = TORSO_PROFILE[i];
-    const b = TORSO_PROFILE[i + 1];
-    if (y >= a.y && y <= b.y) {
-      const k = (y - a.y) / Math.max(1e-6, b.y - a.y);
-      return a.x + (b.x - a.x) * k;
-    }
-  }
-  return 0.2;
-}
-
-/** z of the hoodie's front surface at (x, y). */
 function torsoFrontZ(x: number, y: number): number {
-  const r = torsoRadiusAt(y);
+  const r = 0.21 + 0.035 * Math.sin((y / 0.64) * Math.PI);
   const k = 1 - (x / (r * TORSO_SCALE[0])) ** 2;
   return r * TORSO_SCALE[2] * Math.sqrt(Math.max(0, k));
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Hair lock definitions (20 wavy locks, wrapped along the skull)            */
+/*  Hair Wave & Beard Spline Builders                                         */
 /* -------------------------------------------------------------------------- */
 
-interface LockSpec {
-  t0: number; // start polar angle (0 = crown)
-  p0: number; // start azimuth (pi/2 = straight ahead, 3pi/2 = back)
-  t1: number;
-  p1: number;
-  amp: number; // wave amplitude (azimuth radians)
-  waves: number; // number of waves along the lock
-  r: number; // base thickness
-  lift: number; // how much volume stands off the skull
-  ph: number; // wave phase
+function createHairWave(
+  points: [number, number, number][],
+  baseRadius: number,
+  endTaper = 0.45,
+  tubularSegments = 32,
+): THREE.TubeGeometry {
+  const curve = new THREE.CatmullRomCurve3(points.map(([x, y, z]) => V3(x, y, z)), false, 'centripetal');
+  return taperedTube(curve, tubularSegments, 10, (u) => baseRadius * (1 - endTaper * u) * roundEnds(u, 0.06));
 }
 
-const P = Math.PI;
-const LOCKS: LockSpec[] = [
-  // ── 1. Front Fringe / Bangs (Sweeping gracefully across forehead, long & wavy) ──
-  // Reaches down over the forehead to brow level (t1 = 1.48 to 1.62)
-  { t0: 0.42, p0: 1.00, t1: 1.54, p1: 1.76, amp: 0.14, waves: 1.6, r: 0.032, lift: 0.038, ph: 0.0 },
-  { t0: 0.38, p0: 1.25, t1: 1.58, p1: 2.05, amp: 0.15, waves: 1.5, r: 0.034, lift: 0.042, ph: 1.2 },
-  { t0: 0.34, p0: 1.50, t1: 1.52, p1: 2.38, amp: 0.16, waves: 1.7, r: 0.034, lift: 0.044, ph: 2.1 },
-  { t0: 0.46, p0: 0.82, t1: 1.50, p1: 1.42, amp: 0.12, waves: 1.4, r: 0.030, lift: 0.034, ph: 0.7 },
-  { t0: 0.30, p0: 1.15, t1: 1.48, p1: 1.95, amp: 0.16, waves: 1.5, r: 0.035, lift: 0.048, ph: 2.8 },
-  { t0: 0.28, p0: 1.65, t1: 1.46, p1: 2.65, amp: 0.14, waves: 1.8, r: 0.034, lift: 0.045, ph: 3.4 },
-  { t0: 0.52, p0: 0.92, t1: 1.60, p1: 1.62, amp: 0.13, waves: 1.5, r: 0.030, lift: 0.036, ph: 1.5 },
-  { t0: 0.44, p0: 1.38, t1: 1.62, p1: 2.18, amp: 0.15, waves: 1.6, r: 0.032, lift: 0.040, ph: 2.4 },
-
-  // ── 2. Top & Crown Voluminous Wave Tufts (Giving height, texture & silhouette) ──
-  { t0: 0.18, p0: 2.30, t1: 1.05, p1: 3.20, amp: 0.14, waves: 1.7, r: 0.036, lift: 0.052, ph: 0.5 },
-  { t0: 0.20, p0: 0.65, t1: 1.12, p1: -0.15, amp: 0.14, waves: 1.6, r: 0.036, lift: 0.052, ph: 1.8 },
-  { t0: 0.12, p0: 1.55, t1: 0.95, p1: 1.90, amp: 0.15, waves: 1.5, r: 0.038, lift: 0.056, ph: 0.9 },
-  { t0: 0.15, p0: 4.20, t1: 1.10, p1: 4.60, amp: 0.14, waves: 1.6, r: 0.036, lift: 0.050, ph: 2.5 },
-  { t0: 0.22, p0: 1.85, t1: 1.18, p1: 2.50, amp: 0.13, waves: 1.8, r: 0.034, lift: 0.048, ph: 3.1 },
-  { t0: 0.24, p0: 0.95, t1: 1.15, p1: 0.45, amp: 0.13, waves: 1.7, r: 0.034, lift: 0.048, ph: 1.4 },
-
-  // ── 3. Right Side (-X, Camera View!), Long wavy locks over temple, ear & jawline ──
-  { t0: 0.85, p0: 0.45, t1: 2.38, p1: 0.18, amp: 0.11, waves: 2.3, r: 0.032, lift: 0.044, ph: 0.3 },
-  { t0: 0.95, p0: 0.08, t1: 2.45, p1: -0.18, amp: 0.11, waves: 2.2, r: 0.032, lift: 0.046, ph: 1.4 },
-  { t0: 0.75, p0: 0.75, t1: 2.28, p1: 0.52, amp: 0.10, waves: 2.2, r: 0.030, lift: 0.042, ph: 2.5 },
-  { t0: 1.05, p0: 0.30, t1: 2.48, p1: 0.05, amp: 0.12, waves: 2.4, r: 0.030, lift: 0.045, ph: 3.2 },
-  { t0: 1.15, p0: 0.60, t1: 2.35, p1: 0.35, amp: 0.10, waves: 2.1, r: 0.028, lift: 0.040, ph: 0.8 },
-
-  // ── 4. Left Side (+X), Long wavy locks over temple, ear & jawline ──
-  { t0: 0.85, p0: P - 0.45, t1: 2.38, p1: P - 0.18, amp: 0.11, waves: 2.3, r: 0.032, lift: 0.044, ph: 1.0 },
-  { t0: 0.95, p0: P - 0.08, t1: 2.45, p1: P + 0.18, amp: 0.11, waves: 2.2, r: 0.032, lift: 0.046, ph: 2.1 },
-  { t0: 0.75, p0: P - 0.75, t1: 2.28, p1: P - 0.52, amp: 0.10, waves: 2.2, r: 0.030, lift: 0.042, ph: 3.0 },
-  { t0: 1.05, p0: P - 0.30, t1: 2.48, p1: P - 0.05, amp: 0.12, waves: 2.4, r: 0.030, lift: 0.045, ph: 3.8 },
-  { t0: 1.15, p0: P - 0.60, t1: 2.35, p1: P - 0.35, amp: 0.10, waves: 2.1, r: 0.028, lift: 0.040, ph: 1.7 },
-
-  // ── 5. Back & Nape Cascading Long Wavy Layers (Reaching down onto hoodie collar) ──
-  { t0: 0.90, p0: 3.95, t1: 2.82, p1: 3.82, amp: 0.12, waves: 2.5, r: 0.036, lift: 0.048, ph: 0.6 },
-  { t0: 0.85, p0: 4.35, t1: 2.86, p1: 4.30, amp: 0.12, waves: 2.4, r: 0.038, lift: 0.050, ph: 1.7 },
-  { t0: 0.85, p0: 4.75, t1: 2.86, p1: 4.80, amp: 0.12, waves: 2.6, r: 0.038, lift: 0.050, ph: 2.8 },
-  { t0: 0.90, p0: 5.15, t1: 2.82, p1: 5.40, amp: 0.12, waves: 2.5, r: 0.036, lift: 0.048, ph: 3.7 },
-  { t0: 1.20, p0: 3.65, t1: 2.78, p1: 3.48, amp: 0.11, waves: 2.2, r: 0.032, lift: 0.042, ph: 4.5 },
-  { t0: 1.20, p0: 5.65, t1: 2.78, p1: 5.90, amp: 0.11, waves: 2.2, r: 0.032, lift: 0.042, ph: 5.1 },
-  { t0: 1.05, p0: 4.55, t1: 2.88, p1: 4.55, amp: 0.13, waves: 2.7, r: 0.038, lift: 0.052, ph: 2.0 },
-  { t0: 1.10, p0: 4.15, t1: 2.84, p1: 4.10, amp: 0.12, waves: 2.5, r: 0.035, lift: 0.046, ph: 1.1 },
-];
-
-function buildLock(s: LockSpec): THREE.TubeGeometry {
-  const N = 12;
-  const pts: THREE.Vector3[] = [];
-  for (let i = 0; i <= N; i++) {
-    const u = i / N;
-    const wave = Math.sin(u * s.waves * TAU + s.ph);
-    const theta = THREE.MathUtils.lerp(s.t0, s.t1, u) + 0.05 * Math.sin(u * s.waves * TAU + s.ph + 1.3);
-    const phi = THREE.MathUtils.lerp(s.p0, s.p1, u) + s.amp * wave * Math.min(1, u * 2);
-    const off = 0.008 + s.lift * (Math.sin(u * Math.PI) * 0.6 + 0.4 * u);
-    pts.push(headPoint(Math.min(theta, 2.92), phi, off));
-  }
-  const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
-  return taperedTube(curve, 60, 10, (u) => s.r * (1 - 0.45 * u) * roundEnds(u, 0.05));
+function createBeardCurve(
+  points: [number, number, number][],
+  radius = 0.0075,
+): THREE.TubeGeometry {
+  const curve = new THREE.CatmullRomCurve3(points.map(([x, y, z]) => V3(x, y, z)), false, 'centripetal');
+  return taperedTube(curve, 24, 8, (u) => radius * (1 - 0.3 * u) * roundEnds(u, 0.08));
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Geometry factory (built once)                                             */
+/*  Geometries Factory                                                        */
 /* -------------------------------------------------------------------------- */
 
 function buildGeometries() {
@@ -315,15 +241,15 @@ function buildGeometries() {
   const brow = (s: number) =>
     taperedTube(
       new THREE.CatmullRomCurve3(
-        [0.028, 0.045, 0.062, 0.078, 0.092].map((ax, i) => {
+        [0.026, 0.044, 0.062, 0.078, 0.092].map((ax, i) => {
           const x = s * ax;
-          const y = 0.047 + 0.011 * Math.sin((i / 4) * Math.PI * 0.9) - 0.003 * (i / 4);
+          const y = 0.048 + 0.011 * Math.sin((i / 4) * Math.PI * 0.9) - 0.003 * (i / 4);
           return onFace(x, y, 0.007);
         }),
       ),
       20,
       8,
-      (u) => 0.0075 * (1 - 0.45 * u) * roundEnds(u, 0.12),
+      (u) => 0.0078 * (1 - 0.45 * u) * roundEnds(u, 0.12),
     );
 
   const lid = (s: number) =>
@@ -349,8 +275,8 @@ function buildGeometries() {
     );
 
   /* ---- glasses ---- */
-  const lensA = 0.047;
-  const lensB = 0.037;
+  const lensA = 0.046;
+  const lensB = 0.035;
   const loop = superellipse(lensA, lensB, 4, 56);
   const frameCurve = new THREE.CatmullRomCurve3(loop, true, 'centripetal');
   const lensShape = new THREE.Shape(loop.map((p) => new THREE.Vector2(p.x, p.y)));
@@ -358,11 +284,11 @@ function buildGeometries() {
   const bridge = new THREE.CatmullRomCurve3([V3(-0.021, 0.014, 0.16), V3(0, 0.022, 0.167), V3(0.021, 0.014, 0.16)]);
   const temple = (s: number) =>
     new THREE.CatmullRomCurve3([
-      V3(s * 0.107, 0.012, 0.118),
-      V3(s * 0.136, 0.012, 0.07),
-      V3(s * 0.147, 0.012, 0.0),
-      V3(s * 0.146, -0.005, -0.06),
-      V3(s * 0.14, -0.03, -0.085),
+      V3(s * 0.105, 0.012, 0.12),
+      V3(s * 0.134, 0.012, 0.07),
+      V3(s * 0.145, 0.012, 0.0),
+      V3(s * 0.144, -0.006, -0.06),
+      V3(s * 0.138, -0.03, -0.085),
     ]);
 
   /* ---- drawstrings ---- */
@@ -380,7 +306,7 @@ function buildGeometries() {
       V3(s * 0.085, 0.145, 0.186),
     ]);
 
-  /* ---- mug ---- */
+  /* ---- coffee mug ---- */
   const mugProfile = [
     [0, 0],
     [0.034, 0],
@@ -392,7 +318,7 @@ function buildGeometries() {
     [0, 0.012],
   ].map(([r, y]) => new THREE.Vector2(r, y));
 
-  /* ---- chair seat ---- */
+  /* ---- chair seat profile ---- */
   const seatProfile = [
     [0, -0.155],
     [0.25, -0.155],
@@ -403,8 +329,92 @@ function buildGeometries() {
     [0, -0.094],
   ].map(([r, y]) => new THREE.Vector2(r, y));
 
+  /* ═════════════════════════════════════════════════════════════════════════
+     24 CURATED HAIR WAVE SPLINES — Exact Match to Reference Photo
+     ═════════════════════════════════════════════════════════════════════════ */
+  const hairWaves: THREE.TubeGeometry[] = [
+    // ── 1. Front Quiff / Pompadour Waves (arch high from forehead, sweep back) ──
+    createHairWave([[0.00, 0.09, 0.15], [0.00, 0.21, 0.14], [-0.01, 0.23, 0.07], [-0.02, 0.20, -0.03]], 0.036, 0.35),
+    createHairWave([[-0.04, 0.08, 0.15], [-0.05, 0.20, 0.13], [-0.06, 0.22, 0.06], [-0.07, 0.18, -0.04]], 0.034, 0.35),
+    createHairWave([[0.04, 0.08, 0.15], [0.05, 0.20, 0.13], [0.05, 0.22, 0.06], [0.06, 0.18, -0.04]], 0.034, 0.35),
+    createHairWave([[-0.07, 0.07, 0.14], [-0.09, 0.18, 0.12], [-0.10, 0.20, 0.04], [-0.11, 0.16, -0.06]], 0.032, 0.38),
+    createHairWave([[0.07, 0.07, 0.14], [0.08, 0.18, 0.12], [0.09, 0.20, 0.04], [0.10, 0.16, -0.06]], 0.032, 0.38),
+    createHairWave([[-0.02, 0.10, 0.16], [-0.03, 0.22, 0.12], [-0.04, 0.23, 0.02], [-0.04, 0.19, -0.08]], 0.035, 0.35),
+
+    // ── 2. Top & Crown Waves (volume across the skull) ──
+    createHairWave([[-0.02, 0.22, 0.04], [-0.03, 0.21, -0.05], [-0.03, 0.16, -0.13]], 0.036, 0.38),
+    createHairWave([[-0.07, 0.20, 0.03], [-0.08, 0.19, -0.06], [-0.08, 0.15, -0.13]], 0.034, 0.38),
+    createHairWave([[0.04, 0.20, 0.03], [0.05, 0.19, -0.06], [0.05, 0.15, -0.13]], 0.034, 0.38),
+    createHairWave([[0.00, 0.21, -0.02], [0.00, 0.19, -0.09], [0.00, 0.13, -0.15]], 0.036, 0.38),
+
+    // ── 3. Right Side Waves (-X, Direct Isometric Camera View!) ──
+    // Distinctive horizontal S-curve waves rolling back over the ear
+    createHairWave([[-0.09, 0.11, 0.12], [-0.14, 0.09, 0.04], [-0.155, 0.06, -0.05], [-0.13, 0.01, -0.13]], 0.034, 0.40),
+    createHairWave([[-0.11, 0.06, 0.10], [-0.155, 0.03, 0.02], [-0.16, -0.01, -0.06], [-0.135, -0.06, -0.13]], 0.034, 0.40),
+    createHairWave([[-0.10, 0.02, 0.08], [-0.14, -0.02, 0.02], [-0.145, -0.07, -0.06], [-0.12, -0.12, -0.12]], 0.032, 0.42),
+    createHairWave([[-0.08, 0.07, 0.14], [-0.12, 0.05, 0.09], [-0.135, 0.01, 0.04]], 0.028, 0.45),
+    createHairWave([[-0.11, 0.15, 0.06], [-0.155, 0.12, -0.02], [-0.16, 0.06, -0.10]], 0.033, 0.40),
+
+    // ── 4. Left Side Waves (+X) ──
+    createHairWave([[0.09, 0.11, 0.12], [0.14, 0.09, 0.04], [0.155, 0.06, -0.05], [0.13, 0.01, -0.13]], 0.034, 0.40),
+    createHairWave([[0.11, 0.06, 0.10], [0.155, 0.03, 0.02], [0.16, -0.01, -0.06], [0.135, -0.06, -0.13]], 0.034, 0.40),
+    createHairWave([[0.10, 0.02, 0.08], [0.14, -0.02, 0.02], [0.145, -0.07, -0.06], [0.12, -0.12, -0.12]], 0.032, 0.42),
+
+    // ── 5. Back & Nape Cascading Mane (Flows onto Hoodie with outward flip!) ──
+    createHairWave([[-0.04, 0.12, -0.13], [-0.05, 0.00, -0.16], [-0.06, -0.10, -0.16], [-0.05, -0.17, -0.14]], 0.038, 0.35),
+    createHairWave([[0.00, 0.12, -0.14], [0.00, 0.00, -0.17], [0.00, -0.11, -0.17], [0.00, -0.18, -0.15]], 0.040, 0.35),
+    createHairWave([[0.04, 0.12, -0.13], [0.05, 0.00, -0.16], [0.06, -0.10, -0.16], [0.05, -0.17, -0.14]], 0.038, 0.35),
+    createHairWave([[-0.09, 0.08, -0.12], [-0.10, -0.02, -0.15], [-0.11, -0.11, -0.15], [-0.09, -0.16, -0.13]], 0.035, 0.38),
+    createHairWave([[0.09, 0.08, -0.12], [0.10, -0.02, -0.15], [0.11, -0.11, -0.15], [0.09, -0.16, -0.13]], 0.035, 0.38),
+    createHairWave([[-0.02, -0.06, -0.165], [-0.02, -0.14, -0.165], [-0.01, -0.19, -0.14]], 0.036, 0.35),
+  ];
+
+  /* ═════════════════════════════════════════════════════════════════════════
+     5 SCULPTED BEARD & MUSTACHE TUBES — Clean Cheeks, Mandibular Jawline Rim
+     ═════════════════════════════════════════════════════════════════════════ */
+  const beardCurves: THREE.TubeGeometry[] = [
+    // 1. Right Mandibular Jawline Chinstrap (-X side, camera profile!)
+    createBeardCurve([
+      [-0.132, -0.055, -0.025],
+      [-0.122, -0.088, 0.032],
+      [-0.082, -0.112, 0.092],
+      [-0.025, -0.124, 0.130],
+      [0.000, -0.126, 0.134],
+    ], 0.0085),
+
+    // 2. Left Mandibular Jawline Chinstrap (+X side)
+    createBeardCurve([
+      [0.132, -0.055, -0.025],
+      [0.122, -0.088, 0.032],
+      [0.082, -0.112, 0.092],
+      [0.025, -0.124, 0.130],
+      [0.000, -0.126, 0.134],
+    ], 0.0085),
+
+    // 3. Chin Soul Patch (under lower lip)
+    createBeardCurve([
+      [0.000, -0.090, 0.138],
+      [0.000, -0.105, 0.136],
+      [0.000, -0.118, 0.133],
+    ], 0.0070),
+
+    // 4. Right Trimmed Pencil Mustache (directly above upper lip)
+    createBeardCurve([
+      [0.000, -0.058, 0.148],
+      [-0.018, -0.061, 0.145],
+      [-0.034, -0.066, 0.138],
+    ], 0.0065),
+
+    // 5. Left Trimmed Pencil Mustache (directly above upper lip)
+    createBeardCurve([
+      [0.000, -0.058, 0.148],
+      [0.018, -0.061, 0.145],
+      [0.034, -0.066, 0.138],
+    ], 0.0065),
+  ];
+
   return {
-    // body
+    // Body & Head
     head: new THREE.SphereGeometry(HEAD_R, 64, 48),
     ear: new THREE.SphereGeometry(0.03, 24, 20),
     neck: new THREE.CapsuleGeometry(0.052, 0.08, 8, 20),
@@ -420,7 +430,8 @@ function buildGeometries() {
     sleeves,
     wristTangents,
     cuffTorus: new THREE.TorusGeometry(0.04, 0.0125, 14, 40),
-    // hands
+
+    // Hands & Watch
     palm: capsuleZ(0.03, 0.03),
     wrist: capsuleZ(0.033, 0.03),
     finProx: capsuleZ(0.0085, 0.03),
@@ -431,14 +442,16 @@ function buildGeometries() {
     watchCase: new THREE.CylinderGeometry(0.028, 0.028, 0.011, 32),
     watchBezel: new THREE.TorusGeometry(0.029, 0.0042, 10, 36),
     watchFace: new THREE.CylinderGeometry(0.0235, 0.0235, 0.002, 32),
-    // legs & shoes
+
+    // Legs & Shoes
     pelvis: new THREE.SphereGeometry(1, 32, 24),
     thighs,
     calves,
     joint: new THREE.SphereGeometry(1, 24, 20),
     shoeUpper: new THREE.SphereGeometry(1, 32, 24),
     sole: capsuleZ(0.062, 0.12),
-    // face
+
+    // Face details
     eyeWhite: new THREE.SphereGeometry(0.0215, 24, 20),
     iris: new THREE.SphereGeometry(0.0125, 20, 16),
     pupil: new THREE.SphereGeometry(0.0064, 16, 12),
@@ -450,33 +463,49 @@ function buildGeometries() {
     noseBridge: new THREE.CapsuleGeometry(0.011, 0.034, 6, 12),
     noseTip: new THREE.SphereGeometry(0.0175, 20, 16),
     nostril: new THREE.SphereGeometry(0.0095, 14, 12),
-    // hair (expanded cap & 32 long wavy locks)
-    hairCapTop: new THREE.SphereGeometry(HEAD_R * 1.055, 56, 36, 0, TAU, 0, 1.25),
-    hairCapBack: new THREE.SphereGeometry(HEAD_R * 1.065, 56, 36, Math.PI - 0.55, Math.PI + 1.1, 0, 2.65),
-    locks: LOCKS.map(buildLock),
-    // glasses
+
+    // Hair: Underlay Cap + 24 Curated Wave Splines
+    hairCapTop: new THREE.SphereGeometry(HEAD_R * 1.05, 48, 32, 0, TAU, 0, 1.25),
+    hairCapBack: new THREE.SphereGeometry(HEAD_R * 1.06, 48, 32, Math.PI - 0.55, Math.PI + 1.1, 0, 2.65),
+    hairWaves,
+    beardCurves,
+
+    // Glasses
     frameLoop: new THREE.TubeGeometry(frameCurve, 140, 0.0052, 10, true),
     lens: new THREE.ShapeGeometry(lensShape, 24),
     bridge: new THREE.TubeGeometry(bridge, 20, 0.0048, 8, false),
     temples: [temple(-1), temple(1)].map((c) => new THREE.TubeGeometry(c, 32, 0.0042, 8, false)),
-    // furniture
-    deskTop: slab(1.9, 1.0, 0.03, 0.05),
-    deskLeg: new THREE.CapsuleGeometry(0.022, 0.52, 6, 12),
-    deskBar: new THREE.CapsuleGeometry(0.014, 1.64, 6, 10),
+
+    // Executive Walnut Desk
+    deskTop: slab(1.9, 1.0, 0.035, 0.04),
+    deskDrawerStack: new THREE.BoxGeometry(0.44, 0.52, 0.88),
+    drawerFace: new THREE.BoxGeometry(0.42, 0.15, 0.02),
+    drawerHandle: new THREE.BoxGeometry(0.12, 0.016, 0.02),
+    deskSidePanelLeft: new THREE.BoxGeometry(0.04, 0.52, 0.88),
+    deskModestyPanel: new THREE.BoxGeometry(1.36, 0.38, 0.02),
+
+    // Typing Keyboard & Mouse
     kbBase: slab(0.45, 0.15, 0.014, 0.016),
     key: slab(0.026, 0.024, 0.008, 0.005),
     space: slab(0.17, 0.024, 0.008, 0.006),
     mouse: new THREE.SphereGeometry(1, 28, 20),
-    monitor: panel(0.78, 0.46, 0.03, 0.022),
-    monitorSmall: panel(0.58, 0.42, 0.03, 0.022),
-    screen: new THREE.PlaneGeometry(0.73, 0.41),
-    screenSmall: new THREE.PlaneGeometry(0.53, 0.37),
-    standNeck: new THREE.CapsuleGeometry(0.018, 0.16, 6, 12),
-    standFoot: new THREE.SphereGeometry(1, 28, 16),
+
+    // Monitors
+    monitor: panel(0.78, 0.46, 0.024, 0.018),
+    monitorSmall: panel(0.58, 0.42, 0.024, 0.018),
+    screen: new THREE.PlaneGeometry(0.74, 0.42),
+    screenSmall: new THREE.PlaneGeometry(0.54, 0.38),
+    standNeck: new THREE.CapsuleGeometry(0.016, 0.16, 6, 12),
+    standFoot: slab(0.22, 0.16, 0.01, 0.02),
+
+    // Ceramic Mug
     mug: new THREE.LatheGeometry(mugProfile, 32),
     mugHandle: new THREE.TorusGeometry(0.02, 0.0065, 10, 24, Math.PI),
+
+    // Ergonomic Chair
     seat: new THREE.LatheGeometry(seatProfile, 48),
     backrest: new THREE.CapsuleGeometry(0.12, 0.2, 10, 24),
+    chairFrame: new THREE.TorusGeometry(0.16, 0.014, 12, 36),
     pole: new THREE.CylinderGeometry(0.024, 0.03, 0.34, 20),
     chairArm: capsuleZ(0.02, 0.26),
     caster: new THREE.SphereGeometry(0.028, 16, 12),
@@ -486,112 +515,128 @@ function buildGeometries() {
 type Geo = ReturnType<typeof buildGeometries>;
 
 /* -------------------------------------------------------------------------- */
-/*  Materials (built once)                                                    */
+/*  Materials Factory                                                         */
 /* -------------------------------------------------------------------------- */
 
 function buildMaterials() {
   const std = (color: string, roughness: number, metalness = 0, extra: THREE.MeshStandardMaterialParameters = {}) =>
     new THREE.MeshStandardMaterial({ color, roughness, metalness, ...extra });
+
   return {
-    skin: std('#c68b66', 0.55, 0.02),
-    skinDeep: std('#a86f4f', 0.6, 0.02),
-    lip: std('#a45f4b', 0.5, 0.0),
-    eyeWhite: std('#f1ece6', 0.35),
-    iris: std('#2a1810', 0.3),
-    pupil: new THREE.MeshStandardMaterial({ color: '#050505', roughness: 0.2 }),
+    // South Asian tan skin tone
+    skin: std('#ba7b56', 0.52, 0.02),
+    skinDeep: std('#a06745', 0.58, 0.02),
+    lip: std('#a25c48', 0.48, 0.0),
+    eyeWhite: std('#f4efe9', 0.35),
+    iris: std('#22140d', 0.3),
+    pupil: new THREE.MeshBasicMaterial({ color: '#040404' }),
     glint: new THREE.MeshBasicMaterial({ color: '#ffffff' }),
-    brow: std('#1a1412', 0.8),
-    lid: std('#2a1b14', 0.7),
-    hair: std('#140f0d', 0.65, 0.05), // Deep dark brown-black wavy hair with soft specular
-    hoodie: std('#4a3022', 0.88, 0, { side: THREE.DoubleSide }),
-    hoodieDark: std('#3b2519', 0.9),
-    string: std('#d9d2c5', 0.8),
-    inner: std('#241710', 0.95),
-    jeans: std('#1e293b', 0.82),
-    shoeDark: std('#1b1f2a', 0.55),
-    shoeWhite: std('#ececec', 0.5),
-    frame: std('#181b22', 0.35, 0.25),
-    lens: new THREE.MeshStandardMaterial({
-      color: '#bfefff',
-      emissive: '#22d3ee',
-      emissiveIntensity: 0.08,
+    brow: std('#16110e', 0.85),
+
+    // Hair & Sculpted Beard
+    hair: std('#181210', 0.65, 0.06),
+    beard: std('#16110e', 0.88),
+
+    // Glasses
+    frame: std('#151922', 0.35, 0.15),
+    lens: new THREE.MeshPhysicalMaterial({
+      color: '#e2e8f0',
       transparent: true,
-      opacity: 0.22,
-      roughness: 0.1,
-      metalness: 0.8,
-      side: THREE.DoubleSide,
-      depthWrite: false,
+      opacity: 0.18,
+      roughness: 0.05,
+      metalness: 0.1,
+      reflectivity: 0.8,
     }),
-    strap: std('#111318', 0.6),
-    watchMetal: std('#7d848f', 0.25, 0.9),
-    watchFace: std('#06090f', 0.15, 0.4, { emissive: '#0e7490', emissiveIntensity: 0.35 }),
-    desk: std('#2b2f3a', 0.45, 0.05),
-    deskMetal: std('#8b93a1', 0.35, 0.8),
-    chair: std('#161922', 0.6),
-    chairMetal: std('#aab1bd', 0.3, 0.85),
-    kbBase: std('#20242d', 0.5, 0.2),
-    key: std('#3a404d', 0.45, 0.05),
-    keyAccent: std('#4a5262', 0.45, 0.05),
-    mouse: std('#2d323d', 0.4, 0.1),
-    monitorBody: std('#12151c', 0.4, 0.3),
-    mug: std('#e8e2d6', 0.4),
+
+    // Chocolate brown hoodie
+    hoodie: std('#5e3422', 0.82),
+    hoodieDark: std('#4a2818', 0.88),
+    string: std('#3e2114', 0.7),
+
+    // Clothing & Accessories
+    jeans: std('#1e2538', 0.78),
+    shoeDark: std('#1e293b', 0.6),
+    shoeWhite: std('#f8fafc', 0.35),
+    strap: std('#0f172a', 0.8),
+    watchMetal: std('#e2e8f0', 0.25, 0.95),
+    watchFace: std('#0284c7', 0.2, 0.1),
+    inner: std('#451218', 0.7),
+
+    // Furniture & Tech
+    desk: std('#52331e', 0.62), // Warm walnut wood
+    deskDrawer: std('#462a17', 0.65),
+    deskBrass: std('#d4af37', 0.25, 0.9), // Drawer handles
+    chair: std('#1e2330', 0.7),
+    chairMetal: std('#cbd5e1', 0.3, 0.85),
+    kbBase: std('#0f172a', 0.5, 0.4),
+    key: std('#1e293b', 0.55),
+    keyAccent: std('#0284c7', 0.4),
+    mouse: std('#0f172a', 0.35, 0.2),
+    monitorBody: std('#e2e8f0', 0.28, 0.85), // Apple aluminum
+    mug: std('#f8fafc', 0.25),
   };
 }
 
 type Mats = ReturnType<typeof buildMaterials>;
 
 /* -------------------------------------------------------------------------- */
-/*  Animated screen textures                                                  */
+/*  Live Typing Code & Graph Monitor Displays                                 */
 /* -------------------------------------------------------------------------- */
 
-type Seg = [string, string];
-const CODE: Seg[][] = [
-  [['from ', '#c792ea'], ['langgraph.graph ', '#82aaff'], ['import ', '#c792ea'], ['StateGraph, END', '#ffcb6b']],
-  [['from ', '#c792ea'], ['agents ', '#82aaff'], ['import ', '#c792ea'], ['planner, verifier', '#ffcb6b']],
+const CODE = [
+  [['import ', '#c792ea'], ['{ agent, task } ', '#ffcb6b'], ['from ', '#c792ea'], ['"@google/gemini"', '#c3e88d']],
+  [['import ', '#c792ea'], ['* as three ', '#ffcb6b'], ['from ', '#c792ea'], ['"three"', '#c3e88d']],
   [['', '#fff']],
-  [['class ', '#c792ea'], ['AgentState', '#ffcb6b'], ['(TypedDict):', '#89ddff']],
-  [['    messages', '#eeffff'], [': list', '#89ddff'], ['  # memory', '#546e7a']],
-  [['    tenant_id', '#eeffff'], [': str', '#89ddff']],
+  [['export class ', '#c792ea'], ['RutvikPortfolio ', '#82aaff'], ['implements ', '#c792ea'], ['AIDeveloper ', '#ffcb6b'], ['{', '#89ddff']],
+  [['  name: string = ', '#89ddff'], ['"Rutvik"', '#c3e88d'], [';', '#89ddff']],
+  [['  role: string = ', '#89ddff'], ['"Full Stack & AI Engineer"', '#c3e88d'], [';', '#89ddff']],
+  [['  skills: string[] = [', '#89ddff'], ['"React", "Three.js", "Python", "LLMs"', '#c3e88d'], ['];', '#89ddff']],
   [['', '#fff']],
-  [['graph ', '#eeffff'], ['= ', '#89ddff'], ['StateGraph', '#ffcb6b'], ['(AgentState)', '#89ddff']],
-  [['graph.add_node', '#82aaff'], ['("plan", planner)', '#c3e88d']],
-  [['graph.add_node', '#82aaff'], ['("verify", verifier)', '#c3e88d']],
-  [['graph.add_edge', '#82aaff'], ['("plan", "verify")', '#c3e88d']],
-  [['app ', '#eeffff'], ['= ', '#89ddff'], ['graph.compile', '#82aaff'], ['(checkpointer=pg)', '#c3e88d']],
-  [['async def ', '#c792ea'], ['run', '#82aaff'], ['(q):', '#89ddff']],
-  [['    return await ', '#c792ea'], ['app.ainvoke', '#82aaff'], ['({"messages": [q]})', '#c3e88d']],
+  [['  async ', '#c792ea'], ['buildExperience', '#82aaff'], ['(): ', '#89ddff'], ['Promise<Scene> ', '#ffcb6b'], ['{', '#89ddff']],
+  [['    const ', '#c792ea'], ['scene ', '#eeffff'], ['= ', '#89ddff'], ['new Scene3D()', '#ffcb6b'], [';', '#89ddff']],
+  [['    await ', '#c792ea'], ['scene.render60FPS()', '#82aaff'], [';', '#89ddff']],
+  [['    return ', '#c792ea'], ['scene.launch()', '#82aaff'], [';', '#89ddff']],
+  [['  }', '#89ddff']],
+  [['}', '#89ddff']],
 ];
+
 const CODE_TOTAL = CODE.reduce((n, l) => n + l.reduce((m, s) => m + s[0].length, 0), 0);
 
 function drawCode(ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
-  ctx.fillStyle = '#0b1220';
+  ctx.fillStyle = '#0a101d';
   ctx.fillRect(0, 0, w, h);
+
+  // Window title bar
   ctx.fillStyle = '#111b2e';
-  ctx.fillRect(0, 0, w, 48);
-  ['#ff5f57', '#febc2e', '#28c840'].forEach((c, i) => {
+  ctx.fillRect(0, 0, w, 44);
+  ['#ef4444', '#f59e0b', '#10b981'].forEach((c, i) => {
     ctx.fillStyle = c;
     ctx.beginPath();
-    ctx.arc(28 + i * 26, 24, 8, 0, TAU);
+    ctx.arc(24 + i * 22, 22, 6, 0, TAU);
     ctx.fill();
   });
-  ctx.font = '600 20px ui-monospace, Menlo, monospace';
-  ctx.fillStyle = '#7dd3fc';
-  ctx.fillText('agent_graph.py', 132, 31);
-  ctx.fillStyle = '#0f172a';
-  ctx.fillRect(0, 48, 64, h - 48);
+  ctx.font = '600 18px ui-monospace, Menlo, monospace';
+  ctx.fillStyle = '#93c5fd';
+  ctx.fillText('RutvikDeveloper.ts', 105, 28);
 
-  ctx.font = '22px ui-monospace, Menlo, monospace';
-  const reveal = Math.floor(t * 16) % (CODE_TOTAL + 50);
+  // Line numbers column
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(0, 44, 58, h - 44);
+
+  ctx.font = '20px ui-monospace, Menlo, monospace';
+  const reveal = Math.floor(t * 18) % (CODE_TOTAL + 60);
   let used = 0;
   let cx = 0;
   let cy = 0;
+
   for (let li = 0; li < CODE.length; li++) {
-    const y = 88 + li * 34;
+    const y = 80 + li * 32;
     ctx.fillStyle = '#334155';
-    ctx.fillText(String(li + 1).padStart(2, ' '), 18, y);
-    let x = 82;
+    ctx.fillText(String(li + 1).padStart(2, ' '), 16, y);
+    let x = 74;
     cx = x;
     cy = y;
+
     for (const [text, color] of CODE[li]) {
       const left = reveal - used;
       if (left <= 0) break;
@@ -604,35 +649,39 @@ function drawCode(ctx: CanvasRenderingContext2D, w: number, h: number, t: number
     }
     if (reveal - used <= 0 && used >= reveal) break;
   }
-  if (Math.floor(t * 2) % 2 === 0) {
-    ctx.fillStyle = '#22d3ee';
-    ctx.fillRect(cx + 2, cy - 20, 11, 26);
+
+  // Blinking typing cursor
+  if (Math.floor(t * 2.5) % 2 === 0) {
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(cx + 2, cy - 18, 9, 23);
   }
 }
 
 const NODES = [
-  { x: 0.5, y: 0.14, l: 'Planner' },
-  { x: 0.2, y: 0.42, l: 'Router' },
-  { x: 0.8, y: 0.42, l: 'Memory' },
-  { x: 0.12, y: 0.78, l: 'SQL Agent' },
-  { x: 0.42, y: 0.78, l: 'Retriever' },
-  { x: 0.72, y: 0.78, l: 'Verifier' },
-  { x: 0.92, y: 0.2, l: 'Tenant' },
+  { x: 0.5, y: 0.16, l: 'Agent Core' },
+  { x: 0.22, y: 0.44, l: 'Planning' },
+  { x: 0.78, y: 0.44, l: 'Memory' },
+  { x: 0.15, y: 0.80, l: 'Code Gen' },
+  { x: 0.50, y: 0.80, l: '3D Engine' },
+  { x: 0.85, y: 0.80, l: 'Deploy' },
 ];
+
 const EDGES: [number, number][] = [
   [0, 1],
   [0, 2],
   [1, 3],
   [1, 4],
+  [2, 4],
   [2, 5],
   [4, 5],
-  [2, 6],
 ];
 
 function drawGraph(ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
-  ctx.fillStyle = '#0a1018';
+  ctx.fillStyle = '#080d1a';
   ctx.fillRect(0, 0, w, h);
-  ctx.strokeStyle = '#122033';
+
+  // Background grid
+  ctx.strokeStyle = '#101c30';
   ctx.lineWidth = 1;
   for (let x = 0; x < w; x += 32) {
     ctx.beginPath();
@@ -646,39 +695,46 @@ function drawGraph(ctx: CanvasRenderingContext2D, w: number, h: number, t: numbe
     ctx.lineTo(w, y);
     ctx.stroke();
   }
-  const px = (n: { x: number; y: number }) => [n.x * (w - 160) + 80, n.y * (h - 120) + 60] as const;
-  ctx.lineWidth = 3;
+
+  const px = (n: { x: number; y: number }) => [n.x * (w - 140) + 70, n.y * (h - 100) + 50] as const;
+
+  // Edges & data pulses
+  ctx.lineWidth = 2.5;
   EDGES.forEach(([a, b], i) => {
     const [ax, ay] = px(NODES[a]);
     const [bx, by] = px(NODES[b]);
-    ctx.strokeStyle = '#1e4a6b';
+    ctx.strokeStyle = '#1e3a5f';
     ctx.beginPath();
     ctx.moveTo(ax, ay);
     ctx.lineTo(bx, by);
     ctx.stroke();
-    const k = (t * 0.45 + i * 0.21) % 1;
-    ctx.fillStyle = '#22d3ee';
-    ctx.shadowColor = '#22d3ee';
-    ctx.shadowBlur = 14;
+
+    const k = (t * 0.5 + i * 0.25) % 1;
+    ctx.fillStyle = '#38bdf8';
+    ctx.shadowColor = '#38bdf8';
+    ctx.shadowBlur = 12;
     ctx.beginPath();
-    ctx.arc(ax + (bx - ax) * k, ay + (by - ay) * k, 6, 0, TAU);
+    ctx.arc(ax + (bx - ax) * k, ay + (by - ay) * k, 5, 0, TAU);
     ctx.fill();
     ctx.shadowBlur = 0;
   });
-  ctx.font = '600 20px ui-sans-serif, system-ui, sans-serif';
+
+  // Nodes
+  ctx.font = '600 18px ui-sans-serif, system-ui, sans-serif';
   ctx.textAlign = 'center';
   NODES.forEach((n, i) => {
     const [x, y] = px(n);
-    const pulse = 0.5 + 0.5 * Math.sin(t * 2 + i);
-    ctx.fillStyle = '#0f2236';
-    ctx.strokeStyle = `rgba(34,211,238,${0.45 + 0.4 * pulse})`;
-    ctx.lineWidth = 2.5;
+    const pulse = 0.5 + 0.5 * Math.sin(t * 2.5 + i);
+    ctx.fillStyle = '#0d1f36';
+    ctx.strokeStyle = `rgba(56, 189, 248, ${0.4 + 0.45 * pulse})`;
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.roundRect(x - 68, y - 24, 136, 48, 14);
+    ctx.roundRect(x - 56, y - 20, 112, 40, 12);
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = '#e0f2fe';
-    ctx.fillText(n.l, x, y + 7);
+
+    ctx.fillStyle = '#f0f9ff';
+    ctx.fillText(n.l, x, y + 6);
   });
   ctx.textAlign = 'start';
 }
@@ -698,8 +754,7 @@ function makeScreen(w: number, h: number) {
 /*  Component                                                                 */
 /* -------------------------------------------------------------------------- */
 
-const FINGER_X = [-0.027, -0.009, 0.009, 0.027]; // index -> pinky (mirrored per hand)
-const FINGER_LEN = [1.0, 1.1, 1.0, 0.8];
+const FINGER_X = [-0.027, -0.009, 0.009, 0.027];
 const KEY_ROWS = 4;
 const KEY_COLS = 14;
 
@@ -707,20 +762,20 @@ export function DeveloperAvatar({
   position = [0, 0, 0],
   rotation = [0, 0, 0],
   scale = 1,
-  standalone = false,
+  standalone: _standalone = false,
 }: DeveloperAvatarProps) {
-  const geo = useMemo<Geo>(buildGeometries, []);
-  const mats = useMemo<Mats>(buildMaterials, []);
-  const screens = useMemo(() => ({ code: makeScreen(1024, 640), graph: makeScreen(768, 560) }), []);
+  const geo = useMemo<Geo>(() => buildGeometries(), []);
+  const mats = useMemo<Mats>(() => buildMaterials(), []);
+  const [screens] = useState(() => ({ code: makeScreen(1024, 640), graph: makeScreen(768, 560) }));
   const screenMats = useMemo(
     () => ({
-      code: new THREE.MeshBasicMaterial({ map: screens.code.tex, toneMapped: false }),
-      graph: new THREE.MeshBasicMaterial({ map: screens.graph.tex, toneMapped: false }),
+      code: new THREE.MeshBasicMaterial({ map: screens.code.tex }),
+      graph: new THREE.MeshBasicMaterial({ map: screens.graph.tex }),
     }),
     [screens],
   );
 
-  // Dispose GPU resources on unmount.
+  // Clean up GPU resources on unmount
   useEffect(
     () => () => {
       const disposeDeep = (o: unknown) => {
@@ -729,183 +784,126 @@ export function DeveloperAvatar({
       };
       Object.values(geo).forEach(disposeDeep);
       Object.values(mats).forEach(disposeDeep);
-    },
-    [geo, mats],
-  );
-  useEffect(
-    () => () => {
       screens.code.tex.dispose();
       screens.graph.tex.dispose();
       screenMats.code.dispose();
       screenMats.graph.dispose();
     },
-    [screens, screenMats],
+    [geo, mats, screens, screenMats],
   );
 
   /* ---- refs ---- */
   const upperRef = useRef<THREE.Group>(null);
-  const chestRef = useRef<THREE.Group>(null);
   const headRef = useRef<THREE.Group>(null);
-  const eyeRefs = useRef<(THREE.Group | null)[]>([null, null]);
   const handRefs = useRef<(THREE.Group | null)[]>([null, null]);
   const proxRefs = useRef<(THREE.Group | null)[][]>([[], []]);
-  const distRefs = useRef<(THREE.Group | null)[][]>([[], []]);
-  const thumbRefs = useRef<(THREE.Group | null)[]>([null, null]);
   const keysRef = useRef<THREE.InstancedMesh>(null);
-  const gaze = useRef({ yaw: 0, pitch: 0.14, eye: 0 });
-  const screenClock = useRef(0);
 
-  /* ---- key layout ---- */
-  useLayoutEffect(() => {
+  // Initialize keyboard keys matrix
+  useEffect(() => {
     const mesh = keysRef.current;
     if (!mesh) return;
-    const d = new THREE.Object3D();
-    let i = 0;
+    const m = new THREE.Matrix4();
+    const p = new THREE.Vector3();
+    const q = new THREE.Quaternion();
+    const s = new THREE.Vector3(1, 1, 1);
+    let idx = 0;
+    const kw = 0.03;
+    const kd = 0.028;
+    const x0 = -((KEY_COLS - 1) * kw) / 2;
+    const z0 = -((KEY_ROWS - 1) * kd) / 2;
+
     for (let r = 0; r < KEY_ROWS; r++) {
       for (let c = 0; c < KEY_COLS; c++) {
-        d.position.set((c - (KEY_COLS - 1) / 2) * 0.0305 + (r % 2) * 0.004, 0.011, -0.055 + r * 0.029);
-        d.updateMatrix();
-        mesh.setMatrixAt(i++, d.matrix);
+        p.set(x0 + c * kw, 0, z0 + r * kd);
+        m.compose(p, q, s);
+        mesh.setMatrixAt(idx++, m);
       }
     }
     mesh.instanceMatrix.needsUpdate = true;
   }, []);
 
-  /* ---- animation ---- */
-  useFrame((state, dt) => {
-    const t = state.clock.elapsedTime;
+  // Frame animations (typing, breathing, live screens)
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
 
-    // Breathing
-    const breath = Math.sin(t * 2.1);
+    // Subtle natural breathing
     if (upperRef.current) {
-      upperRef.current.scale.set(1 + 0.004 * breath, 1 + 0.008 * breath, 1 + 0.004 * breath);
-      upperRef.current.position.y = 0.002 * breath;
+      upperRef.current.position.y = 0.003 * Math.sin(t * 1.8);
+      upperRef.current.rotation.x = -0.05 + 0.012 * Math.sin(t * 1.8);
     }
-    if (chestRef.current) {
-      chestRef.current.scale.set(1 + 0.012 * breath, 1 + 0.006 * breath, 1 + 0.018 * breath);
+    if (headRef.current) {
+      headRef.current.rotation.x = 0.04 + 0.008 * Math.cos(t * 1.4);
+      headRef.current.rotation.y = 0.03 * Math.sin(t * 0.9);
     }
 
-    // Gaze: main code monitor <-> secondary node-graph monitor <-> keyboard glance
-    const c = t % 11;
-    let yaw = 0.05 * Math.sin(t * 0.7);
-    let pitch = 0.14 + 0.025 * Math.sin(t * 1.3);
-    let eye = 0;
-    if (c >= 5 && c < 7.2) {
-      yaw = 0.38;
-      pitch = 0.1;
-      eye = 0.2;
-    } else if (c >= 10) {
-      yaw = 0;
-      pitch = 0.3;
-    } else if (c >= 7.2) {
-      yaw = -0.04;
-      pitch = 0.16;
-    }
-    const g = gaze.current;
-    g.yaw = THREE.MathUtils.damp(g.yaw, yaw, 3.5, dt);
-    g.pitch = THREE.MathUtils.damp(g.pitch, pitch, 4, dt);
-    g.eye = THREE.MathUtils.damp(g.eye, eye, 8, dt);
-    if (headRef.current) headRef.current.rotation.set(g.pitch, g.yaw, 0.02 * Math.sin(t * 0.5));
-
-    // Blink
-    const bl = (t + 0.7) % 4.3;
-    const lid = bl < 0.13 ? 1 - 0.92 * Math.sin((bl / 0.13) * Math.PI) : 1;
-    eyeRefs.current.forEach((e) => {
-      if (!e) return;
-      e.scale.y = lid;
-      e.rotation.y = g.eye;
+    // Typing fingers animation
+    handRefs.current.forEach((hand, hi) => {
+      if (!hand) return;
+      const s = hi === 0 ? -1 : 1;
+      hand.position.y = 0.002 * Math.sin(t * 14 + hi * 2);
+      proxRefs.current[hi]?.forEach((f, fi) => {
+        if (!f) return;
+        const tap = Math.sin(t * 18 + hi * 3 + fi * 1.6);
+        f.rotation.x = -0.25 - 0.22 * Math.max(0, tap);
+        f.rotation.z = s * 0.04 * tap;
+      });
     });
 
-    // Typing: alternating bursts, per-finger strokes, wrist micro-bounces
-    const active = 0.7 + 0.3 * Math.sin(t * 0.9);
-    for (let h = 0; h < 2; h++) {
-      const hand = handRefs.current[h];
-      if (hand) {
-        const k = Math.max(0, Math.sin(t * 6.3 + h * Math.PI));
-        hand.position.y = 0.15 + 0.0035 * k * active;
-        hand.rotation.z = 0.035 * Math.sin(t * 4.7 + h * 2) * active;
-        hand.rotation.x = -0.02 * k * active;
-      }
-      for (let f = 0; f < 4; f++) {
-        const stroke = Math.max(0, Math.sin(t * (8.5 + f * 0.7 + h * 0.4) + (h * 1.7 + f * 0.9) * 2.1));
-        const prox = proxRefs.current[h][f];
-        const dist = distRefs.current[h][f];
-        if (prox) prox.rotation.x = 0.22 + 0.3 * stroke * stroke * active;
-        if (dist) dist.rotation.x = 0.5 + 0.35 * stroke * active;
-      }
-      const th = thumbRefs.current[h];
-      if (th) th.rotation.x = 0.25 + 0.1 * Math.max(0, Math.sin(t * 2.3 + h * 3)) * active;
-    }
-
-    // Screens (throttled)
-    screenClock.current += dt;
-    if (screenClock.current > 0.12) {
-      screenClock.current = 0;
-      drawCode(screens.code.ctx, screens.code.w, screens.code.h, t);
-      drawGraph(screens.graph.ctx, screens.graph.w, screens.graph.h, t);
-      screens.code.tex.needsUpdate = true;
-      screens.graph.tex.needsUpdate = true;
-    }
+    // Update canvas screen textures
+    drawCode(screens.code.ctx, screens.code.w, screens.code.h, t);
+    drawGraph(screens.graph.ctx, screens.graph.w, screens.graph.h, t);
+    screens.code.tex.needsUpdate = true;
+    screens.graph.tex.needsUpdate = true;
   });
 
   /* ---- hand builder ---- */
   const hand = (idx: 0 | 1) => {
-    const s = idx === 0 ? -1 : 1; // -X = right hand, +X = left hand
-    const tan = geo.wristTangents[idx];
-    const yaw = Math.atan2(tan.x, tan.z);
+    const s = idx === 0 ? -1 : 1;
+    const hx = s * 0.115;
+    const hy = 0.15;
+    const hz = 0.36;
+
     return (
       <group
         key={`hand-${idx}`}
         ref={(el) => {
           handRefs.current[idx] = el;
         }}
-        position={[s * 0.115, 0.15, 0.36]}
-        rotation={[0, yaw, 0]}
+        position={[hx, hy, hz]}
+        rotation={[0.3, s * 0.15, -s * 0.1]}
       >
         <mesh geometry={geo.wrist} material={mats.skin} position={[0, 0, 0.02]} {...SHADOWS} />
-        <mesh geometry={geo.palm} material={mats.skin} position={[0, -0.002, 0.055]} scale={[1.25, 0.55, 1]} {...SHADOWS} />
-        {FINGER_X.map((fx, f) => (
-          <group key={f} position={[-s * fx, -0.006, 0.095]} scale={[1, 1, FINGER_LEN[f]]}>
-            <group
-              ref={(el) => {
-                proxRefs.current[idx][f] = el;
-              }}
-              rotation={[0.22, 0, 0]}
-            >
-              <mesh geometry={geo.finProx} material={mats.skin} position={[0, 0, 0.0235]} {...SHADOWS} />
-              <group
-                ref={(el) => {
-                  distRefs.current[idx][f] = el;
-                }}
-                position={[0, 0, 0.044]}
-                rotation={[0.5, 0, 0]}
-              >
-                <mesh geometry={geo.finDist} material={mats.skin} position={[0, 0, 0.0178]} {...SHADOWS} />
-              </group>
-            </group>
+        <mesh geometry={geo.palm} material={mats.skin} position={[0, 0, 0.05]} scale={[1, 0.8, 1]} {...SHADOWS} />
+
+        {/* Fingers */}
+        {FINGER_X.map((fx, fi) => (
+          <group
+            key={fi}
+            ref={(el) => {
+              if (!proxRefs.current[idx]) proxRefs.current[idx] = [];
+              proxRefs.current[idx][fi] = el;
+            }}
+            position={[s * fx, 0, 0.075]}
+          >
+            <mesh geometry={geo.finProx} material={mats.skin} position={[0, 0, 0.015]} {...SHADOWS} />
+            <mesh geometry={geo.finDist} material={mats.skin} position={[0, -0.008, 0.035]} rotation={[-0.4, 0, 0]} {...SHADOWS} />
           </group>
         ))}
-        {/* thumb */}
-        <group position={[-s * 0.034, -0.008, 0.035]} rotation={[0, -s * 0.55, 0]}>
-          <group
-            ref={(el) => {
-              thumbRefs.current[idx] = el;
-            }}
-            rotation={[0.25, 0, 0]}
-          >
-            <mesh geometry={geo.thumbProx} material={mats.skin} position={[0, 0, 0.022]} {...SHADOWS} />
-            <group position={[0, 0, 0.04]} rotation={[0.25, 0, 0]}>
-              <mesh geometry={geo.thumbDist} material={mats.skin} position={[0, 0, 0.014]} {...SHADOWS} />
-            </group>
-          </group>
+
+        {/* Thumb */}
+        <group position={[-s * 0.028, -0.008, 0.045]} rotation={[0.4, -s * 0.5, s * 0.3]}>
+          <mesh geometry={geo.thumbProx} material={mats.skin} position={[0, 0, 0.014]} {...SHADOWS} />
+          <mesh geometry={geo.thumbDist} material={mats.skin} position={[0, 0, 0.034]} rotation={[-0.3, 0, 0]} {...SHADOWS} />
         </group>
-        {/* black strap watch on the left wrist */}
+
+        {/* Left wrist watch */}
         {idx === 1 && (
           <group position={[0, 0, 0.016]}>
             <mesh geometry={geo.strap} material={mats.strap} scale={[1, 1, 1.5]} {...SHADOWS} />
             <mesh geometry={geo.watchCase} material={mats.watchMetal} position={[0, 0.038, 0]} {...SHADOWS} />
-            <mesh geometry={geo.watchBezel} material={mats.watchMetal} position={[0, 0.0445, 0]} rotation={[Math.PI / 2, 0, 0]} {...SHADOWS} />
-            <mesh geometry={geo.watchFace} material={mats.watchFace} position={[0, 0.0455, 0]} {...SHADOWS} />
+            <mesh geometry={geo.watchBezel} material={mats.watchMetal} position={[0, 0.044, 0]} rotation={[Math.PI / 2, 0, 0]} {...SHADOWS} />
+            <mesh geometry={geo.watchFace} material={mats.watchFace} position={[0, 0.045, 0]} {...SHADOWS} />
           </group>
         )}
       </group>
@@ -919,6 +917,7 @@ export function DeveloperAvatar({
     const q = new THREE.Quaternion().setFromUnitVectors(V3(0, 0, 1), tan);
     const wrist = V3(s * 0.115, 0.15, 0.36);
     const ribs = [0.004, -0.014, -0.032].map((o) => wrist.clone().addScaledVector(tan, o));
+
     return (
       <group key={`arm-${idx}`}>
         <mesh geometry={geo.sleeves[idx]} material={mats.hoodie} {...SHADOWS} />
@@ -938,62 +937,62 @@ export function DeveloperAvatar({
     );
   };
 
-  /* ---- sneaker builder ---- */
+  /* ---- shoe builder ---- */
   const shoe = (s: -1 | 1) => (
     <group key={`shoe-${s}`} position={[s * 0.115, 0, 0]} rotation={[0, s * 0.1, 0]}>
       <mesh geometry={geo.shoeUpper} material={mats.shoeDark} position={[0, -0.445, 0.555]} scale={[0.068, 0.045, 0.125]} {...SHADOWS} />
       <mesh geometry={geo.sole} material={mats.shoeWhite} position={[0, -0.474, 0.55]} scale={[1.1, 0.42, 1]} {...SHADOWS} />
       <mesh geometry={geo.shoeUpper} material={mats.shoeWhite} position={[0, -0.462, 0.635]} scale={[0.052, 0.034, 0.052]} {...SHADOWS} />
-      <mesh geometry={geo.shoeUpper} material={mats.shoeWhite} position={[0, -0.4, 0.5]} scale={[0.05, 0.016, 0.03]} {...SHADOWS} />
     </group>
   );
 
-  /* ---- render ---- */
   return (
     <group position={position} rotation={rotation} scale={scale}>
-      {/* Lighting & Shadows (Standalone mode only) */}
-      {standalone && (
-        <>
-          <hemisphereLight args={['#c7d2fe', '#0b1020', 0.55]} />
-          <directionalLight
-            position={[2.5, 3.5, 2.5]}
-            intensity={1.5}
-            castShadow
-            shadow-mapSize={[1024, 1024]}
-            shadow-camera-left={-2}
-            shadow-camera-right={2}
-            shadow-camera-top={2}
-            shadow-camera-bottom={-2}
-            shadow-bias={-0.0004}
-          />
-          <pointLight position={[0, 0.58, 0.82]} color="#22d3ee" intensity={1.8} distance={3.5} decay={2} />
-        </>
-      )}
-      <ContactShadows position={[0, -0.499, 0.4]} opacity={0.55} scale={5} blur={2.4} far={1.4} resolution={512} />
-
-      {/* ======================= CHAIR ======================= */}
+      {/* =====================================================================
+          1. ERGONOMIC MESH CHAIR (Herman Miller Aeron Style)
+          ===================================================================== */}
       <mesh geometry={geo.seat} material={mats.chair} {...SHADOWS} />
-      <mesh geometry={geo.backrest} material={mats.chair} position={[0, 0.3, -0.3]} rotation={[-0.08, 0, 0]} scale={[1.7, 1, 0.34]} {...SHADOWS} />
+      {/* Contoured mesh backrest */}
+      <group position={[0, 0.28, -0.28]} rotation={[-0.06, 0, 0]}>
+        <mesh geometry={geo.backrest} material={mats.chair} scale={[1.65, 1, 0.32]} {...SHADOWS} />
+        <mesh geometry={geo.chairFrame} material={mats.chairMetal} position={[0, 0, -0.02]} scale={[1.1, 1.35, 1]} {...SHADOWS} />
+      </group>
+      {/* Hydraulic center column */}
       <mesh geometry={geo.pole} material={mats.chairMetal} position={[0, -0.32, 0]} {...SHADOWS} />
+      {/* 5-star caster base on floor */}
       <group position={[0, -0.475, 0]}>
         {[0, 1, 2, 3, 4].map((i) => (
           <group key={i} rotation={[0, (i / 5) * TAU + 0.3, 0]}>
             <mesh geometry={geo.chairArm} material={mats.chairMetal} position={[0, 0, 0.14]} {...SHADOWS} />
-            <mesh geometry={geo.caster} material={mats.chair} position={[0, -0.0, 0.28]} {...SHADOWS} />
+            <mesh geometry={geo.caster} material={mats.chair} position={[0, 0, 0.28]} {...SHADOWS} />
           </group>
         ))}
       </group>
 
-      {/* ======================= DESK ======================= */}
+      {/* =====================================================================
+          2. EXECUTIVE WALNUT DESK & WORKSPACE (Exact Match to Image 5)
+          ===================================================================== */}
+      {/* Solid walnut desk top slab */}
       <mesh geometry={geo.deskTop} material={mats.desk} position={[0, 0.088, 0.8]} {...SHADOWS} />
-      {([-1, 1] as const).flatMap((sx) =>
-        [0.36, 1.24].map((z) => (
-          <mesh key={`${sx}-${z}`} geometry={geo.deskLeg} material={mats.deskMetal} position={[sx * 0.88, -0.2, z]} {...SHADOWS} />
-        )),
-      )}
-      <mesh geometry={geo.deskBar} material={mats.deskMetal} position={[0, -0.12, 1.24]} rotation={[0, 0, Math.PI / 2]} {...SHADOWS} />
 
-      {/* Keyboard */}
+      {/* Right-hand side 3-drawer cabinet stack (solid pedestal) */}
+      <group position={[0.66, -0.17, 0.8]}>
+        <mesh geometry={geo.deskDrawerStack} material={mats.deskDrawer} {...SHADOWS} />
+        {/* 3 Drawer front faces with brushed brass horizontal pull handles */}
+        {[-0.16, 0.00, 0.16].map((dy, idx) => (
+          <group key={idx} position={[0, dy, -0.44]}>
+            <mesh geometry={geo.drawerFace} material={mats.desk} {...SHADOWS} />
+            <mesh geometry={geo.drawerHandle} material={mats.deskBrass} position={[0, 0, -0.018]} {...SHADOWS} />
+          </group>
+        ))}
+      </group>
+
+      {/* Left-hand side solid wood panel leg */}
+      <mesh geometry={geo.deskSidePanelLeft} material={mats.desk} position={[-0.88, -0.17, 0.8]} {...SHADOWS} />
+      {/* Back modesty structural panel */}
+      <mesh geometry={geo.deskModestyPanel} material={mats.deskDrawer} position={[-0.04, -0.10, 1.22]} {...SHADOWS} />
+
+      {/* Mechanical Backlit Keyboard */}
       <group position={[0, 0.103, 0.52]}>
         <mesh geometry={geo.kbBase} material={mats.kbBase} position={[0, 0.007, 0]} {...SHADOWS} />
         <group position={[0, 0.014, 0]}>
@@ -1001,33 +1000,45 @@ export function DeveloperAvatar({
           <mesh geometry={geo.space} material={mats.keyAccent} position={[0.01, 0.011, 0.058]} {...SHADOWS} />
         </group>
       </group>
-      {/* Mouse + mug */}
-      <mesh geometry={geo.mouse} material={mats.mouse} position={[-0.3, 0.12, 0.52]} scale={[0.032, 0.017, 0.052]} {...SHADOWS} />
+
+      {/* Modern Mouse */}
+      <mesh geometry={geo.mouse} material={mats.mouse} position={[-0.30, 0.12, 0.52]} scale={[0.032, 0.017, 0.052]} {...SHADOWS} />
+
+      {/* Ceramic Coffee Mug */}
       <group position={[-0.55, 0.103, 0.68]}>
         <mesh geometry={geo.mug} material={mats.mug} {...SHADOWS} />
         <mesh geometry={geo.mugHandle} material={mats.mug} position={[0.04, 0.042, 0]} rotation={[0, 0, -Math.PI / 2]} {...SHADOWS} />
       </group>
 
-      {/* Main code monitor */}
-      <group position={[0, 0.103, 1.05]}>
-        <mesh geometry={geo.standFoot} material={mats.monitorBody} position={[0, 0.006, 0.03]} scale={[0.14, 0.012, 0.09]} {...SHADOWS} />
-        <mesh geometry={geo.standNeck} material={mats.monitorBody} position={[0, 0.17, 0.045]} {...SHADOWS} />
+      {/* =====================================================================
+          3. DUAL-SCREEN WORKSTATION (iMac Main Screen + Laptop / Graph Screen)
+          ===================================================================== */}
+      {/* Main Studio Display Code Monitor (Angled for clear visibility from camera) */}
+      <group position={[0.05, 0.103, 1.05]} rotation={[0, 0.12, 0]}>
+        {/* Apple aluminum L-stand foot & neck */}
+        <mesh geometry={geo.standFoot} material={mats.monitorBody} position={[0, 0.006, 0.02]} {...SHADOWS} />
+        <mesh geometry={geo.standNeck} material={mats.monitorBody} position={[0, 0.17, 0.04]} {...SHADOWS} />
+        {/* Monitor casing & screen */}
         <group position={[0, 0.42, 0]}>
           <mesh geometry={geo.monitor} material={mats.monitorBody} {...SHADOWS} />
-          <mesh geometry={geo.screen} material={screenMats.code} position={[0, 0, -0.0165]} rotation={[0, Math.PI, 0]} />
-        </group>
-      </group>
-      {/* Secondary node-graph monitor (turned toward the developer) */}
-      <group position={[0.7, 0.103, 0.96]} rotation={[0, 0.62, 0]}>
-        <mesh geometry={geo.standFoot} material={mats.monitorBody} position={[0, 0.006, 0.03]} scale={[0.12, 0.012, 0.08]} {...SHADOWS} />
-        <mesh geometry={geo.standNeck} material={mats.monitorBody} position={[0, 0.16, 0.045]} {...SHADOWS} />
-        <group position={[0, 0.4, 0]}>
-          <mesh geometry={geo.monitorSmall} material={mats.monitorBody} {...SHADOWS} />
-          <mesh geometry={geo.screenSmall} material={screenMats.graph} position={[0, 0, -0.0165]} rotation={[0, Math.PI, 0]} />
+          {/* Code screen facing the developer & visible to camera */}
+          <mesh geometry={geo.screen} material={screenMats.code} position={[0, 0, -0.014]} rotation={[0, Math.PI, 0]} />
         </group>
       </group>
 
-      {/* ======================= CHARACTER: lower body ======================= */}
+      {/* Secondary Node-Graph Monitor / Laptop Display (Angled toward developer) */}
+      <group position={[0.68, 0.103, 0.94]} rotation={[0, 0.55, 0]}>
+        <mesh geometry={geo.standFoot} material={mats.monitorBody} position={[0, 0.006, 0.02]} scale={[0.85, 1, 0.85]} {...SHADOWS} />
+        <mesh geometry={geo.standNeck} material={mats.monitorBody} position={[0, 0.15, 0.04]} {...SHADOWS} />
+        <group position={[0, 0.38, 0]}>
+          <mesh geometry={geo.monitorSmall} material={mats.monitorBody} {...SHADOWS} />
+          <mesh geometry={geo.screenSmall} material={screenMats.graph} position={[0, 0, -0.014]} rotation={[0, Math.PI, 0]} />
+        </group>
+      </group>
+
+      {/* =====================================================================
+          4. DEVELOPER: LOWER BODY & SNEAKERS
+          ===================================================================== */}
       <mesh geometry={geo.pelvis} material={mats.jeans} position={[0, -0.01, -0.005]} scale={[0.205, 0.105, 0.17]} {...SHADOWS} />
       {([0, 1] as const).map((i) => {
         const s = i === 0 ? -1 : 1;
@@ -1043,21 +1054,25 @@ export function DeveloperAvatar({
       {shoe(-1)}
       {shoe(1)}
 
-      {/* ======================= CHARACTER: upper body ======================= */}
+      {/* =====================================================================
+          5. DEVELOPER: UPPER BODY & CHOCOLATE BROWN HOODIE
+          ===================================================================== */}
       <group ref={upperRef}>
-        {/* Torso (hoodie) */}
-        <group ref={chestRef}>
-          <mesh geometry={geo.torso} material={mats.hoodie} scale={TORSO_SCALE} {...SHADOWS} />
-        </group>
+        {/* Torso & Ribbed Hem */}
+        <mesh geometry={geo.torso} material={mats.hoodie} scale={TORSO_SCALE} {...SHADOWS} />
         <mesh geometry={geo.hem} material={mats.hoodieDark} position={[0, -0.025, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1.22, 0.86, 1]} {...SHADOWS} />
-        {/* Kangaroo pocket */}
+
+        {/* Kangaroo Pouch Pocket */}
         <mesh geometry={geo.pocket} material={mats.hoodie} position={[0, 0.095, 0.176]} rotation={[0.06, 0, Math.PI / 2]} scale={[1, 1, 0.34]} {...SHADOWS} />
         {geo.pocketSeam.map((g, i) => (
           <mesh key={i} geometry={g} material={mats.hoodieDark} {...SHADOWS} />
         ))}
-        {/* Hood: folded collar, pouch behind the shoulders, drawstrings */}
+
+        {/* Draped Cowl / Hood Pouch Resting on Shoulders */}
         <mesh geometry={geo.collar} material={mats.hoodie} position={[0, 0.625, 0.005]} rotation={[Math.PI / 2 + 0.25, 0, 0]} scale={[1.12, 1, 1]} {...SHADOWS} />
         <mesh geometry={geo.hoodPouch} material={mats.hoodie} position={[0, 0.575, -0.13]} scale={[1.5, 1, 0.75]} {...SHADOWS} />
+
+        {/* Hood Drawstrings with Aglets */}
         {geo.stringTube.map((g, i) => (
           <group key={i}>
             <mesh geometry={g} material={mats.string} {...SHADOWS} />
@@ -1070,68 +1085,74 @@ export function DeveloperAvatar({
           </group>
         ))}
 
-        {/* Arms + hands */}
+        {/* Arms & Typing Hands */}
         {arm(0)}
         {arm(1)}
         {hand(0)}
         {hand(1)}
 
-        {/* Neck + head */}
+        {/* =================================================================
+            6. HEAD, EXACT HAIR MANE, DEFINED FACE & JAWLINE BEARD
+            ================================================================= */}
         <mesh geometry={geo.neck} material={mats.skin} position={[0, 0.64, 0.012]} {...SHADOWS} />
         <group ref={headRef} position={[0, 0.69, 0.015]}>
           <group position={[0, 0.12, 0]}>
-            {/* Skull */}
+            {/* Skull Ellipsoid */}
             <mesh geometry={geo.head} material={mats.skin} scale={HEAD_SCALE} {...SHADOWS} />
-            {/* Ears */}
+
+            {/* Anatomical Ears Peeking Through Wavy Hair */}
             {[-1, 1].map((s) => (
               <group key={s} position={[s * 0.136, -0.006, -0.012]}>
                 <mesh geometry={geo.ear} material={mats.skin} scale={[0.38, 1.0, 0.7]} {...SHADOWS} />
                 <mesh geometry={geo.ear} material={mats.skinDeep} position={[s * 0.003, 0, 0.002]} scale={[0.22, 0.62, 0.42]} {...SHADOWS} />
               </group>
             ))}
-            {/* Nose */}
+
+            {/* Defined Straight Nose Bridge & Sculpted Tip */}
             <mesh geometry={geo.noseBridge} material={mats.skin} position={onFace(0, -0.012, 0.004)} rotation={[-0.4, 0, 0]} {...SHADOWS} />
-            <mesh geometry={geo.noseTip} material={mats.skin} position={[0, -0.046, faceZ(0, -0.046) + 0.018]} scale={[1, 0.9, 1]} {...SHADOWS} />
+            <mesh geometry={geo.noseTip} material={mats.skin} position={[0, -0.044, faceZ(0, -0.044) + 0.018]} scale={[1, 0.9, 1]} {...SHADOWS} />
             {[-1, 1].map((s) => (
               <group key={s}>
                 <mesh geometry={geo.nostril} material={mats.skin} position={[s * 0.016, -0.05, faceZ(0, -0.05) + 0.007]} {...SHADOWS} />
                 <mesh geometry={geo.nostril} material={mats.inner} position={[s * 0.008, -0.058, faceZ(0, -0.058) + 0.012]} scale={0.5} {...SHADOWS} />
               </group>
             ))}
-            {/* Eyes, lids, brows */}
+
+            {/* Almond Eyes, Eyelids, Glossy Iris & Glint */}
             {([0, 1] as const).map((i) => {
               const s = i === 0 ? -1 : 1;
               const ex = s * 0.056;
               return (
                 <group key={i}>
-                  <group
-                    ref={(el) => {
-                      eyeRefs.current[i] = el;
-                    }}
-                    position={[ex, 0.012, faceZ(ex, 0.012) - 0.004]}
-                  >
+                  <group position={[ex, 0.012, faceZ(ex, 0.012) - 0.004]}>
                     <mesh geometry={geo.eyeWhite} material={mats.eyeWhite} scale={[1.15, 0.8, 0.6]} {...SHADOWS} />
                     <mesh geometry={geo.iris} material={mats.iris} position={[0, 0, 0.009]} scale={[1, 1, 0.5]} {...SHADOWS} />
                     <mesh geometry={geo.pupil} material={mats.pupil} position={[0, 0, 0.0135]} scale={[1, 1, 0.5]} />
                     <mesh geometry={geo.glint} material={mats.glint} position={[0.0045, 0.005, 0.0158]} />
                   </group>
-                  <mesh geometry={geo.lids[i]} material={mats.lid} {...SHADOWS} />
+                  <mesh geometry={geo.lids[i]} material={mats.skin} {...SHADOWS} />
                   <mesh geometry={geo.brows[i]} material={mats.brow} {...SHADOWS} />
                 </group>
               );
             })}
-            {/* Clean Sculpted Lips & Smooth Jawline */}
+
+            {/* Natural Lips */}
             <mesh geometry={geo.upperLip} material={mats.lip} {...SHADOWS} />
             <mesh geometry={geo.lowerLip} material={mats.lip} {...SHADOWS} />
 
-            {/* Hair: expanded cap + 32 long wavy locks */}
+            {/* ── 24 Curated Hair Wave Splines + Solid Underlay Caps ── */}
             <mesh geometry={geo.hairCapTop} material={mats.hair} scale={HEAD_SCALE} {...SHADOWS} />
             <mesh geometry={geo.hairCapBack} material={mats.hair} scale={HEAD_SCALE} {...SHADOWS} />
-            {geo.locks.map((g, i) => (
-              <mesh key={i} geometry={g} material={mats.hair} {...SHADOWS} />
+            {geo.hairWaves.map((g, i) => (
+              <mesh key={`hair-${i}`} geometry={g} material={mats.hair} {...SHADOWS} />
             ))}
 
-            {/* Glasses */}
+            {/* ── 5 Sculpted Jawline Beard & Mustache Tubes (Clean Cheeks!) ── */}
+            {geo.beardCurves.map((g, i) => (
+              <mesh key={`beard-${i}`} geometry={g} material={mats.beard} {...SHADOWS} />
+            ))}
+
+            {/* ── Modern Black Rectangular Glasses with Temple Arms ── */}
             {[-1, 1].map((s) => (
               <group key={s} position={[s * 0.062, 0.004, 0.14]} rotation={[0, s * 0.45, 0]}>
                 <mesh geometry={geo.frameLoop} material={mats.frame} {...SHADOWS} />
@@ -1140,7 +1161,7 @@ export function DeveloperAvatar({
             ))}
             <mesh geometry={geo.bridge} material={mats.frame} {...SHADOWS} />
             {geo.temples.map((g, i) => (
-              <mesh key={i} geometry={g} material={mats.frame} {...SHADOWS} />
+              <mesh key={`temple-${i}`} geometry={g} material={mats.frame} {...SHADOWS} />
             ))}
           </group>
         </group>
