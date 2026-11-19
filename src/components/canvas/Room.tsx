@@ -18,13 +18,13 @@ import { ArticulatedDeskLamp } from './DeskSetup'
 //   plus the ArticulatedDeskLamp on the desk casting the warm golden light.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const SLATE_BASE      = '#182030'
-const OAK_FLOOR       = '#683e22'
-const OAK_PLANK_ALT   = '#5c361e'
-const RUG_COLOR       = '#241e3a'
-const RUG_BORDER      = '#31284d'
+const SLATE_BASE = '#182030'
+const OAK_FLOOR = '#683e22'
+const OAK_PLANK_ALT = '#5c361e'
+const RUG_COLOR = '#241e3a'
+const RUG_BORDER = '#31284d'
 const SLATE_NAVY_WALL = '#262f44'
-const WOOD_BASEBOARD  = '#4a2c1a'
+const WOOD_BASEBOARD = '#4a2c1a'
 
 function BaseSlabAndFloor() {
   const planks = useMemo(() =>
@@ -32,7 +32,7 @@ function BaseSlabAndFloor() {
       z: -1.85 + i * 0.37,
       color: i % 2 === 0 ? OAK_FLOOR : OAK_PLANK_ALT,
     }))
-  , [])
+    , [])
 
   return (
     <group>

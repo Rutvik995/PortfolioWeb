@@ -18,8 +18,8 @@ import * as THREE from 'three'
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MULLION_COLOR = '#f1f5f9' // Crisp white/cream mullions
-const FRAME_COLOR   = '#1e2638' // Architectural slate frame
-const SILL_COLOR    = '#334155' // Window sill
+const FRAME_COLOR = '#1e2638' // Architectural slate frame
+const SILL_COLOR = '#334155' // Window sill
 const CURTAIN_COLOR = '#b8b5c0' // Soft beige-grey curtain cloth
 
 function DrapedCurtain({ side, height }: { side: 'left' | 'right'; height: number }) {
@@ -30,9 +30,9 @@ function DrapedCurtain({ side, height }: { side: 'left' | 'right'; height: numbe
   const folds = useMemo(() => [
     { dx: -0.14, r: 0.038, z: 0.05 },
     { dx: -0.07, r: 0.044, z: 0.08 },
-    { dx:  0.00, r: 0.046, z: 0.05 },
-    { dx:  0.07, r: 0.044, z: 0.08 },
-    { dx:  0.14, r: 0.038, z: 0.05 },
+    { dx: 0.00, r: 0.046, z: 0.05 },
+    { dx: 0.07, r: 0.044, z: 0.08 },
+    { dx: 0.14, r: 0.038, z: 0.05 },
   ], [])
 
   return (
@@ -78,19 +78,19 @@ function ContainedNightCityscape() {
     // Far background skyline
     { x: -0.75, h: 2.8, w: 0.36, d: 0.35, z: -2.8, col: '#0d1527' },
     { x: -0.35, h: 3.5, w: 0.44, d: 0.40, z: -3.0, col: '#0a1020', antenna: true },
-    { x:  0.10, h: 2.7, w: 0.38, d: 0.35, z: -2.7, col: '#0f172a' },
-    { x:  0.58, h: 3.9, w: 0.46, d: 0.42, z: -3.2, col: '#080d1a', spire: true },
-    { x:  0.92, h: 3.0, w: 0.40, d: 0.36, z: -2.9, col: '#0d1527' },
+    { x: 0.10, h: 2.7, w: 0.38, d: 0.35, z: -2.7, col: '#0f172a' },
+    { x: 0.58, h: 3.9, w: 0.46, d: 0.42, z: -3.2, col: '#080d1a', spire: true },
+    { x: 0.92, h: 3.0, w: 0.40, d: 0.36, z: -2.9, col: '#0d1527' },
 
     // Midground skyscrapers
     { x: -0.60, h: 2.0, w: 0.34, d: 0.32, z: -2.1, col: '#131d33' },
     { x: -0.15, h: 2.3, w: 0.38, d: 0.35, z: -2.2, col: '#16223b' },
-    { x:  0.32, h: 2.1, w: 0.35, d: 0.32, z: -2.0, col: '#141e35' },
-    { x:  0.75, h: 2.4, w: 0.40, d: 0.34, z: -2.3, col: '#17243e' },
+    { x: 0.32, h: 2.1, w: 0.35, d: 0.32, z: -2.0, col: '#141e35' },
+    { x: 0.75, h: 2.4, w: 0.40, d: 0.34, z: -2.3, col: '#17243e' },
 
     // Foreground architectural blocks
     { x: -0.42, h: 1.4, w: 0.32, d: 0.30, z: -1.5, col: '#1e293b' },
-    { x:  0.48, h: 1.5, w: 0.36, d: 0.30, z: -1.6, col: '#1e293b' },
+    { x: 0.48, h: 1.5, w: 0.36, d: 0.30, z: -1.6, col: '#1e293b' },
   ], [])
 
   return (
