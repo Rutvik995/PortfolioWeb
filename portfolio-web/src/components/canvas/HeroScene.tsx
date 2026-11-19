@@ -16,24 +16,76 @@ function LoadingFallback() {
   const { progress } = useProgress();
   return (
     <Html center>
-      <div className="flex flex-col items-center justify-center gap-3 p-5 rounded-2xl bg-slate-950/85 border border-slate-800 backdrop-blur-md shadow-2xl">
-        <div className="relative w-12 h-12">
-          <div className="absolute inset-0 rounded-full border-2 border-slate-800" />
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '12px',
+          padding: '20px 24px',
+          borderRadius: '16px',
+          backgroundColor: 'rgba(2, 5, 15, 0.90)',
+          border: '1px solid #1e293b',
+          backdropFilter: 'blur(8px)',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
+        }}
+      >
+        <div style={{ position: 'relative', width: '48px', height: '48px' }}>
           <div
-            className="absolute inset-0 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin"
-            style={{ animationDuration: '0.8s' }}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '9999px',
+              border: '2px solid #1e293b',
+            }}
           />
-          <div className="absolute inset-0 flex items-center justify-center text-xs font-mono font-bold text-cyan-300">
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '9999px',
+              border: '2px solid #38bdf8',
+              borderTopColor: 'transparent',
+              animation: 'spin 0.8s linear infinite',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '11px',
+              fontFamily: 'monospace',
+              fontWeight: 700,
+              color: '#38bdf8',
+            }}
+          >
             {Math.round(progress)}%
           </div>
         </div>
-        <div className="text-[11px] uppercase tracking-widest text-slate-400 font-mono">
+        <div
+          style={{
+            fontSize: '11px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.15em',
+            color: '#94a3b8',
+            fontFamily: 'monospace',
+          }}
+        >
           Loading 3D Models
         </div>
       </div>
     </Html>
   );
 }
+
+// Right-side framing coordinates:
+// Room offset shifted to the right side of the screen
+const RIGHT_SIDE_OFFSET: [number, number, number] = [1.85, -0.45, 0];
+const ORBIT_TARGET: [number, number, number] = [1.85, 0.75, 0];
 
 export interface HeroSceneProps {
   enableControls?: boolean;
@@ -43,13 +95,23 @@ export function HeroScene({
   enableControls = true,
 }: HeroSceneProps) {
   return (
-    <div className="w-full h-full select-none">
+    <div
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        overflow: 'hidden',
+        userSelect: 'none',
+      }}
+    >
       <Canvas
         shadows="soft"
         dpr={[1, 1.75]}
         camera={{
-          position: [4.6, 3.4, 5.2],
-          fov: 36,
+          position: [6.4, 4.4, 6.6],
+          fov: 34,
         }}
         gl={{
           antialias: true,
@@ -58,18 +120,23 @@ export function HeroScene({
           toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: 1.15,
         }}
-        style={{ width: '100%', height: '100%', background: '#02050f' }}
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'block',
+          backgroundColor: '#02050f',
+        }}
       >
-        {/* Full Freedom OrbitControls with Smooth Damping */}
+        {/* Synchronized OrbitControls locked to the right-side room center */}
         {enableControls && (
           <OrbitControls
             enableDamping
             dampingFactor={0.06}
-            target={[0.0, 1.0, 0.35]}
-            minDistance={2.2}
+            target={ORBIT_TARGET}
+            minDistance={2.5}
             maxDistance={14.0}
-            minPolarAngle={0.2}
-            maxPolarAngle={Math.PI / 2.05}
+            minPolarAngle={0.25}
+            maxPolarAngle={Math.PI / 2.12}
             enablePan={true}
           />
         )}
@@ -81,8 +148,10 @@ export function HeroScene({
           {/* Base Night Lighting */}
           <Lighting />
 
-          {/* Full Room Diorama (Walls, Window, Skyline, Clock, Poster, Desk, Lamp, Steam, Character) */}
-          <Room />
+          {/* Full Room Diorama framed BIG in the right-center of the screen */}
+          <group position={RIGHT_SIDE_OFFSET} scale={1.22}>
+            <Room />
+          </group>
 
           {/* Cinematic Post-Processing */}
           <PostProcessingEffects />

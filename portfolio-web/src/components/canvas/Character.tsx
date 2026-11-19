@@ -1,31 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 
-/**
- * Character
- * ─────────────────────────────────────────────────────────────────────────────
- * Rigged 3D Human Developer seated at workstation:
- *  - Loads directly from `/models/character.glb` (with automatic fallback to `/models/model.glb`)
- *  - Real human proportions, PBR skin, long wavy hair, winter hoodie/knitwear
- *  - Skeletal animation driven in `useFrame`:
- *      • Natural alternating typing hands on mechanical keyboard
- *      • Subtle chest expansion/relaxation breathing cycle
- *      • Periodic head turn glancing at secondary monitor
- *      • Soft blue-cyan screen reflection on face + warm yellow rim light on hair
- *
- * ASSET INSTRUCTIONS:
- *  Place your rigged 3D human character GLB file at:
- *    `/public/models/character.glb`
- *  Recommended specifications:
- *    - Standard Mixamo-compatible or humanoid bone names (Head, Neck, Spine, LeftArm, RightArm, LeftHand, RightHand)
- *    - Draco or Meshopt compressed
- */
-
-const HOODIE_COLOR = '#452b1b'; // Warm rich brown winter knit
+const HOODIE_COLOR = '#422a1c'; // Rich matte dark brown winter knit
 
 function CharacterModel({ url }: { url: string }) {
   const { scene } = useGLTF(url);
@@ -48,41 +28,16 @@ function CharacterModel({ url }: { url: string }) {
     rightUpLeg?: THREE.Bone;
     leftLeg?: THREE.Bone;
     rightLeg?: THREE.Bone;
+    hips?: THREE.Bone;
   }>({});
 
-  // Clone scene so multiple instances don't clash
-  const clonedScene = useRef<THREE.Group>(null!);
-  if (!clonedScene.current) {
-    clonedScene.current = scene.clone(true);
-  }
+  // Store rest quaternions so rotations are applied cleanly relative to bind pose
+  const restQuatsRef = useRef<Map<THREE.Bone, THREE.Quaternion>>(new Map());
 
-  useEffect(() => {
-    const root = clonedScene.current;
-    if (!root) return;
-
-    // Cache bone references
-    const bones: Record<string, THREE.Bone> = {};
-    root.traverse((obj) => {
-      if ((obj as THREE.Bone).isBone) {
-        const name = obj.name.toLowerCase();
-        if (name.includes('head')) bones.head = obj as THREE.Bone;
-        else if (name.includes('neck')) bones.neck = obj as THREE.Bone;
-        else if (name.includes('spine2')) bones.spine2 = obj as THREE.Bone;
-        else if (name.includes('spine1')) bones.spine1 = obj as THREE.Bone;
-        else if (name.includes('spine')) bones.spine = obj as THREE.Bone;
-        else if (name.includes('leftforearm') || name.includes('leftlowerarm')) bones.leftForeArm = obj as THREE.Bone;
-        else if (name.includes('rightforearm') || name.includes('rightlowerarm')) bones.rightForeArm = obj as THREE.Bone;
-        else if (name.includes('leftarm') || name.includes('leftupperarm')) bones.leftArm = obj as THREE.Bone;
-        else if (name.includes('rightarm') || name.includes('rightupperarm')) bones.rightArm = obj as THREE.Bone;
-        else if (name.includes('lefthand')) bones.leftHand = obj as THREE.Bone;
-        else if (name.includes('righthand')) bones.rightHand = obj as THREE.Bone;
-        else if (name.includes('leftupleg') || name.includes('leftthigh')) bones.leftUpLeg = obj as THREE.Bone;
-        else if (name.includes('rightupleg') || name.includes('rightthigh')) bones.rightUpLeg = obj as THREE.Bone;
-        else if (name.includes('leftleg') || name.includes('leftcalf')) bones.leftLeg = obj as THREE.Bone;
-        else if (name.includes('rightleg') || name.includes('rightcalf')) bones.rightLeg = obj as THREE.Bone;
-      }
-
-      // Material tuning for PBR photorealism
+  // Use the original scene directly (NO scene.clone which breaks SkinnedMesh bindings)
+  const modelScene = useMemo(() => {
+    // Traverse and optimize materials
+    scene.traverse((obj) => {
       if ((obj as THREE.Mesh).isMesh) {
         obj.castShadow = true;
         obj.receiveShadow = true;
@@ -94,7 +49,7 @@ function CharacterModel({ url }: { url: string }) {
           const matName = mat.name.toLowerCase();
           const meshName = mesh.name.toLowerCase();
 
-          // Winter hoodie / jacket material override
+          // Winter hoodie / knitwear material override
           if (
             meshName.includes('body') ||
             meshName.includes('look') ||
@@ -116,21 +71,67 @@ function CharacterModel({ url }: { url: string }) {
             matName.includes('skin') ||
             matName.includes('head')
           ) {
-            mat.roughness = 0.54;
+            mat.roughness = 0.52;
             mat.metalness = 0.02;
           }
 
           // Hair material refinement
           if (meshName.includes('hair') || matName.includes('hair')) {
-            mat.roughness = 0.75;
-            mat.metalness = 0.05;
+            mat.roughness = 0.78;
+            mat.metalness = 0.03;
           }
         }
       }
     });
 
+    return scene;
+  }, [scene]);
+
+  useEffect(() => {
+    const root = modelScene;
+    if (!root) return;
+
+    const bones: typeof bonesRef.current = {};
+    const restMap = new Map<THREE.Bone, THREE.Quaternion>();
+
+    root.traverse((obj) => {
+      if ((obj as THREE.Bone).isBone) {
+        const bone = obj as THREE.Bone;
+        const name = bone.name.toLowerCase();
+
+        restMap.set(bone, bone.quaternion.clone());
+
+        if (name.includes('head')) bones.head = bone;
+        else if (name.includes('neck')) bones.neck = bone;
+        else if (name.includes('spine2')) bones.spine2 = bone;
+        else if (name.includes('spine1')) bones.spine1 = bone;
+        else if (name.includes('spine')) bones.spine = bone;
+        else if (name.includes('hips')) bones.hips = bone;
+        else if (name.includes('leftforearm') || name.includes('leftlowerarm')) bones.leftForeArm = bone;
+        else if (name.includes('rightforearm') || name.includes('rightlowerarm')) bones.rightForeArm = bone;
+        else if (name.includes('leftarm') || name.includes('leftupperarm')) bones.leftArm = bone;
+        else if (name.includes('rightarm') || name.includes('rightupperarm')) bones.rightArm = bone;
+        else if (name.includes('lefthand')) bones.leftHand = bone;
+        else if (name.includes('righthand')) bones.rightHand = bone;
+        else if (name.includes('leftupleg') || name.includes('leftthigh')) bones.leftUpLeg = bone;
+        else if (name.includes('rightupleg') || name.includes('rightthigh')) bones.rightUpLeg = bone;
+        else if (name.includes('leftleg') || name.includes('leftcalf')) bones.leftLeg = bone;
+        else if (name.includes('rightleg') || name.includes('rightcalf')) bones.rightLeg = bone;
+      }
+    });
+
     bonesRef.current = bones;
-  }, []);
+    restQuatsRef.current = restMap;
+  }, [modelScene]);
+
+  // Quaternions helper
+  const applyDelta = (bone: THREE.Bone | undefined, euler: THREE.Euler) => {
+    if (!bone) return;
+    const rest = restQuatsRef.current.get(bone);
+    if (!rest) return;
+    const delta = new THREE.Quaternion().setFromEuler(euler);
+    bone.quaternion.copy(rest).multiply(delta);
+  };
 
   // Continuous animation and seated pose lock in useFrame (60 FPS)
   useFrame(({ clock }) => {
@@ -138,81 +139,66 @@ function CharacterModel({ url }: { url: string }) {
     const bones = bonesRef.current;
     if (!bones) return;
 
-    // ── 1. Enforce Seated Desk Pose ──
-    // Thighs bent 90° forward onto chair cushion
-    if (bones.leftUpLeg) bones.leftUpLeg.rotation.x = Math.PI / 2.05;
-    if (bones.rightUpLeg) bones.rightUpLeg.rotation.x = Math.PI / 2.05;
+    // ── 1. Seated Lower Body Pose ──
+    // Bend thighs forward 90 degrees onto the chair cushion
+    applyDelta(bones.leftUpLeg, new THREE.Euler(1.52, 0.08, -0.05));
+    applyDelta(bones.rightUpLeg, new THREE.Euler(1.52, -0.08, 0.05));
 
-    // Calves bent 90° downward toward floor
-    if (bones.leftLeg) bones.leftLeg.rotation.x = -Math.PI / 2.05;
-    if (bones.rightLeg) bones.rightLeg.rotation.x = -Math.PI / 2.05;
+    // Bend calves downward 90 degrees to floor
+    applyDelta(bones.leftLeg, new THREE.Euler(-1.55, 0, 0));
+    applyDelta(bones.rightLeg, new THREE.Euler(-1.55, 0, 0));
 
-    // Spine leaned slightly forward toward desk
-    if (bones.spine) bones.spine.rotation.x = 0.12;
-    if (bones.spine1) bones.spine1.rotation.x = 0.08;
+    // ── 2. Upper Body Spine Lean ──
+    applyDelta(bones.spine, new THREE.Euler(0.10, 0, 0));
+    applyDelta(bones.spine1, new THREE.Euler(0.06, 0, 0));
+    applyDelta(bones.spine2, new THREE.Euler(0.05 + Math.sin(t * 1.8) * 0.012, 0, 0)); // breathing
 
-    // Upper arms forward & forearms resting toward keyboard
-    if (bones.leftArm) {
-      bones.leftArm.rotation.x = 0.55;
-      bones.leftArm.rotation.z = -0.22;
-    }
-    if (bones.rightArm) {
-      bones.rightArm.rotation.x = 0.55;
-      bones.rightArm.rotation.z = 0.22;
-    }
-    if (bones.leftForeArm) {
-      bones.leftForeArm.rotation.x = 0.78;
-      bones.leftForeArm.rotation.z = 0.14;
-    }
-    if (bones.rightForeArm) {
-      bones.rightForeArm.rotation.x = 0.78;
-      bones.rightForeArm.rotation.z = -0.14;
-    }
+    // ── 3. Arms Lowered from T-Pose onto Keyboard ──
+    // Left arm down and forward
+    applyDelta(bones.leftArm, new THREE.Euler(0.48, 0.25, -1.18));
+    // Left forearm angled inward over keyboard
+    applyDelta(bones.leftForeArm, new THREE.Euler(0.20, -0.65, -0.72));
 
-    // ── 2. Subtle Natural Breathing Cycle ──
-    if (bones.spine2) {
-      bones.spine2.rotation.x = 0.06 + Math.sin(t * 1.8) * 0.014;
-    }
+    // Right arm down and forward
+    applyDelta(bones.rightArm, new THREE.Euler(0.48, -0.25, 1.18));
+    // Right forearm angled inward over keyboard
+    applyDelta(bones.rightForeArm, new THREE.Euler(0.20, 0.65, 0.72));
 
-    // ── 3. Alternating Typing Hand Movement ──
-    if (bones.leftHand) {
-      bones.leftHand.rotation.x = -0.10 + Math.sin(t * 14) * 0.05;
-      bones.leftHand.rotation.z = -0.04 + Math.cos(t * 12) * 0.02;
-    }
-    if (bones.rightHand) {
-      bones.rightHand.rotation.x = -0.10 + Math.sin(t * 14 + Math.PI) * 0.05;
-      bones.rightHand.rotation.z = 0.04 + Math.cos(t * 13) * 0.02;
-    }
+    // ── 4. Alternating Hands Typing Motion ──
+    const leftTap = Math.sin(t * 14) * 0.06;
+    const rightTap = Math.sin(t * 14 + Math.PI) * 0.06;
+    applyDelta(bones.leftHand, new THREE.Euler(-0.15 + leftTap, 0.05, 0));
+    applyDelta(bones.rightHand, new THREE.Euler(-0.15 + rightTap, -0.05, 0));
 
-    // ── 4. Periodic Head Glance toward Secondary Monitor ──
+    // ── 5. Head Micro-Glance ──
     if (bones.head) {
       const cycle = (t * 0.15) % (Math.PI * 2);
-      const isGlancing = Math.sin(cycle) > 0.85;
-      const targetY = isGlancing ? 0.28 : 0.0;
-      bones.head.rotation.y = THREE.MathUtils.lerp(bones.head.rotation.y, targetY, 0.05);
-      bones.head.rotation.x = 0.06 + Math.sin(t * 1.4) * 0.008;
+      const isGlancing = Math.sin(cycle) > 0.82;
+      const targetY = isGlancing ? 0.32 : 0.0;
+      const rest = restQuatsRef.current.get(bones.head);
+      if (rest) {
+        const delta = new THREE.Quaternion().setFromEuler(
+          new THREE.Euler(0.08 + Math.sin(t * 1.4) * 0.01, targetY, 0)
+        );
+        bones.head.quaternion.copy(rest).multiply(delta);
+      }
     }
   });
 
   return (
     <primitive
       ref={characterGroup}
-      object={clonedScene.current}
-      position={[0, -0.46, 0.02]}
+      object={modelScene}
+      position={[0, -0.44, 0.02]}
       rotation={[0, 0, 0]}
       scale={0.92}
     />
   );
 }
 
-/**
- * Character Component with graceful asset fallback
- */
 export function Character() {
   const [modelUrl, setModelUrl] = useState('/models/character.glb');
-  const [hasError, setHasError] = useState(false);
 
-  // If character.glb doesn't exist, try model.glb
   useEffect(() => {
     fetch('/models/character.glb', { method: 'HEAD' })
       .then((res) => {
@@ -220,18 +206,6 @@ export function Character() {
       })
       .catch(() => setModelUrl('/models/model.glb'));
   }, []);
-
-  if (hasError) {
-    return (
-      <group position={[0, 0.65, 0]}>
-        {/* Sleek architectural placeholder wireframe */}
-        <mesh position={[0, 0.45, 0]}>
-          <capsuleGeometry args={[0.22, 0.65, 8, 16]} />
-          <meshStandardMaterial color="#38bdf8" wireframe transparent opacity={0.35} />
-        </mesh>
-      </group>
-    );
-  }
 
   return (
     <group
@@ -244,8 +218,8 @@ export function Character() {
       <pointLight
         position={[0, 1.25, 0.45]}
         color="#38bdf8"
-        intensity={1.2}
-        distance={1.4}
+        intensity={1.4}
+        distance={1.6}
         decay={2}
       />
 
@@ -253,7 +227,7 @@ export function Character() {
       <pointLight
         position={[-0.45, 1.35, 0.20]}
         color="#ffaa3b"
-        intensity={2.1}
+        intensity={2.2}
         distance={2.0}
         decay={2}
       />
@@ -261,6 +235,5 @@ export function Character() {
   );
 }
 
-// Preload model
 useGLTF.preload('/models/character.glb');
 useGLTF.preload('/models/model.glb');

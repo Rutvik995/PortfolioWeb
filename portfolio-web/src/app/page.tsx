@@ -4,20 +4,53 @@ import dynamic from 'next/dynamic';
 
 /**
  * InitialLoadingScreen
- * Minimal, centered dark spinner while the WebGL scene compiles
+ * Minimal centered spinner while WebGL shaders and GLTF models load
  */
 function InitialLoadingScreen() {
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#02050f] text-slate-100">
-      <div className="relative w-14 h-14 mb-4">
-        <div className="absolute inset-0 rounded-full border-2 border-slate-800" />
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#02050f',
+        color: '#f8fafc',
+        zIndex: 50,
+      }}
+    >
+      <div style={{ position: 'relative', width: '48px', height: '48px', marginBottom: '16px' }}>
         <div
-          className="absolute inset-0 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin"
-          style={{ animationDuration: '0.8s' }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: '9999px',
+            border: '2px solid #1e293b',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: '9999px',
+            border: '2px solid #38bdf8',
+            borderTopColor: 'transparent',
+            animation: 'spin 0.8s linear infinite',
+          }}
         />
       </div>
-      <div className="text-xs font-mono uppercase tracking-widest text-slate-400">
-        Loading 3D Scene...
+      <div
+        style={{
+          fontSize: '11px',
+          fontFamily: 'monospace',
+          letterSpacing: '0.2em',
+          textTransform: 'uppercase',
+          color: '#94a3b8',
+        }}
+      >
+        Loading 3D Workstation...
       </div>
     </div>
   );
@@ -34,8 +67,18 @@ const HeroScene = dynamic(
 
 export default function Home() {
   return (
-    <main className="w-screen h-screen overflow-hidden bg-[#02050f]">
-      {/* ── 100% Pure Fullscreen 3D Scene (No HTML UI / overlays) ── */}
+    <main
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        overflow: 'hidden',
+        backgroundColor: '#02050f',
+      }}
+    >
+      {/* ── 100% Pure Fullscreen 3D Scene ── */}
       <HeroScene enableControls={true} />
     </main>
   );

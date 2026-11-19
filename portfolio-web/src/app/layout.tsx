@@ -13,8 +13,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-[#02050f] text-slate-100 overflow-x-hidden select-none">
+    <html lang="en" className="dark" style={{ width: '100%', height: '100%', margin: 0, padding: 0 }}>
+      <body
+        style={{
+          width: '100vw',
+          height: '100vh',
+          margin: 0,
+          padding: 0,
+          overflow: 'hidden',
+          backgroundColor: '#02050f',
+          color: '#f8fafc',
+          userSelect: 'none',
+        }}
+      >
         {children}
       </body>
     </html>
