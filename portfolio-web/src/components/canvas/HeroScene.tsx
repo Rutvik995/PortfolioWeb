@@ -82,10 +82,14 @@ function LoadingFallback() {
   );
 }
 
-// Right-side framing coordinates:
-// Room offset shifted to the right side of the screen
-const RIGHT_SIDE_OFFSET: [number, number, number] = [1.85, -0.45, 0];
-const ORBIT_TARGET: [number, number, number] = [1.85, 0.75, 0];
+// ─────────────────────────────────────────────────────────────────────────────
+// Right-Side Framing Coordinates:
+// - Room occupies ~31% to ~81% horizontally (right-center)
+// - Sits between 3% and 84% vertically (zero clipping, entire floor and desk visible)
+// - Left ~31% is clean midnight starry space
+// ─────────────────────────────────────────────────────────────────────────────
+const RIGHT_SIDE_OFFSET: [number, number, number] = [2.2, 0.1, 0];
+const ORBIT_TARGET: [number, number, number] = [1.2, 1.4, 0];
 
 export interface HeroSceneProps {
   enableControls?: boolean;
@@ -97,7 +101,7 @@ export function HeroScene({
   return (
     <div
       style={{
-        position: 'absolute',
+        position: 'fixed',
         top: 0,
         left: 0,
         width: '100vw',
@@ -110,8 +114,8 @@ export function HeroScene({
         shadows="soft"
         dpr={[1, 1.75]}
         camera={{
-          position: [6.4, 4.4, 6.6],
-          fov: 34,
+          position: [9.2, 6.4, 9.2],
+          fov: 32,
         }}
         gl={{
           antialias: true,
@@ -121,8 +125,8 @@ export function HeroScene({
           toneMappingExposure: 1.15,
         }}
         style={{
-          width: '100%',
-          height: '100%',
+          width: '100vw',
+          height: '100vh',
           display: 'block',
           backgroundColor: '#02050f',
         }}
@@ -133,8 +137,8 @@ export function HeroScene({
             enableDamping
             dampingFactor={0.06}
             target={ORBIT_TARGET}
-            minDistance={2.5}
-            maxDistance={14.0}
+            minDistance={4.0}
+            maxDistance={18.0}
             minPolarAngle={0.25}
             maxPolarAngle={Math.PI / 2.12}
             enablePan={true}
@@ -148,8 +152,8 @@ export function HeroScene({
           {/* Base Night Lighting */}
           <Lighting />
 
-          {/* Full Room Diorama framed BIG in the right-center of the screen */}
-          <group position={RIGHT_SIDE_OFFSET} scale={1.22}>
+          {/* Full Room Diorama framed BIG on the right-center of the screen */}
+          <group position={RIGHT_SIDE_OFFSET}>
             <Room />
           </group>
 
