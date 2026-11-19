@@ -130,62 +130,65 @@ function CharacterModel({ url }: { url: string }) {
     });
 
     bonesRef.current = bones;
-
-    // Apply baseline seated coding pose
-    if (bones.leftUpLeg) bones.leftUpLeg.rotation.x = Math.PI / 2.1;
-    if (bones.rightUpLeg) bones.rightUpLeg.rotation.x = Math.PI / 2.1;
-    if (bones.leftLeg) bones.leftLeg.rotation.x = -Math.PI / 2.1;
-    if (bones.rightLeg) bones.rightLeg.rotation.x = -Math.PI / 2.1;
-
-    // Spine lean forward toward desk
-    if (bones.spine) bones.spine.rotation.x = 0.08;
-    if (bones.spine1) bones.spine1.rotation.x = 0.05;
-    if (bones.spine2) bones.spine2.rotation.x = 0.05;
-
-    // Arms forward onto keyboard
-    if (bones.leftArm) {
-      bones.leftArm.rotation.x = 0.45;
-      bones.leftArm.rotation.z = -0.15;
-    }
-    if (bones.rightArm) {
-      bones.rightArm.rotation.x = 0.45;
-      bones.rightArm.rotation.z = 0.15;
-    }
-    if (bones.leftForeArm) {
-      bones.leftForeArm.rotation.x = 0.70;
-      bones.leftForeArm.rotation.z = 0.10;
-    }
-    if (bones.rightForeArm) {
-      bones.rightForeArm.rotation.x = 0.70;
-      bones.rightForeArm.rotation.z = -0.10;
-    }
   }, []);
 
-  // Continuous animation in useFrame (60 FPS)
+  // Continuous animation and seated pose lock in useFrame (60 FPS)
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime();
     const bones = bonesRef.current;
+    if (!bones) return;
 
-    // 1. Subtle natural breathing cycle
-    if (bones.spine2) {
-      bones.spine2.rotation.x = 0.05 + Math.sin(t * 1.8) * 0.012;
+    // ── 1. Enforce Seated Desk Pose ──
+    // Thighs bent 90° forward onto chair cushion
+    if (bones.leftUpLeg) bones.leftUpLeg.rotation.x = Math.PI / 2.05;
+    if (bones.rightUpLeg) bones.rightUpLeg.rotation.x = Math.PI / 2.05;
+
+    // Calves bent 90° downward toward floor
+    if (bones.leftLeg) bones.leftLeg.rotation.x = -Math.PI / 2.05;
+    if (bones.rightLeg) bones.rightLeg.rotation.x = -Math.PI / 2.05;
+
+    // Spine leaned slightly forward toward desk
+    if (bones.spine) bones.spine.rotation.x = 0.12;
+    if (bones.spine1) bones.spine1.rotation.x = 0.08;
+
+    // Upper arms forward & forearms resting toward keyboard
+    if (bones.leftArm) {
+      bones.leftArm.rotation.x = 0.55;
+      bones.leftArm.rotation.z = -0.22;
+    }
+    if (bones.rightArm) {
+      bones.rightArm.rotation.x = 0.55;
+      bones.rightArm.rotation.z = 0.22;
+    }
+    if (bones.leftForeArm) {
+      bones.leftForeArm.rotation.x = 0.78;
+      bones.leftForeArm.rotation.z = 0.14;
+    }
+    if (bones.rightForeArm) {
+      bones.rightForeArm.rotation.x = 0.78;
+      bones.rightForeArm.rotation.z = -0.14;
     }
 
-    // 2. Alternating typing motion on keyboard
+    // ── 2. Subtle Natural Breathing Cycle ──
+    if (bones.spine2) {
+      bones.spine2.rotation.x = 0.06 + Math.sin(t * 1.8) * 0.014;
+    }
+
+    // ── 3. Alternating Typing Hand Movement ──
     if (bones.leftHand) {
-      bones.leftHand.rotation.x = -0.12 + Math.sin(t * 14) * 0.06;
+      bones.leftHand.rotation.x = -0.10 + Math.sin(t * 14) * 0.05;
       bones.leftHand.rotation.z = -0.04 + Math.cos(t * 12) * 0.02;
     }
     if (bones.rightHand) {
-      bones.rightHand.rotation.x = -0.12 + Math.sin(t * 14 + Math.PI) * 0.06;
+      bones.rightHand.rotation.x = -0.10 + Math.sin(t * 14 + Math.PI) * 0.05;
       bones.rightHand.rotation.z = 0.04 + Math.cos(t * 13) * 0.02;
     }
 
-    // 3. Periodic head glances toward secondary monitor (every ~10s)
+    // ── 4. Periodic Head Glance toward Secondary Monitor ──
     if (bones.head) {
       const cycle = (t * 0.15) % (Math.PI * 2);
       const isGlancing = Math.sin(cycle) > 0.85;
-      const targetY = isGlancing ? 0.32 : 0.0;
+      const targetY = isGlancing ? 0.28 : 0.0;
       bones.head.rotation.y = THREE.MathUtils.lerp(bones.head.rotation.y, targetY, 0.05);
       bones.head.rotation.x = 0.06 + Math.sin(t * 1.4) * 0.008;
     }
@@ -195,7 +198,7 @@ function CharacterModel({ url }: { url: string }) {
     <primitive
       ref={characterGroup}
       object={clonedScene.current}
-      position={[0, 0.42, 0.04]}
+      position={[0, -0.46, 0.02]}
       rotation={[0, 0, 0]}
       scale={0.92}
     />
