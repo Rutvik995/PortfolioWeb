@@ -161,13 +161,17 @@ export default class TvPlayer
         this.model = {}
         this.model.group = new THREE.Group()
 
-        // Exact TV screen placement on the TV stand
-        this.model.group.position.x = 4.195
-        this.model.group.position.y = 2.72
-        this.model.group.position.z = 1.63
+        // FULL SCREEN TV PLACEMENT:
+        // Center of the physical TV display:
+        // x = 4.19 (just 1cm in front of TV back to prevent z-fighting)
+        // y = 2.665
+        // z = 1.820
+        this.model.group.position.x = 4.19
+        this.model.group.position.y = 2.665
+        this.model.group.position.z = 1.820
 
-        // TV screen plane: 16:9 widescreen ratio
-        this.model.geometry = new THREE.PlaneGeometry(2.68, 1.52)
+        // Exact physical TV screen dimensions: Width = 4.16, Height = 2.34 (16:9 widescreen)
+        this.model.geometry = new THREE.PlaneGeometry(4.16, 2.34)
         this.model.geometry.rotateY(- Math.PI * 0.5)
 
         this.model.material = new THREE.MeshBasicMaterial({
@@ -243,20 +247,20 @@ export default class TvPlayer
 
     getHitZone(x, y)
     {
-        // Prev button (cx: 630, cy: 530, r: 35)
-        if(Math.hypot(x - 630, y - 530) < 45) return 'prev'
+        // Poster area (x: 60 to 520, y: 130 to 590)
+        if(x >= 60 && x <= 520 && y >= 130 && y <= 590) return 'poster'
 
-        // Play/Pause button (cx: 740, cy: 530, r: 50)
-        if(Math.hypot(x - 740, y - 530) < 55) return 'playpause'
+        // Prev button (cx: 720, cy: 535, r: 40)
+        if(Math.hypot(x - 720, y - 535) < 50) return 'prev'
 
-        // Next button (cx: 850, cy: 530, r: 35)
-        if(Math.hypot(x - 850, y - 530) < 45) return 'next'
+        // Play/Pause button (cx: 830, cy: 535, r: 55)
+        if(Math.hypot(x - 830, y - 535) < 60) return 'playpause'
 
-        // Volume slider bar (x: 550 to 860, y: 610 to 655)
-        if(x >= 540 && x <= 870 && y >= 610 && y <= 655) return 'volume'
+        // Next button (cx: 940, cy: 535, r: 40)
+        if(Math.hypot(x - 940, y - 535) < 50) return 'next'
 
-        // Poster area (x: 70 to 450, y: 110 to 490)
-        if(x >= 70 && x <= 450 && y >= 110 && y <= 490) return 'poster'
+        // Volume slider bar (x: 630 to 970, y: 610 to 650)
+        if(x >= 630 && x <= 970 && y >= 610 && y <= 650) return 'volume'
 
         return 'tv'
     }
@@ -287,7 +291,7 @@ export default class TvPlayer
         }
         else if(zone === 'volume')
         {
-            const newVol = Math.max(0, Math.min(1, (cx - 560) / 280))
+            const newVol = Math.max(0, Math.min(1, (cx - 640) / 320))
             this.setVolume(newVol)
         }
     }
@@ -378,51 +382,51 @@ export default class TvPlayer
         const H = this.canvas.height
         const track = this.playlist[this.currentIndex]
 
-        // 1. Background gradient
+        // 1. Sleek deep background gradient
         const bgGrad = ctx.createLinearGradient(0, 0, W, H)
-        bgGrad.addColorStop(0, '#0c0d12')
-        bgGrad.addColorStop(0.5, '#141722')
-        bgGrad.addColorStop(1, '#090a0e')
+        bgGrad.addColorStop(0, '#0a0a0f')
+        bgGrad.addColorStop(0.5, '#12141c')
+        bgGrad.addColorStop(1, '#08080c')
         ctx.fillStyle = bgGrad
         ctx.fillRect(0, 0, W, H)
 
         // 2. Ambient Accent Glow behind Artwork
-        const radialGlow = ctx.createRadialGradient(260, 300, 40, 260, 300, 380)
-        radialGlow.addColorStop(0, track.accentColor + (this.isPlaying ? '44' : '22'))
+        const radialGlow = ctx.createRadialGradient(290, 360, 50, 290, 360, 480)
+        radialGlow.addColorStop(0, track.accentColor + (this.isPlaying ? '55' : '28'))
         radialGlow.addColorStop(1, 'transparent')
         ctx.fillStyle = radialGlow
-        ctx.fillRect(0, 0, 700, H)
+        ctx.fillRect(0, 0, 850, H)
 
         // 3. Top Header Bar
-        ctx.font = '700 18px "Roboto", monospace'
+        ctx.font = '700 20px "Roboto", monospace'
         ctx.fillStyle = '#64748b'
-        ctx.fillText('RUTVIK LIVING ROOM • TV SOUNDSYSTEM', 70, 60)
+        ctx.fillText('RUTVIK LIVING ROOM • TV SOUNDSYSTEM', 70, 68)
 
         // Status pill
         ctx.fillStyle = this.isPlaying ? '#10b981' : '#64748b'
         ctx.beginPath()
-        ctx.arc(1140, 54, 6, 0, Math.PI * 2)
+        ctx.arc(1140, 62, 7, 0, Math.PI * 2)
         ctx.fill()
 
-        ctx.font = '600 16px sans-serif'
+        ctx.font = '700 16px sans-serif'
         ctx.fillStyle = this.isPlaying ? '#34d399' : '#94a3b8'
-        ctx.fillText(this.isPlaying ? 'NOW PLAYING' : 'PAUSED', 1155, 60)
+        ctx.fillText(this.isPlaying ? 'NOW PLAYING' : 'PAUSED', 1155, 68)
 
-        ctx.font = '600 16px monospace'
+        ctx.font = '700 16px monospace'
         ctx.fillStyle = '#64748b'
-        ctx.fillText(`0${this.currentIndex + 1} / 0${this.playlist.length}`, 1040, 60)
+        ctx.fillText(`0${this.currentIndex + 1} / 0${this.playlist.length}`, 1030, 68)
 
-        // 4. Album Artwork Poster
+        // 4. Album Artwork Poster (Full size, edge-to-edge proportion)
         const posterX = 70
-        const posterY = 100
-        const posterSize = 390
-        const radius = 24
+        const posterY = 130
+        const posterSize = 440
+        const radius = 26
 
-        // Poster shadow
+        // Poster shadow & glow
         ctx.save()
-        ctx.shadowColor = track.accentColor + '55'
-        ctx.shadowBlur = this.isPlaying ? 40 : 20
-        ctx.shadowOffsetY = 12
+        ctx.shadowColor = track.accentColor + (this.isPlaying ? '66' : '33')
+        ctx.shadowBlur = this.isPlaying ? 45 : 22
+        ctx.shadowOffsetY = 14
 
         // Rounded clip for artwork
         ctx.beginPath()
@@ -445,7 +449,6 @@ export default class TvPlayer
         }
         else
         {
-            // Fallback gradient if loading
             const fallbackGrad = ctx.createLinearGradient(posterX, posterY, posterX + posterSize, posterY + posterSize)
             fallbackGrad.addColorStop(0, track.accentColor)
             fallbackGrad.addColorStop(1, '#1e1e2f')
@@ -454,15 +457,15 @@ export default class TvPlayer
         }
         ctx.restore()
 
-        // Subtle glass reflection on the poster
+        // Subtle top glass reflection on poster
         const refGrad = ctx.createLinearGradient(posterX, posterY, posterX, posterY + posterSize * 0.4)
-        refGrad.addColorStop(0, 'rgba(255, 255, 255, 0.15)')
+        refGrad.addColorStop(0, 'rgba(255, 255, 255, 0.16)')
         refGrad.addColorStop(1, 'rgba(255, 255, 255, 0)')
         ctx.fillStyle = refGrad
         ctx.fillRect(posterX, posterY, posterSize, posterSize * 0.4)
 
         // Poster border
-        ctx.strokeStyle = this.hoverZone === 'poster' ? '#ffffff' : 'rgba(255, 255, 255, 0.12)'
+        ctx.strokeStyle = this.hoverZone === 'poster' ? '#ffffff' : 'rgba(255, 255, 255, 0.15)'
         ctx.lineWidth = 3
         ctx.stroke()
 
@@ -474,76 +477,75 @@ export default class TvPlayer
 
             ctx.fillStyle = track.accentColor
             ctx.beginPath()
-            ctx.arc(posterX + posterSize / 2, posterY + posterSize / 2, 44, 0, Math.PI * 2)
+            ctx.arc(posterX + posterSize / 2, posterY + posterSize / 2, 50, 0, Math.PI * 2)
             ctx.fill()
 
             ctx.fillStyle = '#ffffff'
             ctx.beginPath()
-            ctx.moveTo(posterX + posterSize / 2 - 10, posterY + posterSize / 2 - 18)
-            ctx.lineTo(posterX + posterSize / 2 + 18, posterY + posterSize / 2)
-            ctx.lineTo(posterX + posterSize / 2 - 10, posterY + posterSize / 2 + 18)
+            ctx.moveTo(posterX + posterSize / 2 - 12, posterY + posterSize / 2 - 20)
+            ctx.lineTo(posterX + posterSize / 2 + 20, posterY + posterSize / 2)
+            ctx.lineTo(posterX + posterSize / 2 - 12, posterY + posterSize / 2 + 20)
             ctx.closePath()
             ctx.fill()
 
-            ctx.font = '600 16px sans-serif'
+            ctx.font = '700 18px sans-serif'
             ctx.fillStyle = '#ffffff'
             ctx.textAlign = 'center'
-            ctx.fillText('CLICK TV TO PLAY', posterX + posterSize / 2, posterY + posterSize / 2 + 65)
+            ctx.fillText('CLICK TV TO PLAY', posterX + posterSize / 2, posterY + posterSize / 2 + 75)
             ctx.textAlign = 'start'
         }
 
         // 5. Track Information (Right Column)
-        const infoX = 510
+        const infoX = 560
 
         // Genre Pill
         ctx.fillStyle = 'rgba(255, 255, 255, 0.08)'
         ctx.beginPath()
-        ctx.roundRect(infoX, 108, 175, 32, 16)
+        ctx.roundRect(infoX, 132, 195, 34, 17)
         ctx.fill()
-        ctx.font = '600 13px sans-serif'
+        ctx.font = '700 14px sans-serif'
         ctx.fillStyle = track.accentColor
-        ctx.fillText('HOT TRACK • VIBE', infoX + 18, 129)
+        ctx.fillText('HOT TRACK • VIBE', infoX + 20, 154)
 
         // Song Title
-        ctx.font = '800 48px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        ctx.font = '800 52px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
         ctx.fillStyle = '#ffffff'
-        ctx.fillText(track.title, infoX, 185)
+        ctx.fillText(track.title, infoX, 214)
 
         // Artist Name
-        ctx.font = '700 28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        ctx.font = '700 30px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
         ctx.fillStyle = track.accentColor
-        ctx.fillText(track.artist, infoX, 226)
+        ctx.fillText(track.artist, infoX, 258)
 
         // Description / Vibe
-        ctx.font = '400 18px "Roboto", sans-serif'
+        ctx.font = '400 20px "Roboto", sans-serif'
         ctx.fillStyle = '#94a3b8'
-        ctx.fillText(track.description, infoX, 264)
+        ctx.fillText(track.description, infoX, 300)
 
         // 6. Audio Reactive Equalizer Bars
         let freqValues = []
         if(this.analyser && this.isPlaying)
         {
             this.analyser.getByteFrequencyData(this.dataArray)
-            freqValues = Array.from(this.dataArray).slice(0, 24)
+            freqValues = Array.from(this.dataArray).slice(0, 26)
         }
         else
         {
-            // Ambient idle wave
             const t = this.time.elapsed * 0.003
-            freqValues = Array.from({ length: 24 }, (_, i) =>
-                this.isPlaying ? (Math.sin(t + i * 0.4) * 0.5 + 0.5) * 180 + 30 : 15
+            freqValues = Array.from({ length: 26 }, (_, i) =>
+                this.isPlaying ? (Math.sin(t + i * 0.4) * 0.5 + 0.5) * 190 + 35 : 18
             )
         }
 
         const barStartX = infoX
-        const barY = 370
-        const barW = 18
+        const barY = 405
+        const barW = 16
         const barGap = 9
 
-        for(let i = 0; i < 24; i++)
+        for(let i = 0; i < 26; i++)
         {
-            const val = (freqValues[i] || 10) / 255
-            const barH = Math.max(6, val * 65)
+            const val = (freqValues[i] || 12) / 255
+            const barH = Math.max(6, val * 75)
             const bx = barStartX + i * (barW + barGap)
 
             const barGrad = ctx.createLinearGradient(bx, barY, bx, barY - barH)
@@ -557,66 +559,64 @@ export default class TvPlayer
         }
 
         // 7. Timeline Progress Bar
-        const barWTotal = 660
-        const progY = 412
-        const progH = 6
+        const barWTotal = 650
+        const progY = 445
+        const progH = 7
 
-        // Background line
         ctx.fillStyle = 'rgba(255, 255, 255, 0.12)'
         ctx.beginPath()
-        ctx.roundRect(infoX, progY, barWTotal, progH, 3)
+        ctx.roundRect(infoX, progY, barWTotal, progH, 4)
         ctx.fill()
 
-        // Active line
-        const activeW = Math.max(8, barWTotal * this.progress)
+        const activeW = Math.max(10, barWTotal * this.progress)
         const progGrad = ctx.createLinearGradient(infoX, progY, infoX + activeW, progY)
         progGrad.addColorStop(0, track.accentColor)
         progGrad.addColorStop(1, '#ffffff')
         ctx.fillStyle = progGrad
         ctx.beginPath()
-        ctx.roundRect(infoX, progY, activeW, progH, 3)
+        ctx.roundRect(infoX, progY, activeW, progH, 4)
         ctx.fill()
 
         // Progress Knob
         ctx.fillStyle = '#ffffff'
         ctx.beginPath()
-        ctx.arc(infoX + activeW, progY + progH / 2, 7, 0, Math.PI * 2)
+        ctx.arc(infoX + activeW, progY + progH / 2, 8, 0, Math.PI * 2)
         ctx.fill()
 
         // Time labels
         const curSec = Math.floor(this.audio.currentTime || 0)
         const durSec = Math.floor(this.audio.duration || 30)
         const formatTime = (s) => `0:${s < 10 ? '0' : ''}${s}`
-        ctx.font = '500 14px monospace'
+        ctx.font = '600 15px monospace'
         ctx.fillStyle = '#64748b'
-        ctx.fillText(formatTime(curSec), infoX, progY + 26)
-        ctx.fillText(formatTime(durSec), infoX + barWTotal - 35, progY + 26)
+        ctx.fillText(formatTime(curSec), infoX, progY + 28)
+        ctx.fillText(formatTime(durSec), infoX + barWTotal - 38, progY + 28)
 
         // 8. Control Buttons Row
-        // Prev button (cx: 630, cy: 515, r: 32)
+        // Prev button (cx: 720, cy: 535, r: 36)
         const isPrevHover = this.hoverZone === 'prev'
-        ctx.fillStyle = isPrevHover ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.08)'
+        ctx.fillStyle = isPrevHover ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.09)'
         ctx.beginPath()
-        ctx.arc(630, 515, 32, 0, Math.PI * 2)
+        ctx.arc(720, 535, 36, 0, Math.PI * 2)
         ctx.fill()
         ctx.fillStyle = isPrevHover ? '#ffffff' : '#cbd5e1'
         // Draw Prev Icon (|<)
-        ctx.fillRect(618, 503, 3, 24)
+        ctx.fillRect(706, 521, 4, 28)
         ctx.beginPath()
-        ctx.moveTo(638, 503)
-        ctx.lineTo(625, 515)
-        ctx.lineTo(638, 527)
+        ctx.moveTo(730, 521)
+        ctx.lineTo(714, 535)
+        ctx.lineTo(730, 549)
         ctx.closePath()
         ctx.fill()
 
-        // Play/Pause button (cx: 740, cy: 515, r: 42)
+        // Play/Pause button (cx: 830, cy: 535, r: 46)
         const isPlayHover = this.hoverZone === 'playpause'
         ctx.fillStyle = track.accentColor
         ctx.save()
         ctx.shadowColor = track.accentColor
-        ctx.shadowBlur = isPlayHover ? 30 : 15
+        ctx.shadowBlur = isPlayHover ? 35 : 18
         ctx.beginPath()
-        ctx.arc(740, 515, 42, 0, Math.PI * 2)
+        ctx.arc(830, 535, 46, 0, Math.PI * 2)
         ctx.fill()
         ctx.restore()
 
@@ -624,46 +624,46 @@ export default class TvPlayer
         if(this.isPlaying)
         {
             // Pause bars
-            ctx.fillRect(730, 499, 7, 32)
-            ctx.fillRect(743, 499, 7, 32)
+            ctx.fillRect(819, 517, 8, 36)
+            ctx.fillRect(833, 517, 8, 36)
         }
         else
         {
             // Play triangle
             ctx.beginPath()
-            ctx.moveTo(733, 497)
-            ctx.lineTo(755, 515)
-            ctx.lineTo(733, 533)
+            ctx.moveTo(822, 515)
+            ctx.lineTo(846, 535)
+            ctx.lineTo(822, 555)
             ctx.closePath()
             ctx.fill()
         }
 
-        // Next button (cx: 850, cy: 515, r: 32)
+        // Next button (cx: 940, cy: 535, r: 36)
         const isNextHover = this.hoverZone === 'next'
-        ctx.fillStyle = isNextHover ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.08)'
+        ctx.fillStyle = isNextHover ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.09)'
         ctx.beginPath()
-        ctx.arc(850, 515, 32, 0, Math.PI * 2)
+        ctx.arc(940, 535, 36, 0, Math.PI * 2)
         ctx.fill()
         ctx.fillStyle = isNextHover ? '#ffffff' : '#cbd5e1'
         // Draw Next Icon (>|)
-        ctx.fillRect(860, 503, 3, 24)
+        ctx.fillRect(950, 521, 4, 28)
         ctx.beginPath()
-        ctx.moveTo(842, 503)
-        ctx.lineTo(855, 515)
-        ctx.lineTo(842, 527)
+        ctx.moveTo(930, 521)
+        ctx.lineTo(946, 535)
+        ctx.lineTo(930, 549)
         ctx.closePath()
         ctx.fill()
 
         // 9. Volume Control Bar
-        const volX = infoX + 50
-        const volY = 612
-        const volW = 280
+        const volX = 640
+        const volY = 625
+        const volW = 320
         const volH = 8
 
         // Speaker icon
         ctx.fillStyle = '#94a3b8'
-        ctx.font = '20px sans-serif'
-        ctx.fillText('🔊', infoX + 10, volY + 10)
+        ctx.font = '22px sans-serif'
+        ctx.fillText('🔊', volX - 45, volY + 10)
 
         // Volume bar background
         ctx.fillStyle = 'rgba(255, 255, 255, 0.12)'
@@ -681,18 +681,23 @@ export default class TvPlayer
         // Volume knob
         ctx.fillStyle = '#ffffff'
         ctx.beginPath()
-        ctx.arc(volX + volActiveW, volY + volH / 2, 7, 0, Math.PI * 2)
+        ctx.arc(volX + volActiveW, volY + volH / 2, 8, 0, Math.PI * 2)
         ctx.fill()
 
         // Volume percentage
-        ctx.font = '600 15px monospace'
+        ctx.font = '700 16px monospace'
         ctx.fillStyle = '#cbd5e1'
         ctx.fillText(`${Math.round(this.volume * 100)}%`, volX + volW + 20, volY + 9)
 
         // Interactive instruction pill
-        ctx.font = '500 14px "Roboto", sans-serif'
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)'
-        ctx.fillText('💡 Click TV to Play • Use controls to switch songs & adjust volume', infoX, 670)
+        ctx.font = '500 15px "Roboto", sans-serif'
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.45)'
+        ctx.fillText('💡 Click TV screen to Play/Pause • Use controls to switch songs & adjust volume', infoX, 680)
+
+        // Subtle TV edge border
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)'
+        ctx.lineWidth = 4
+        ctx.strokeRect(0, 0, W, H)
 
         // Texture needs update
         this.texture.needsUpdate = true
@@ -700,7 +705,6 @@ export default class TvPlayer
 
     setDOMControls()
     {
-        // Add floating sleek TV remote bar in bottom right for ultra-convenient control
         let container = document.getElementById('tv-music-player')
         if(!container)
         {
@@ -749,10 +753,8 @@ export default class TvPlayer
 
     update()
     {
-        // Redraw TV screen canvas each frame
         this.renderCanvas()
 
-        // Subtle audio reactive TV backlight pulse when music is playing
         if(this.isPlaying && this.world && this.world.baked && this.world.baked.model && this.world.baked.model.material)
         {
             let bassValue = 1.0

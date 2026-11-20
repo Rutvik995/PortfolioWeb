@@ -9,19 +9,15 @@ import ElgatoLight from './ElgatoLight.js'
 import TvPlayer from './TvPlayer.js'
 import Screen from './Screen.js'
 
-export default class World
-{
-    constructor(_options)
-    {
+export default class World {
+    constructor(_options) {
         this.experience = new Experience()
         this.config = this.experience.config
         this.scene = this.experience.scene
         this.resources = this.experience.resources
-        
-        this.resources.on('groupEnd', (_group) =>
-        {
-            if(_group.name === 'base')
-            {
+
+        this.resources.on('groupEnd', (_group) => {
+            if (_group.name === 'base') {
                 this.setBaked()
                 this.setGoogleLeds()
                 this.setLoupedeckButtons()
@@ -34,43 +30,35 @@ export default class World
         })
     }
 
-    setBaked()
-    {
+    setBaked() {
         this.baked = new Baked()
     }
 
-    setGoogleLeds()
-    {
+    setGoogleLeds() {
         this.googleLeds = new GoogleLeds()
     }
 
-    setLoupedeckButtons()
-    {
+    setLoupedeckButtons() {
         this.loupedeckButtons = new LoupedeckButtons()
     }
 
-    setCoffeeSteam()
-    {
+    setCoffeeSteam() {
         this.coffeeSteam = new CoffeeSteam()
     }
 
-    setTopChair()
-    {
+    setTopChair() {
         this.topChair = new TopChair()
     }
 
-    setElgatoLight()
-    {
+    setElgatoLight() {
         this.elgatoLight = new ElgatoLight()
     }
 
-    setTvPlayer()
-    {
+    setTvPlayer() {
         this.tvPlayer = new TvPlayer()
     }
 
-    setScreens()
-    {
+    setScreens() {
         this.pcScreen = new Screen(
             this.resources.items.pcScreenModel.scene.children[0],
             '/assets/videoPortfolio.mp4'
@@ -81,29 +69,26 @@ export default class World
         )
     }
 
-    resize()
-    {
+    resize() {
     }
 
-    update()
-    {
-        if(this.googleLeds)
+    update() {
+        if (this.googleLeds)
             this.googleLeds.update()
 
-        if(this.loupedeckButtons)
+        if (this.loupedeckButtons)
             this.loupedeckButtons.update()
 
-        if(this.coffeeSteam)
+        if (this.coffeeSteam)
             this.coffeeSteam.update()
 
-        if(this.topChair)
+        if (this.topChair)
             this.topChair.update()
 
-        if(this.tvPlayer)
+        if (this.tvPlayer)
             this.tvPlayer.update()
     }
 
-    destroy()
-    {
+    destroy() {
     }
 }
