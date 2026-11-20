@@ -1,0 +1,47 @@
+[
+  {
+    "id": "midnight-city",
+    "title": "Midnight City",
+    "artist": "M83",
+    "description": "Energetic, cinematic synth-pop that pairs well with dark-mode room lighting",
+    "audioUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/74/a2/d3/74a2d361-c6bb-9880-a8d1-d999833d2891/mzaf_15783493292556356203.plus.aac.p.m4a",
+    "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/73/c6/ed/73c6edb3-924c-27f0-28f8-1470906d6780/cover.jpg/600x600bb.jpg",
+    "themeColor": "#7928ca"
+  },
+  {
+    "id": "gooey",
+    "title": "Gooey",
+    "artist": "Glass Animals",
+    "description": "Laid-back, rhythmic, and distinctly creative",
+    "audioUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/6f/f0/06/6ff00603-5b7c-d8e9-26a5-a5b22fddc2ea/mzaf_4090730652532760300.plus.aac.p.m4a",
+    "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/fd/46/47/fd464715-c290-3060-8346-346746c411ee/00602537776962.rgb.jpg/600x600bb.jpg",
+    "themeColor": "#10b981"
+  },
+  {
+    "id": "tadow",
+    "title": "Tadow",
+    "artist": "Masego & FKJ",
+    "description": "Smooth, effortless groove that makes the room feel warm and lived-in",
+    "audioUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/f8/c0/bd/f8c0bd82-707d-92b6-cd8e-85b9f344397e/mzaf_220188570221008811.plus.aac.p.m4a",
+    "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/5d/e3/8a/5de38af4-52e3-993d-213b-7bdfcf8a055f/842812109249.jpg/600x600bb.jpg",
+    "themeColor": "#f59e0b"
+  },
+  {
+    "id": "redbone",
+    "title": "Redbone",
+    "artist": "Childish Gambino",
+    "description": "Chill, warm bassline that matches cozy lamp/monitor lighting",
+    "audioUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/77/47/1f/77471f44-fc0f-83fd-2f04-4ccbc991fd64/mzaf_33743664269287764.plus.aac.p.m4a",
+    "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/f1/3c/d7/f13cd7ab-7319-028a-8807-5991d0b308d4/0044003187658_Cover.jpg/600x600bb.jpg",
+    "themeColor": "#ef4444"
+  },
+  {
+    "id": "breathe",
+    "title": "Breathe",
+    "artist": "Télépopmusik",
+    "description": "Classic, airy downtempo English vocals that feel futuristic yet relaxed",
+    "audioUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/e1/71/79/e17179d4-9b2b-d754-8391-3bac6ffc5d01/mzaf_3594546411583999729.plus.aac.p.m4a",
+    "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/be/da/ec/bedaec4f-ed05-3fde-f131-e47fba90ca7e/00602567548744.rgb.jpg/600x600bb.jpg",
+    "themeColor": "#06b6d4"
+  }
+]

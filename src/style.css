@@ -9,6 +9,10 @@ html,
 body
 {
     overflow: hidden;
+    background: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .experience
@@ -16,4 +20,226 @@ body
     position: fixed;
     width: 100vw;
     height: 100vh;
+    top: 0;
+    left: 0;
+}
+
+/* Floating TV Music Player Widget */
+#tv-music-player
+{
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 100;
+    pointer-events: auto;
+}
+
+.tv-player-pill
+{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 18px 10px 10px;
+    background: rgba(15, 23, 42, 0.78);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 9999px;
+    box-shadow: 0 12px 36px -6px rgba(0, 0, 0, 0.6), 0 0 20px -3px var(--accent, #a855f7);
+    color: #ffffff;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tv-player-pill:hover
+{
+    background: rgba(15, 23, 42, 0.9);
+    border-color: rgba(255, 255, 255, 0.22);
+    transform: translateY(-2px);
+    box-shadow: 0 16px 42px -6px rgba(0, 0, 0, 0.7), 0 0 28px 0 var(--accent, #a855f7);
+}
+
+.tv-player-art
+{
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.tv-player-art img
+{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.tv-art-overlay
+{
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    color: #ffffff;
+}
+
+.tv-player-art:hover .tv-art-overlay
+{
+    opacity: 1;
+}
+
+.tv-player-info
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 120px;
+    max-width: 160px;
+    cursor: pointer;
+}
+
+.tv-title
+{
+    font-size: 14px;
+    font-weight: 700;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tv-artist
+{
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent, #a855f7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tv-player-btns
+{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tv-btn
+{
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    color: #e2e8f0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tv-btn:hover
+{
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    transform: scale(1.08);
+}
+
+.tv-btn-play
+{
+    background: var(--accent, #a855f7);
+    color: #ffffff;
+    width: 38px;
+    height: 38px;
+    font-size: 15px;
+    box-shadow: 0 0 14px var(--accent, #a855f7);
+}
+
+.tv-btn-play:hover
+{
+    background: #ffffff;
+    color: #000000;
+    transform: scale(1.12);
+}
+
+.tv-player-vol
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-left: 4px;
+}
+
+.vol-icon
+{
+    font-size: 14px;
+    opacity: 0.75;
+}
+
+.tv-player-vol input[type="range"]
+{
+    -webkit-appearance: none;
+    appearance: none;
+    width: 65px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+
+.tv-player-vol input[type="range"]::-webkit-slider-thumb
+{
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ffffff;
+    cursor: pointer;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
+}
+
+.tv-badge
+{
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    padding: 3px 8px;
+    background: rgba(255, 255, 255, 0.09);
+    border-radius: 9999px;
+    color: #94a3b8;
+    margin-left: 2px;
+}
+
+@media (max-width: 640px)
+{
+    #tv-music-player
+    {
+        bottom: 16px;
+        right: 16px;
+        left: 16px;
+    }
+
+    .tv-player-pill
+    {
+        justify-content: space-between;
+        padding: 8px 14px;
+    }
+
+    .tv-player-vol,
+    .tv-badge
+    {
+        display: none;
+    }
 }
