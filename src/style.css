@@ -339,32 +339,6 @@ html, body {
     box-shadow: 0 0 6px var(--accent-cyan);
 }
 
-/* Spatial Hover Tooltip */
-.spatial-tooltip {
-    position: fixed;
-    pointer-events: none;
-    z-index: 1000;
-    display: none;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 14px;
-    background: rgba(10, 15, 30, 0.90);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid var(--accent-cyan);
-    border-radius: var(--radius-full);
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: #ffffff;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 14px rgba(56, 189, 248, 0.35);
-    white-space: nowrap;
-}
-
-.tooltip-icon {
-    color: var(--accent-cyan);
-    font-size: 10px;
-}
-
 /* ==========================================================================
    Floating Minimal HUD Dock (Bottom Center)
    ========================================================================== */
@@ -376,9 +350,9 @@ html, body {
     z-index: 90;
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
-    background: rgba(8, 12, 24, 0.82);
+    gap: 4px;
+    padding: 5px 8px;
+    background: rgba(8, 12, 24, 0.85);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--border-glass);
@@ -389,14 +363,14 @@ html, body {
 .dock-item {
     display: flex;
     align-items: center;
-    gap: 7px;
-    padding: 8px 14px;
+    gap: 5px;
+    padding: 6px 12px;
     border-radius: var(--radius-full);
     border: 1px solid transparent;
     background: transparent;
     color: var(--text-secondary);
     font-family: var(--font-sans);
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1204,6 +1178,16 @@ html, body {
 /* ==========================================================================
    Responsive Adaptations
    ========================================================================== */
+@media (max-width: 1440px) {
+    #tv-music-player .tv-vol-wrap,
+    #tv-music-player .tv-sync-pill {
+        display: none;
+    }
+    .tv-player-info {
+        max-width: 110px;
+    }
+}
+
 @media (max-width: 1024px) {
     .site-header .availability-status {
         display: none;

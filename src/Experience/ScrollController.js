@@ -37,7 +37,6 @@ export default class ScrollController {
         this.cardBadge = document.getElementById('card-zone-badge')
         this.reopenBtn = document.getElementById('btn-reopen-card')
         this.reopenLabel = document.getElementById('reopen-card-label')
-        this.spatialTooltip = document.getElementById('spatial-tooltip')
     }
 
     initHUDDock() {
@@ -458,15 +457,14 @@ export default class ScrollController {
         this.raycaster.setFromCamera(this.mouse, this.camera.modes.default.instance)
 
         const interactiveMeshes = []
-        if (this.world?.pcScreen?.mesh) interactiveMeshes.push({ mesh: this.world.pcScreen.mesh, zone: 'projects', label: 'PC Monitor: Projects & Code IDE' })
-        if (this.world?.macScreen?.mesh) interactiveMeshes.push({ mesh: this.world.macScreen.mesh, zone: 'experience', label: 'MacBook: Multi-Agent DAG Architecture' })
-        if (this.world?.baked?.model?.mesh) interactiveMeshes.push({ mesh: this.world.baked.model.mesh, zone: 'baked', label: null })
+        if (this.world?.pcScreen?.mesh) interactiveMeshes.push({ mesh: this.world.pcScreen.mesh, zone: 'projects' })
+        if (this.world?.macScreen?.mesh) interactiveMeshes.push({ mesh: this.world.macScreen.mesh, zone: 'experience' })
+        if (this.world?.baked?.model?.mesh) interactiveMeshes.push({ mesh: this.world.baked.model.mesh, zone: 'baked' })
 
         const meshesOnly = interactiveMeshes.map(m => m.mesh)
         const intersects = this.raycaster.intersectObjects(meshesOnly, true)
 
         let detectedZone = null
-        let detectedLabel = null
 
         if (intersects.length > 0) {
             const hit = intersects[0]
@@ -474,45 +472,28 @@ export default class ScrollController {
 
             if (this.world?.pcScreen?.mesh && hit.object === this.world.pcScreen.mesh) {
                 detectedZone = 'projects'
-                detectedLabel = '💻 PC Monitor: Selected Projects (Click to inspect)'
             } else if (this.world?.macScreen?.mesh && hit.object === this.world.macScreen.mesh) {
                 detectedZone = 'experience'
-                detectedLabel = '⚡ MacBook: Multi-Agent Architecture (Click to inspect)'
             } else if (pt.x < -1.8 && pt.z < 0 && pt.y > 0.5) {
                 detectedZone = 'skills'
-                detectedLabel = '📚 Bookshelf: Skills & Tooling (Click to inspect)'
             } else if (pt.x >= -1.2 && pt.x <= 1.4 && pt.z < -3.0 && pt.y > 2.0) {
                 detectedZone = 'projects'
-                detectedLabel = '💻 PC Monitor: Selected Projects (Click to inspect)'
             } else if (pt.x > 1.4 && pt.x <= 3.2 && pt.z < -3.0 && pt.y > 2.0) {
                 detectedZone = 'experience'
-                detectedLabel = '⚡ MacBook: Multi-Agent Architecture (Click to inspect)'
             } else if (pt.x >= -1.5 && pt.x <= 2.5 && pt.z >= -4.0 && pt.z <= -1.0 && pt.y < 2.5) {
                 detectedZone = 'about'
-                detectedLabel = '☕ Desk & Chair: About Rutvik (Click to inspect)'
             } else if (pt.x >= 0.0 && pt.x <= 3.0 && pt.z >= 0.0 && pt.z <= 2.5) {
                 detectedZone = 'contact'
-                detectedLabel = '📡 Coffee Table: Contact & Channels (Click to inspect)'
             }
         }
 
         this.hoveredZone = detectedZone
 
-        // Update cursor & tooltip
-        if (detectedZone && detectedLabel) {
+        // Update cursor style only (no text tooltip)
+        if (detectedZone) {
             document.body.style.cursor = 'pointer'
-            if (this.spatialTooltip) {
-                this.spatialTooltip.style.display = 'flex'
-                this.spatialTooltip.style.left = `${e.clientX + 16}px`
-                this.spatialTooltip.style.top = `${e.clientY + 16}px`
-                const labelEl = this.spatialTooltip.querySelector('.tooltip-label')
-                if (labelEl) labelEl.textContent = detectedLabel
-            }
         } else {
             document.body.style.cursor = 'default'
-            if (this.spatialTooltip) {
-                this.spatialTooltip.style.display = 'none'
-            }
         }
     }
 
