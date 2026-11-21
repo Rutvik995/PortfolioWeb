@@ -84,6 +84,57 @@ export default class CoffeeSteam
             }
         })
 
+        // Cleanly remove microphone, boom arm, key light rig, and camera
+        const geometry = this.model.mesh?.geometry
+        if(geometry && geometry.index)
+        {
+            const oldIndices = geometry.index.array
+            const totalTriangles = oldIndices.length / 3
+
+            // Triangle ranges corresponding to the mic, boom arm, key light mount, and camera
+            const removalRanges = [
+                [39875, 2664],
+                [46124, 864],
+                [47020, 612],
+                [47872, 1076],
+                [49006, 34],
+                [103922, 5]
+            ]
+
+            let removedCount = 0
+            for(let r = 0; r < removalRanges.length; r++)
+            {
+                removedCount += removalRanges[r][1]
+            }
+
+            const newIndices = new Uint32Array((totalTriangles - removedCount) * 3)
+            let writeIdx = 0
+
+            for(let t = 0; t < totalTriangles; t++)
+            {
+                let isRemoved = false
+                for(let r = 0; r < removalRanges.length; r++)
+                {
+                    const start = removalRanges[r][0]
+                    const len = removalRanges[r][1]
+                    if(t >= start && t < start + len)
+                    {
+                        isRemoved = true
+                        break
+                    }
+                }
+
+                if(!isRemoved)
+                {
+                    newIndices[writeIdx++] = oldIndices[t * 3]
+                    newIndices[writeIdx++] = oldIndices[t * 3 + 1]
+                    newIndices[writeIdx++] = oldIndices[t * 3 + 2]
+                }
+            }
+
+            geometry.setIndex(new THREE.BufferAttribute(newIndices, 1))
+        }
+
         this.scene.add(this.model.mesh)
         
         // Debug

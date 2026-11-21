@@ -5,7 +5,6 @@ import GoogleLeds from './GoogleLeds.js'
 import LoupedeckButtons from './LoupedeckButtons.js'
 import CoffeeSteam from './CoffeeSteam.js'
 import TopChair from './TopChair.js'
-import ElgatoLight from './ElgatoLight.js'
 import TvPlayer from './TvPlayer.js'
 import Screen from './Screen.js'
 
@@ -23,7 +22,6 @@ export default class World {
                 this.setLoupedeckButtons()
                 this.setCoffeeSteam()
                 this.setTopChair()
-                this.setElgatoLight()
                 this.setTvPlayer()
                 this.setScreens()
             }
@@ -48,10 +46,6 @@ export default class World {
 
     setTopChair() {
         this.topChair = new TopChair()
-    }
-
-    setElgatoLight() {
-        this.elgatoLight = new ElgatoLight()
     }
 
     setTvPlayer() {

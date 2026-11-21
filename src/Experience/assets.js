@@ -13,8 +13,6 @@ export default [
             
             { name: 'coffeeSteamModel', source: '/assets/coffeeSteamModel.glb', type: 'model' },
             
-            { name: 'elgatoLightModel', source: '/assets/elgatoLightModel.glb', type: 'model' },
-            
             { name: 'pcScreenModel', source: '/assets/pcScreenModel.glb', type: 'model' },
             
             { name: 'macScreenModel', source: '/assets/macScreenModel.glb', type: 'model' },
