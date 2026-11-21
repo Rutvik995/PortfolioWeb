@@ -7,7 +7,7 @@ export const PLAYLIST = [
         title: 'Midnight City',
         artist: 'M83',
         description: 'Energetic, cinematic synth-pop that pairs well with dark-mode room lighting',
-        audioSrc: '/assets/music/midnight-city.m4a',
+        audioSrc: '/assets/music/midnight-city.mp3',
         artworkSrc: '/assets/music/midnight-city.jpg',
         accentColor: '#a855f7',
         lightColor: '#ff115e'
@@ -17,7 +17,7 @@ export const PLAYLIST = [
         title: 'Gooey',
         artist: 'Glass Animals',
         description: 'Laid-back, rhythmic, and distinctly creative',
-        audioSrc: '/assets/music/gooey.m4a',
+        audioSrc: '/assets/music/gooey.mp3',
         artworkSrc: '/assets/music/gooey.jpg',
         accentColor: '#10b981',
         lightColor: '#059669'
@@ -27,7 +27,7 @@ export const PLAYLIST = [
         title: 'Tadow',
         artist: 'Masego & FKJ',
         description: 'Smooth, effortless groove that makes the room feel warm and lived-in',
-        audioSrc: '/assets/music/tadow.m4a',
+        audioSrc: '/assets/music/tadow.mp3',
         artworkSrc: '/assets/music/tadow.jpg',
         accentColor: '#f59e0b',
         lightColor: '#d97706'
@@ -37,7 +37,7 @@ export const PLAYLIST = [
         title: 'Redbone',
         artist: 'Childish Gambino',
         description: 'Chill, warm bassline that matches cozy lamp/monitor lighting',
-        audioSrc: '/assets/music/redbone.m4a',
+        audioSrc: '/assets/music/redbone.mp3',
         artworkSrc: '/assets/music/redbone.jpg',
         accentColor: '#ef4444',
         lightColor: '#dc2626'
@@ -47,7 +47,7 @@ export const PLAYLIST = [
         title: 'Breathe',
         artist: 'Télépopmusik',
         description: 'Classic, airy downtempo English vocals that feel futuristic yet relaxed',
-        audioSrc: '/assets/music/breathe.m4a',
+        audioSrc: '/assets/music/breathe.mp3',
         artworkSrc: '/assets/music/breathe.jpg',
         accentColor: '#06b6d4',
         lightColor: '#0891b2'
@@ -67,11 +67,12 @@ export default class TvPlayer
 
         this.playlist = PLAYLIST
         this.currentIndex = 0
-        this.isPlaying = false
+        this.isPlaying = true
         this.volume = 0.85
         this.isHovered = false
         this.hoverZone = null
         this.progress = 0
+        this.hasUnlockedAudio = false
 
         this.preloadArtworks()
         this.setAudio()
@@ -79,6 +80,7 @@ export default class TvPlayer
         this.setModel()
         this.setRaycaster()
         this.setDOMControls()
+        this.setupAutoplayAndMobileUnlock()
 
         // Expose to window for external controls
         window.tvPlayer = this
@@ -102,6 +104,9 @@ export default class TvPlayer
         this.audio.crossOrigin = 'anonymous'
         this.audio.preload = 'auto'
         this.audio.volume = this.volume
+        this.audio.playsInline = true
+        this.audio.setAttribute('playsinline', '')
+        this.audio.setAttribute('webkit-playsinline', '')
         this.audio.src = this.playlist[this.currentIndex].audioSrc
 
         this.audio.addEventListener('ended', () =>
@@ -111,11 +116,108 @@ export default class TvPlayer
 
         this.audio.addEventListener('timeupdate', () =>
         {
-            if(this.audio.duration)
+            if(this.audio.duration && !isNaN(this.audio.duration))
             {
                 this.progress = this.audio.currentTime / this.audio.duration
             }
         })
+
+        this.audio.addEventListener('play', () =>
+        {
+            this.isPlaying = true
+            this.syncBacklight()
+            this.updateDOMPlayer()
+            this.removeUnlockPrompt()
+        })
+
+        this.audio.addEventListener('pause', () =>
+        {
+            this.isPlaying = false
+            this.syncBacklight()
+            this.updateDOMPlayer()
+        })
+    }
+
+    setupAutoplayAndMobileUnlock()
+    {
+        // 1. Attempt unmuted autoplay immediately on page load
+        const startPromise = this.audio.play()
+        if(startPromise !== undefined)
+        {
+            startPromise.then(() =>
+            {
+                this.hasUnlockedAudio = true
+                this.isPlaying = true
+                this.syncBacklight()
+                this.updateDOMPlayer()
+            }).catch(() =>
+            {
+                // Browser or mobile OS blocked unmuted autoplay before gesture
+                this.isPlaying = false
+                this.showUnlockPrompt()
+            })
+        }
+
+        // 2. Global one-time unlock listener: The very first touch, click or keypress immediately starts playback
+        const unlock = () =>
+        {
+            if(!this.hasUnlockedAudio)
+            {
+                this.hasUnlockedAudio = true
+                this.initAudioContext()
+                if(this.audioCtx && this.audioCtx.state === 'suspended')
+                {
+                    this.audioCtx.resume()
+                }
+
+                this.audio.play().then(() =>
+                {
+                    this.isPlaying = true
+                    this.syncBacklight()
+                    this.updateDOMPlayer()
+                    this.removeUnlockPrompt()
+                }).catch(e => console.warn('Unlock playback:', e))
+            }
+
+            // Remove listeners once executed
+            ['touchstart', 'touchend', 'pointerdown', 'mousedown', 'keydown', 'click'].forEach(evt =>
+            {
+                window.removeEventListener(evt, unlock)
+                document.removeEventListener(evt, unlock)
+            })
+        }
+
+        ['touchstart', 'touchend', 'pointerdown', 'mousedown', 'keydown', 'click'].forEach(evt =>
+        {
+            window.addEventListener(evt, unlock, { passive: true })
+            document.addEventListener(evt, unlock, { passive: true })
+        })
+    }
+
+    showUnlockPrompt()
+    {
+        if(document.getElementById('tv-audio-unlock-prompt')) return
+
+        const prompt = document.createElement('div')
+        prompt.id = 'tv-audio-unlock-prompt'
+        prompt.innerHTML = `<span>🎵 Tap anywhere to start soundtrack</span>`
+        prompt.addEventListener('click', () =>
+        {
+            this.togglePlay()
+            this.removeUnlockPrompt()
+        })
+        document.body.appendChild(prompt)
+    }
+
+    removeUnlockPrompt()
+    {
+        const prompt = document.getElementById('tv-audio-unlock-prompt')
+        if(prompt)
+        {
+            prompt.style.opacity = '0'
+            prompt.style.transform = 'translate(-50%, 20px)'
+            setTimeout(() => prompt.remove(), 400)
+        }
     }
 
     initAudioContext()
@@ -161,16 +263,11 @@ export default class TvPlayer
         this.model = {}
         this.model.group = new THREE.Group()
 
-        // FULL SCREEN TV PLACEMENT:
-        // Center of the physical TV display:
-        // x = 4.19 (just 1cm in front of TV back to prevent z-fighting)
-        // y = 2.665
-        // z = 1.820
+        // Full Screen 16:9 TV placement (calibrated to the physical TV screen frame)
         this.model.group.position.x = 4.19
         this.model.group.position.y = 2.665
         this.model.group.position.z = 1.820
 
-        // Exact physical TV screen dimensions: Width = 4.16, Height = 2.34 (16:9 widescreen)
         this.model.geometry = new THREE.PlaneGeometry(4.16, 2.34)
         this.model.geometry.rotateY(- Math.PI * 0.5)
 
@@ -229,7 +326,6 @@ export default class TvPlayer
             this.isHovered = true
             document.body.style.cursor = 'pointer'
 
-            // UV to Canvas coordinates
             const cx = hit.uv.x * 1280
             const cy = (1 - hit.uv.y) * 720
             this.hoverZone = this.getHitZone(cx, cy)
@@ -247,6 +343,9 @@ export default class TvPlayer
 
     getHitZone(x, y)
     {
+        // Timeline progress seek zone (x: 560 to 1220, y: 430 to 470)
+        if(x >= 560 && x <= 1220 && y >= 430 && y <= 470) return 'timeline'
+
         // Poster area (x: 60 to 520, y: 130 to 590)
         if(x >= 60 && x <= 520 && y >= 130 && y <= 590) return 'poster'
 
@@ -267,8 +366,7 @@ export default class TvPlayer
 
     handleClick(e)
     {
-        // Check if click was on external DOM controls
-        if(e.target.closest('#tv-music-player')) return
+        if(e.target.closest('#tv-music-player') || e.target.closest('#tv-audio-unlock-prompt')) return
 
         const hit = this.getTVIntersection()
         if(!hit || !hit.uv) return
@@ -294,6 +392,14 @@ export default class TvPlayer
             const newVol = Math.max(0, Math.min(1, (cx - 640) / 320))
             this.setVolume(newVol)
         }
+        else if(zone === 'timeline')
+        {
+            const ratio = Math.max(0, Math.min(1, (cx - 560) / 650))
+            if(this.audio.duration)
+            {
+                this.audio.currentTime = ratio * this.audio.duration
+            }
+        }
     }
 
     togglePlay()
@@ -311,10 +417,14 @@ export default class TvPlayer
         }
         else
         {
-            this.audio.play().then(() => {
+            this.audio.play().then(() =>
+            {
                 this.isPlaying = true
-            }).catch(err => {
-                console.warn('Playback error / Autoplay blocked:', err)
+                this.hasUnlockedAudio = true
+                this.removeUnlockPrompt()
+            }).catch(err =>
+            {
+                console.warn('Playback error:', err)
             })
         }
 
@@ -336,9 +446,13 @@ export default class TvPlayer
             this.audioCtx.resume()
         }
 
-        this.audio.play().then(() => {
+        this.audio.play().then(() =>
+        {
             this.isPlaying = true
-        }).catch(e => {
+            this.hasUnlockedAudio = true
+            this.removeUnlockPrompt()
+        }).catch(e =>
+        {
             console.warn('Play error:', e)
         })
 
@@ -365,7 +479,6 @@ export default class TvPlayer
 
     syncBacklight()
     {
-        // Smoothly match room TV backlight to the track's theme color
         if(this.world && this.world.baked && this.world.baked.model && this.world.baked.model.material)
         {
             const track = this.playlist[this.currentIndex]
@@ -373,6 +486,14 @@ export default class TvPlayer
             this.world.baked.model.material.uniforms.uLightTvColor.value = targetColor
             this.world.baked.model.material.uniforms.uLightTvStrength.value = this.isPlaying ? 2.2 : 1.3
         }
+    }
+
+    formatTime(seconds)
+    {
+        if(isNaN(seconds) || seconds < 0) return '0:00'
+        const mins = Math.floor(seconds / 60)
+        const secs = Math.floor(seconds % 60)
+        return `${mins}:${secs < 10 ? '0' : ''}${secs}`
     }
 
     renderCanvas()
@@ -422,13 +543,11 @@ export default class TvPlayer
         const posterSize = 440
         const radius = 26
 
-        // Poster shadow & glow
         ctx.save()
         ctx.shadowColor = track.accentColor + (this.isPlaying ? '66' : '33')
         ctx.shadowBlur = this.isPlaying ? 45 : 22
         ctx.shadowOffsetY = 14
 
-        // Rounded clip for artwork
         ctx.beginPath()
         ctx.moveTo(posterX + radius, posterY)
         ctx.lineTo(posterX + posterSize - radius, posterY)
@@ -438,7 +557,7 @@ export default class TvPlayer
         ctx.lineTo(posterX + radius, posterY + posterSize)
         ctx.quadraticCurveTo(posterX, posterY + posterSize, posterX, posterY + posterSize - radius)
         ctx.lineTo(posterX, posterY + radius)
-        ctx.quadraticCurveTo(posterX, posterY, posterX + radius, posterY)
+        ctx.quadraticCurveTo(posterX, posterY + radius, posterX + radius, posterY)
         ctx.closePath()
         ctx.clip()
 
@@ -505,7 +624,7 @@ export default class TvPlayer
         ctx.fill()
         ctx.font = '700 14px sans-serif'
         ctx.fillStyle = track.accentColor
-        ctx.fillText('HOT TRACK • VIBE', infoX + 20, 154)
+        ctx.fillText('FULL TRACK • VIBE', infoX + 20, 154)
 
         // Song Title
         ctx.font = '800 52px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
@@ -558,7 +677,7 @@ export default class TvPlayer
             ctx.fill()
         }
 
-        // 7. Timeline Progress Bar
+        // 7. Timeline Progress Bar (Full Song Duration Support)
         const barWTotal = 650
         const progY = 445
         const progH = 7
@@ -583,14 +702,13 @@ export default class TvPlayer
         ctx.arc(infoX + activeW, progY + progH / 2, 8, 0, Math.PI * 2)
         ctx.fill()
 
-        // Time labels
-        const curSec = Math.floor(this.audio.currentTime || 0)
-        const durSec = Math.floor(this.audio.duration || 30)
-        const formatTime = (s) => `0:${s < 10 ? '0' : ''}${s}`
+        // Full song time labels
+        const curSec = this.audio.currentTime || 0
+        const durSec = this.audio.duration || 244
         ctx.font = '600 15px monospace'
         ctx.fillStyle = '#64748b'
-        ctx.fillText(formatTime(curSec), infoX, progY + 28)
-        ctx.fillText(formatTime(durSec), infoX + barWTotal - 38, progY + 28)
+        ctx.fillText(this.formatTime(curSec), infoX, progY + 28)
+        ctx.fillText(this.formatTime(durSec), infoX + barWTotal - 42, progY + 28)
 
         // 8. Control Buttons Row
         // Prev button (cx: 720, cy: 535, r: 36)
@@ -600,7 +718,6 @@ export default class TvPlayer
         ctx.arc(720, 535, 36, 0, Math.PI * 2)
         ctx.fill()
         ctx.fillStyle = isPrevHover ? '#ffffff' : '#cbd5e1'
-        // Draw Prev Icon (|<)
         ctx.fillRect(706, 521, 4, 28)
         ctx.beginPath()
         ctx.moveTo(730, 521)
@@ -623,13 +740,11 @@ export default class TvPlayer
         ctx.fillStyle = '#ffffff'
         if(this.isPlaying)
         {
-            // Pause bars
             ctx.fillRect(819, 517, 8, 36)
             ctx.fillRect(833, 517, 8, 36)
         }
         else
         {
-            // Play triangle
             ctx.beginPath()
             ctx.moveTo(822, 515)
             ctx.lineTo(846, 535)
@@ -645,7 +760,6 @@ export default class TvPlayer
         ctx.arc(940, 535, 36, 0, Math.PI * 2)
         ctx.fill()
         ctx.fillStyle = isNextHover ? '#ffffff' : '#cbd5e1'
-        // Draw Next Icon (>|)
         ctx.fillRect(950, 521, 4, 28)
         ctx.beginPath()
         ctx.moveTo(930, 521)
@@ -660,46 +774,38 @@ export default class TvPlayer
         const volW = 320
         const volH = 8
 
-        // Speaker icon
         ctx.fillStyle = '#94a3b8'
         ctx.font = '22px sans-serif'
         ctx.fillText('🔊', volX - 45, volY + 10)
 
-        // Volume bar background
         ctx.fillStyle = 'rgba(255, 255, 255, 0.12)'
         ctx.beginPath()
         ctx.roundRect(volX, volY, volW, volH, 4)
         ctx.fill()
 
-        // Active volume bar
         const volActiveW = volW * this.volume
         ctx.fillStyle = track.accentColor
         ctx.beginPath()
         ctx.roundRect(volX, volY, volActiveW, volH, 4)
         ctx.fill()
 
-        // Volume knob
         ctx.fillStyle = '#ffffff'
         ctx.beginPath()
         ctx.arc(volX + volActiveW, volY + volH / 2, 8, 0, Math.PI * 2)
         ctx.fill()
 
-        // Volume percentage
         ctx.font = '700 16px monospace'
         ctx.fillStyle = '#cbd5e1'
         ctx.fillText(`${Math.round(this.volume * 100)}%`, volX + volW + 20, volY + 9)
 
-        // Interactive instruction pill
         ctx.font = '500 15px "Roboto", sans-serif'
         ctx.fillStyle = 'rgba(255, 255, 255, 0.45)'
         ctx.fillText('💡 Click TV screen to Play/Pause • Use controls to switch songs & adjust volume', infoX, 680)
 
-        // Subtle TV edge border
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)'
         ctx.lineWidth = 4
         ctx.strokeRect(0, 0, W, H)
 
-        // Texture needs update
         this.texture.needsUpdate = true
     }
 
