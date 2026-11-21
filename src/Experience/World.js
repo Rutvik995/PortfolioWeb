@@ -8,6 +8,7 @@ import TopChair from './TopChair.js'
 import TvPlayer from './TvPlayer.js'
 import PcScreen from './PcScreen.js'
 import LaptopScreen from './LaptopScreen.js'
+import RoomExtension from './RoomExtension.js'
 
 export default class World {
     constructor(_options) {
@@ -19,6 +20,7 @@ export default class World {
         this.resources.on('groupEnd', (_group) => {
             if (_group.name === 'base') {
                 this.setBaked()
+                this.setRoomExtension()
                 this.setGoogleLeds()
                 this.setLoupedeckButtons()
                 this.setCoffeeSteam()
@@ -31,6 +33,10 @@ export default class World {
 
     setBaked() {
         this.baked = new Baked()
+    }
+
+    setRoomExtension() {
+        this.roomExtension = new RoomExtension()
     }
 
     setGoogleLeds() {
@@ -89,6 +95,9 @@ export default class World {
     }
 
     destroy() {
+        if (this.roomExtension)
+            this.roomExtension.destroy()
+
         if (this.pcScreen)
             this.pcScreen.destroy()
 

@@ -17,18 +17,18 @@ export const portfolioData = {
     hero: {
       name: "hero",
       alias: "overview",
-      look: [0.0, 1.8, -1.0],
-      size: [8.5, 5.2], // Whole room
-      normal: [0.54, 0.38, 0.75],
-      padding: 1.15,
+      look: [0.2, 1.9, -1.0],
+      size: [7.2, 4.4], // Tightly calibrated so the room fills the 16:9 widescreen edge-to-edge
+      normal: [0.48, 0.36, 0.80],
+      padding: 1.05,
       idleOrbit: true
     },
     overview: {
       name: "overview",
-      look: [0.0, 1.8, -1.0],
-      size: [8.5, 5.2], // Whole room
-      normal: [0.54, 0.38, 0.75],
-      padding: 1.15,
+      look: [0.2, 1.9, -1.0],
+      size: [7.2, 4.4],
+      normal: [0.48, 0.36, 0.80],
+      padding: 1.05,
       idleOrbit: true
     },
     projects: {
@@ -64,31 +64,31 @@ export const portfolioData = {
     skills: {
       name: "skills",
       alias: "bookshelf",
-      look: [-3.5, 2.3, -2.8], // Whole bookshelf from floor to top + guitar
-      size: [2.6, 3.4],
-      normal: [0.82, 0.18, 0.54], // Viewed from front/open area
-      padding: 1.15
+      look: [-3.2, 2.3, -2.7], // Whole bookshelf from floor to top + guitar, framed from interior
+      size: [2.5, 3.2],
+      normal: [0.65, 0.20, 0.74],
+      padding: 1.08
     },
     bookshelf: {
       name: "bookshelf",
-      look: [-3.5, 2.3, -2.8],
-      size: [2.6, 3.4],
-      normal: [0.82, 0.18, 0.54],
-      padding: 1.15
+      look: [-3.2, 2.3, -2.7],
+      size: [2.5, 3.2],
+      normal: [0.65, 0.20, 0.74],
+      padding: 1.08
     },
     about: {
       name: "about",
-      look: [0.9, 2.2, -2.8], // Desk and chair together, framed whole
-      size: [3.8, 2.8],
-      normal: [0.55, 0.40, 0.73],
-      padding: 1.18
+      look: [0.15, 2.05, -2.7], // Developer desk, chair, monitors, and coffee framed whole without looking past walls
+      size: [3.4, 2.4],
+      normal: [0.18, 0.32, 0.93],
+      padding: 1.08
     },
     contact: {
       name: "contact",
-      look: [1.6, 1.3, 1.2], // Coffee table with smart speaker and sofa with mascot
-      size: [3.6, 2.2],
-      normal: [-0.40, 0.52, 0.75],
-      padding: 1.18
+      look: [1.6, 1.35, 1.1], // Coffee table with smart speaker and sofa with mascot
+      size: [3.3, 2.1],
+      normal: [-0.30, 0.48, 0.82],
+      padding: 1.08
     },
     tvScreen: {
       name: "tvScreen",

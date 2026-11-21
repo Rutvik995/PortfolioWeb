@@ -50,9 +50,9 @@ export default class Navigation {
         this.view.spherical.smoothed = initialSpherical.clone()
         this.view.spherical.smoothing = 0.008
         this.view.spherical.limits = {
-            radius: { min: 0.8, max: 60 },
-            phi: { min: 0.05, max: Math.PI * 0.95 },
-            theta: { min: -Infinity, max: Infinity }
+            radius: { min: 1.5, max: 13.5 },
+            phi: { min: Math.PI * 0.12, max: Math.PI * 0.44 },
+            theta: { min: -0.6, max: 1.6 }
         }
 
         this.view.target = {}
@@ -440,6 +440,14 @@ export default class Navigation {
             Math.max(this.view.spherical.value.phi, this.view.spherical.limits.phi.min),
             this.view.spherical.limits.phi.max
         )
+
+        // Clamp spherical theta (keeps camera in front of room, preventing orbiting into exterior diorama void)
+        if (isFinite(this.view.spherical.limits.theta.min)) {
+            this.view.spherical.value.theta = Math.min(
+                Math.max(this.view.spherical.value.theta, this.view.spherical.limits.theta.min),
+                this.view.spherical.limits.theta.max
+            )
+        }
 
         // Smoothing (only when not driven directly by transition tween)
         if (!this.isTransitioning) {
