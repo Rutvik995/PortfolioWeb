@@ -24,11 +24,9 @@ export default class Renderer
 
     setInstance()
     {
-        this.clearColor = '#010101'
-
-        // Renderer
+        // Renderer with transparent canvas
         this.instance = new THREE.WebGLRenderer({
-            alpha: false,
+            alpha: true,
             antialias: true
         })
         this.instance.domElement.style.position = 'absolute'
@@ -37,8 +35,7 @@ export default class Renderer
         this.instance.domElement.style.width = '100%'
         this.instance.domElement.style.height = '100%'
 
-        // this.instance.setClearColor(0x414141, 1)
-        this.instance.setClearColor(this.clearColor, 1)
+        this.instance.setClearColor(0x000000, 0)
         this.instance.setSize(this.config.width, this.config.height)
         this.instance.setPixelRatio(this.config.pixelRatio)
 

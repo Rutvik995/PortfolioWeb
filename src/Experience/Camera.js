@@ -17,6 +17,7 @@ export default class Camera
 
         // Set up
         this.mode = 'default' // default \ debug
+        this.fov = 30
 
         this.setInstance()
         this.setModes()
@@ -24,8 +25,8 @@ export default class Camera
 
     setInstance()
     {
-        // Set up
-        this.instance = new THREE.PerspectiveCamera(20, this.config.width / this.config.height, 0.1, 150)
+        // Set up with 30 deg FOV for natural framing of room subjects
+        this.instance = new THREE.PerspectiveCamera(this.fov, this.config.width / this.config.height, 0.1, 150)
         this.instance.rotation.reorder('YXZ')
 
         this.scene.add(this.instance)
@@ -66,12 +67,15 @@ export default class Camera
     resize()
     {
         this.instance.aspect = this.config.width / this.config.height
+        this.instance.fov = this.fov
         this.instance.updateProjectionMatrix()
 
         this.modes.default.instance.aspect = this.config.width / this.config.height
+        this.modes.default.instance.fov = this.fov
         this.modes.default.instance.updateProjectionMatrix()
 
         this.modes.debug.instance.aspect = this.config.width / this.config.height
+        this.modes.debug.instance.fov = this.fov
         this.modes.debug.instance.updateProjectionMatrix()
     }
 

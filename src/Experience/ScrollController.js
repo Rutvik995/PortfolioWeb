@@ -15,6 +15,18 @@ export default class ScrollController {
         this.initProjectCardsObserver()
         this.initNavLinks()
         this.initInteractiveButtons()
+        this.initHintDismissal()
+    }
+
+    initHintDismissal() {
+        const dismiss = () => {
+            if (this.navigation && this.navigation.dismissHint) {
+                this.navigation.dismissHint()
+            }
+        }
+        window.addEventListener('scroll', dismiss, { once: true, passive: true })
+        window.addEventListener('wheel', dismiss, { once: true, passive: true })
+        window.addEventListener('touchmove', dismiss, { once: true, passive: true })
     }
 
     initSectionObserver() {

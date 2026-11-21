@@ -20,18 +20,28 @@ export default class Navigation {
         this.isTransitioning = false
         this.lastInteractionTime = performance.now()
         this.currentSectionName = 'hero'
-        this.currentSectionTarget = portfolioData.cameraTargets.hero
         this.currentTween = null
 
         this.setView()
+        this.initDebugHUD()
+        this.initResizeObserver()
+    }
+
+    getFramingForSection(sectionName) {
+        const aspect = (this.config.width && this.config.height) ? (this.config.width / this.config.height) : 0.8
+        const fov = this.camera.fov || 30
+        return portfolioData.computeCameraFraming(sectionName, aspect, fov)
     }
 
     setView() {
         this.view = {}
 
-        // Initial Overview values: pos: [7.5, 6.2, 9.8], look: [0, 1.5, -1.5]
-        const initialLook = new THREE.Vector3(0, 1.5, -1.5)
-        const initialPos = new THREE.Vector3(7.5, 6.2, 9.8)
+        // Initial Overview computed framing
+        const initialFraming = this.getFramingForSection('hero')
+        this.currentSectionTarget = initialFraming
+
+        const initialLook = new THREE.Vector3(...initialFraming.look)
+        const initialPos = new THREE.Vector3(...initialFraming.pos)
         const initialOffset = initialPos.clone().sub(initialLook)
         const initialSpherical = new THREE.Spherical().setFromVector3(initialOffset)
 
@@ -40,7 +50,7 @@ export default class Navigation {
         this.view.spherical.smoothed = initialSpherical.clone()
         this.view.spherical.smoothing = 0.008
         this.view.spherical.limits = {
-            radius: { min: 1.2, max: 60 },
+            radius: { min: 0.8, max: 60 },
             phi: { min: 0.05, max: Math.PI * 0.95 },
             theta: { min: -Infinity, max: Infinity }
         }
@@ -66,7 +76,7 @@ export default class Navigation {
         this.view.zoom.delta = 0
 
         /**
-         * Methods
+         * Interaction Handlers
          */
         this.view.down = (_x, _y) => {
             if (this.currentTween) {
@@ -76,6 +86,7 @@ export default class Navigation {
             this.isTransitioning = false
             this.isUserInteracting = true
             this.lastInteractionTime = performance.now()
+            this.dismissHint()
 
             this.view.drag.previous.x = _x
             this.view.drag.previous.y = _y
@@ -84,6 +95,7 @@ export default class Navigation {
         this.view.move = (_x, _y) => {
             this.isUserInteracting = true
             this.lastInteractionTime = performance.now()
+            this.dismissHint()
 
             this.view.drag.delta.x += _x - this.view.drag.previous.x
             this.view.drag.delta.y += _y - this.view.drag.previous.y
@@ -105,6 +117,7 @@ export default class Navigation {
             this.isTransitioning = false
             this.isUserInteracting = true
             this.lastInteractionTime = performance.now()
+            this.dismissHint()
 
             this.view.zoom.delta += _delta
             setTimeout(() => {
@@ -182,11 +195,38 @@ export default class Navigation {
         this.targetElement.addEventListener('wheel', this.view.onWheel, { passive: false })
     }
 
+    initResizeObserver() {
+        if (window.ResizeObserver && this.targetElement) {
+            this.resizeObserver = new ResizeObserver(() => {
+                this.recomputeFraming()
+            })
+            this.resizeObserver.observe(this.targetElement)
+        }
+        window.addEventListener('resize', () => {
+            this.recomputeFraming()
+        })
+    }
+
+    recomputeFraming() {
+        if (this.currentSectionName && !this.isUserInteracting) {
+            const framing = this.getFramingForSection(this.currentSectionName)
+            this.currentSectionTarget = framing
+            this.goToTarget(framing, 0.4, 'power1.out')
+        }
+    }
+
+    dismissHint() {
+        const hint = document.querySelector('.room-hint')
+        if (hint && !hint.classList.contains('fade-out')) {
+            hint.classList.add('fade-out')
+        }
+    }
+
     goToSection(sectionName, duration = 1.5) {
-        const target = portfolioData.cameraTargets[sectionName] || portfolioData.cameraTargets.hero
         this.currentSectionName = sectionName
-        this.currentSectionTarget = target
-        this.goToTarget(target, duration)
+        const framing = this.getFramingForSection(sectionName)
+        this.currentSectionTarget = framing
+        this.goToTarget(framing, duration)
     }
 
     goToTarget(target, duration = 1.5, ease = 'power2.inOut') {
@@ -278,6 +318,80 @@ export default class Navigation {
         return dRadius + dPhi + dTheta
     }
 
+    initDebugHUD() {
+        this.hud = document.createElement('div')
+        this.hud.id = 'camera-debug-hud'
+        this.hud.style.cssText = `
+            position: fixed;
+            top: 74px;
+            right: 20px;
+            background: rgba(3, 7, 18, 0.94);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 11px;
+            color: #f8fafc;
+            z-index: 9999;
+            pointer-events: none;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            line-height: 1.6;
+        `
+        document.body.appendChild(this.hud)
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'd' || e.key === 'D') {
+                if (this.hud) {
+                    const isVisible = this.hud.style.display === 'block'
+                    this.hud.style.display = isVisible ? 'none' : 'block'
+                }
+            } else if (e.key === 'p' || e.key === 'P') {
+                this.logCurrentTarget()
+            }
+        })
+    }
+
+    updateDebugHUD() {
+        if (!this.hud || this.hud.style.display !== 'block') return
+
+        const camPos = this.camera.modes.default.instance.position
+        const target = this.view.target.smoothed
+        const dist = camPos.distanceTo(target)
+        const aspect = (this.config.width / (this.config.height || 1)).toFixed(3)
+
+        this.hud.innerHTML = `
+            <div style="color: #38bdf8; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; margin-bottom: 6px;">
+                🎥 CAMERA FRAMING HUD (Press D to toggle, P to log)
+            </div>
+            <div>Target: <span style="color:#c084fc; font-weight:bold">${this.currentSectionName}</span></div>
+            <div>Pos: [${camPos.x.toFixed(2)}, ${camPos.y.toFixed(2)}, ${camPos.z.toFixed(2)}]</div>
+            <div>Look: [${target.x.toFixed(2)}, ${target.y.toFixed(2)}, ${target.z.toFixed(2)}]</div>
+            <div>Dist: <span style="color:#34d399">${dist.toFixed(2)}m</span> | FOV: ${this.camera.fov || 30}°</div>
+            <div>Panel: ${Math.round(this.config.width)}x${Math.round(this.config.height)} (aspect: ${aspect})</div>
+            <div style="font-size: 10px; color: #64748b; margin-top: 4px;">Wall Clamped: inside [-4.8..12, 0.5..10, -4.8..11]</div>
+        `
+    }
+
+    logCurrentTarget() {
+        const camPos = this.camera.modes.default.instance.position
+        const target = this.view.target.smoothed
+        const dist = camPos.distanceTo(target)
+        const data = {
+            section: this.currentSectionName,
+            look: [parseFloat(target.x.toFixed(3)), parseFloat(target.y.toFixed(3)), parseFloat(target.z.toFixed(3))],
+            pos: [parseFloat(camPos.x.toFixed(3)), parseFloat(camPos.y.toFixed(3)), parseFloat(camPos.z.toFixed(3))],
+            dist: parseFloat(dist.toFixed(2)),
+            aspect: parseFloat((this.config.width / (this.config.height || 1)).toFixed(3))
+        }
+        console.log('📸 [CAMERA FRAMING LOG]:', JSON.stringify(data, null, 2))
+        if (this.hud) {
+            this.hud.style.display = 'block'
+        }
+    }
+
     update() {
         const now = performance.now()
 
@@ -340,7 +454,7 @@ export default class Navigation {
 
         // Subtle idle orbit when on hero/overview section
         if (
-            (this.currentSectionName === 'hero' || this.currentSectionName === 'overview' || this.currentSectionName === 'about') &&
+            (this.currentSectionName === 'hero' || this.currentSectionName === 'overview') &&
             !this.isUserInteracting &&
             !this.isTransitioning &&
             !this.prefersReducedMotion
@@ -354,13 +468,26 @@ export default class Navigation {
         viewPosition.setFromSpherical(this.view.spherical.smoothed)
         viewPosition.add(this.view.target.smoothed)
 
+        // Wall & boundary safety clamping so camera never clips through walls or furniture
+        viewPosition.x = Math.max(-4.8, Math.min(12.0, viewPosition.x))
+        viewPosition.y = Math.max(0.5, Math.min(10.0, viewPosition.y))
+        viewPosition.z = Math.max(-4.8, Math.min(11.0, viewPosition.z))
+
         this.camera.modes.default.instance.position.copy(viewPosition)
         this.camera.modes.default.instance.lookAt(this.view.target.smoothed)
+
+        this.updateDebugHUD()
     }
 
     destroy() {
         if (this.currentTween) {
             this.currentTween.kill()
+        }
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect()
+        }
+        if (this.hud && this.hud.parentElement) {
+            this.hud.parentElement.removeChild(this.hud)
         }
     }
 }

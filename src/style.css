@@ -5,9 +5,9 @@
 
 :root {
     --bg-base: #000000;
-    --bg-surface: #030712;
-    --bg-card: rgba(15, 23, 42, 0.72);
-    --bg-card-hover: rgba(15, 23, 42, 0.92);
+    --bg-surface: transparent;
+    --bg-card: rgba(15, 23, 42, 0.42);
+    --bg-card-hover: rgba(15, 23, 42, 0.65);
     --border-subtle: rgba(255, 255, 255, 0.08);
     --border-hover: rgba(56, 189, 248, 0.35);
 
@@ -237,41 +237,34 @@ body {
 }
 
 /* ==========================================================================
-   Two-Column Split Layout
+   Two-Column Split Layout & Layered Room
    ========================================================================== */
 .portfolio-container {
-    display: flex;
+    position: relative;
     width: 100%;
     min-height: 100vh;
+    background: transparent;
 }
 
-/* Left Column: Scrolling Content */
-.content-column {
-    width: 58%;
-    padding: 120px 48px 100px 60px;
-    max-width: 820px;
-    margin-left: auto;
-    margin-right: 0;
-    position: relative;
-    z-index: 10;
-}
-
-/* Right Column: Pinned Sticky 3D Room */
+/* Right Column: Pinned 3D Room Layer (Fixed behind content on desktop) */
 .room-column {
-    width: 42%;
-    position: sticky;
+    position: fixed;
     top: 0;
+    right: 0;
+    width: 48vw;
     height: 100vh;
     overflow: hidden;
-    background: #010101;
-    border-left: 1px solid var(--border-subtle);
-    z-index: 20;
+    background: transparent;
+    border-left: none; /* No hard vertical edge */
+    z-index: 1;
+    pointer-events: auto;
 }
 
 .room-sticky {
     position: relative;
     width: 100%;
     height: 100%;
+    background: transparent;
 }
 
 .experience {
@@ -291,7 +284,7 @@ body {
 .room-fallback-poster {
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at 60% 40%, #151b2e 0%, #060911 70%, #000000 100%);
+    background: radial-gradient(circle at 60% 40%, rgba(21, 27, 46, 0.8) 0%, rgba(6, 9, 17, 0.9) 70%, #000000 100%);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -326,28 +319,37 @@ body {
     letter-spacing: 0.05em;
 }
 
-/* Room Interaction Hint Badge */
+/* Room Interaction Hint Badge: Placed at bottom-left of room area */
 .room-hint {
     position: absolute;
-    top: 80px;
-    left: 50%;
-    transform: translateX(-50%);
+    bottom: 24px;
+    left: 24px;
+    top: auto;
+    transform: none;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 14px;
-    background: rgba(15, 23, 42, 0.7);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 5px 12px;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-full);
     pointer-events: none;
     z-index: 30;
+    opacity: 0.85;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.room-hint.fade-out {
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
 }
 
 .hint-dot {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     background: var(--accent-cyan);
     border-radius: 50%;
 }
@@ -355,19 +357,32 @@ body {
 .hint-text {
     font-family: var(--font-mono);
     font-size: 11px;
-    color: var(--text-secondary);
+    color: var(--text-muted);
     letter-spacing: 0.02em;
 }
 
-/* Relocated TV Music Player in Desktop Room */
+/* Relocated TV Music Player: Compact pill in bottom-right corner of room */
 .room-column #tv-music-player {
     position: absolute;
     bottom: 22px;
-    left: 20px;
-    right: 20px;
+    right: 24px;
+    left: auto;
     display: flex;
-    justify-content: center;
-    z-index: 40;
+    justify-content: flex-end;
+    z-index: 35;
+    pointer-events: auto;
+}
+
+/* Left Column: Scrolling Content with Soft Horizontal Gradient */
+.content-column {
+    position: relative;
+    z-index: 10;
+    width: 52vw;
+    max-width: 780px;
+    margin-left: 0;
+    margin-right: auto;
+    padding: 120px 48px 100px 60px;
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.95) 0%, rgba(3, 7, 18, 0.85) 65%, rgba(3, 7, 18, 0) 100%);
     pointer-events: auto;
 }
 
@@ -376,6 +391,7 @@ body {
    ========================================================================== */
 .portfolio-section {
     padding-bottom: 120px;
+    background: transparent;
 }
 
 .section-header {
@@ -536,7 +552,7 @@ body {
 }
 
 /* ==========================================================================
-   Projects Section
+   Projects Section (Translucent Glass Style)
    ========================================================================== */
 .projects-list {
     display: flex;
@@ -546,8 +562,8 @@ body {
 
 .project-card {
     background: var(--bg-card);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
     padding: 30px;
@@ -729,8 +745,8 @@ body {
 
 .timeline-content {
     background: var(--bg-card);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
     padding: 24px;
@@ -823,8 +839,8 @@ body {
 
 .skill-card {
     background: var(--bg-card);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
     padding: 24px;
@@ -888,8 +904,8 @@ body {
    ========================================================================== */
 .about-card {
     background: var(--bg-card);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
     padding: 32px;
@@ -956,24 +972,26 @@ body {
 }
 
 /* ==========================================================================
-   Contact Section
+   Contact Section (Responsive Wrap, No Clipping)
    ========================================================================== */
 .contact-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    width: 100%;
 }
 
 .contact-card {
     display: flex;
     align-items: center;
     gap: 14px;
+    min-width: 0; /* Prevents overflow */
     background: var(--bg-card);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
-    padding: 20px;
+    padding: 18px 20px;
     text-decoration: none;
     color: inherit;
     transition: all 0.2s;
@@ -989,8 +1007,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     background: rgba(56, 189, 248, 0.08);
     border: 1px solid rgba(56, 189, 248, 0.2);
     border-radius: var(--radius-md);
@@ -1002,6 +1020,7 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    min-width: 0;
 }
 
 .contact-label {
@@ -1026,6 +1045,7 @@ body {
     font-size: 16px;
     color: var(--text-muted);
     transition: transform 0.2s, color 0.2s;
+    flex-shrink: 0;
 }
 
 .contact-card:hover .contact-arrow {
@@ -1059,34 +1079,33 @@ body {
 }
 
 /* ==========================================================================
-   TV Player Pill Component (Shared & Scoped)
+   TV Player Pill Component (Compact, Scoped, Semi-Transparent)
    ========================================================================== */
 .tv-player-pill {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 8px 16px 8px 10px;
-    background: rgba(15, 23, 42, 0.88);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    gap: 10px;
+    padding: 6px 14px 6px 8px;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: var(--radius-full);
-    box-shadow: 0 12px 36px -6px rgba(0, 0, 0, 0.7), 0 0 20px -3px var(--accent, #a855f7);
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.6), 0 0 16px -4px var(--accent, #a855f7);
     color: #ffffff;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     max-width: 100%;
 }
 
 .tv-player-pill:hover {
-    background: rgba(15, 23, 42, 0.96);
-    border-color: rgba(255, 255, 255, 0.25);
-    box-shadow: 0 16px 42px -6px rgba(0, 0, 0, 0.8), 0 0 28px 0 var(--accent, #a855f7);
+    background: rgba(15, 23, 42, 0.85);
+    border-color: rgba(255, 255, 255, 0.22);
 }
 
 .tv-player-art {
     position: relative;
-    width: 38px;
-    height: 38px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     overflow: hidden;
     cursor: pointer;
@@ -1108,7 +1127,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 10px;
     opacity: 0;
     transition: opacity 0.2s;
     color: #ffffff;
@@ -1121,13 +1140,13 @@ body {
 .tv-player-info {
     display: flex;
     flex-direction: column;
-    min-width: 100px;
-    max-width: 140px;
+    min-width: 80px;
+    max-width: 120px;
     cursor: pointer;
 }
 
 .tv-title {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
     color: #ffffff;
     white-space: nowrap;
@@ -1136,7 +1155,7 @@ body {
 }
 
 .tv-artist {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--text-muted);
     white-space: nowrap;
     overflow: hidden;
@@ -1153,10 +1172,10 @@ body {
     background: transparent;
     border: none;
     color: #cbd5e1;
-    font-size: 13px;
+    font-size: 11px;
     cursor: pointer;
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1172,7 +1191,7 @@ body {
 .tv-btn-play {
     background: var(--accent, #a855f7);
     color: #ffffff;
-    font-size: 11px;
+    font-size: 10px;
 }
 
 .tv-btn-play:hover {
@@ -1188,14 +1207,14 @@ body {
 }
 
 .vol-icon {
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .tv-player-vol input[type="range"] {
     -webkit-appearance: none;
     appearance: none;
-    width: 60px;
-    height: 4px;
+    width: 45px;
+    height: 3px;
     background: rgba(255, 255, 255, 0.2);
     border-radius: 2px;
     outline: none;
@@ -1204,8 +1223,8 @@ body {
 
 .tv-player-vol input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     background: #ffffff;
     border-radius: 50%;
     cursor: pointer;
@@ -1213,11 +1232,11 @@ body {
 
 .tv-badge {
     font-family: var(--font-mono);
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 700;
     color: var(--accent, #a855f7);
     background: rgba(255, 255, 255, 0.08);
-    padding: 3px 6px;
+    padding: 2px 5px;
     border-radius: var(--radius-sm);
     letter-spacing: 0.05em;
 }
@@ -1245,20 +1264,25 @@ body {
         flex-direction: column;
     }
 
-    /* Pinned top strip for 3D room */
+    /* Pinned top strip for 3D room with bottom fade mask */
     .room-column {
-        width: 100%;
-        height: 34vh;
-        min-height: 240px;
         position: sticky;
         top: 58px;
+        left: 0;
+        width: 100%;
+        height: 32vh;
+        min-height: 220px;
         z-index: 50;
-        border-left: none;
-        border-bottom: 1px solid var(--border-subtle);
+        background: transparent;
+        border: none;
+        /* Fade bottom edge into the page with a gradient mask */
+        mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
     }
 
     .room-hint {
-        top: 14px;
+        bottom: 12px;
+        left: 14px;
     }
 
     /* Music Player becomes floating pill at bottom-right on mobile */
@@ -1277,8 +1301,9 @@ body {
     /* Content scrolls under sticky 3D room */
     .content-column {
         width: 100%;
-        padding: 40px 20px 80px;
         max-width: 100%;
+        padding: 24px 20px 80px;
+        background: transparent;
     }
 
     .hero-title {

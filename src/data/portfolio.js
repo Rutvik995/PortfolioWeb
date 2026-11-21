@@ -12,30 +12,156 @@ export const portfolioData = {
     resumeUrl: "#resume"
   },
 
+  // Computed Camera Subject Framing Targets
+  cameraFrameTargets: {
+    hero: {
+      name: "hero",
+      alias: "overview",
+      look: [0.0, 1.8, -1.0],
+      size: [8.5, 5.2], // Whole room
+      normal: [0.54, 0.38, 0.75],
+      padding: 1.15,
+      idleOrbit: true
+    },
+    overview: {
+      name: "overview",
+      look: [0.0, 1.8, -1.0],
+      size: [8.5, 5.2], // Whole room
+      normal: [0.54, 0.38, 0.75],
+      padding: 1.15,
+      idleOrbit: true
+    },
+    projects: {
+      name: "projects",
+      alias: "pcScreen",
+      look: [0.306, 3.416, -4.511], // Ultrawide PC monitor screen face
+      size: [2.45, 1.38],
+      normal: [0.02, 0.05, 0.998], // Directly in front, viewing screen straight-on
+      padding: 1.18
+    },
+    pcScreen: {
+      name: "pcScreen",
+      look: [0.306, 3.416, -4.511],
+      size: [2.45, 1.38],
+      normal: [0.02, 0.05, 0.998],
+      padding: 1.18
+    },
+    experience: {
+      name: "experience",
+      alias: "macScreen",
+      look: [2.230, 3.040, -4.320], // Laptop screen face (NOT the keyboard)
+      size: [1.28, 0.80],
+      normal: [-0.292, 0.10, 0.95], // Directly along the laptop screen face normal
+      padding: 1.20
+    },
+    macScreen: {
+      name: "macScreen",
+      look: [2.230, 3.040, -4.320],
+      size: [1.28, 0.80],
+      normal: [-0.292, 0.10, 0.95],
+      padding: 1.20
+    },
+    skills: {
+      name: "skills",
+      alias: "bookshelf",
+      look: [-3.5, 2.3, -2.8], // Whole bookshelf from floor to top + guitar
+      size: [2.6, 3.4],
+      normal: [0.82, 0.18, 0.54], // Viewed from front/open area
+      padding: 1.15
+    },
+    bookshelf: {
+      name: "bookshelf",
+      look: [-3.5, 2.3, -2.8],
+      size: [2.6, 3.4],
+      normal: [0.82, 0.18, 0.54],
+      padding: 1.15
+    },
+    about: {
+      name: "about",
+      look: [0.9, 2.2, -2.8], // Desk and chair together, framed whole
+      size: [3.8, 2.8],
+      normal: [0.55, 0.40, 0.73],
+      padding: 1.18
+    },
+    contact: {
+      name: "contact",
+      look: [1.6, 1.3, 1.2], // Coffee table with smart speaker and sofa with mascot
+      size: [3.6, 2.2],
+      normal: [-0.40, 0.52, 0.75],
+      padding: 1.18
+    },
+    tvScreen: {
+      name: "tvScreen",
+      look: [4.19, 2.665, 1.820], // TV screen face
+      size: [4.16, 2.34],
+      normal: [-0.92, 0.12, 0.37],
+      padding: 1.18
+    }
+  },
+
+  computeCameraFraming(targetKey, aspect, fovDegrees = 30) {
+    const targets = portfolioData.cameraFrameTargets;
+    const def = targets[targetKey] || targets.hero;
+    const [lx, ly, lz] = def.look;
+    const [w, h] = def.size;
+    const [nx, ny, nz] = def.normal;
+    const padding = def.padding || 1.18;
+
+    const wPad = w * padding;
+    const hPad = h * padding;
+
+    const tanFovY = Math.tan((fovDegrees * Math.PI) / 360);
+    const tanFovX = tanFovY * aspect;
+
+    const distH = (hPad / 2) / tanFovY;
+    const distW = (wPad / 2) / tanFovX;
+    const dist = Math.max(distH, distW);
+
+    // Compute camera position along the normal vector
+    const len = Math.hypot(nx, ny, nz) || 1;
+    let px = lx + (nx / len) * dist;
+    let py = ly + (ny / len) * dist;
+    let pz = lz + (nz / len) * dist;
+
+    // Boundary / Wall Clamping: keep inside the room
+    px = Math.max(-4.8, Math.min(12.0, px));
+    py = Math.max(0.5, Math.min(10.0, py));
+    pz = Math.max(-4.8, Math.min(11.0, pz));
+
+    return {
+      name: targetKey,
+      look: [lx, ly, lz],
+      pos: [px, py, pz],
+      dist: dist,
+      size: def.size,
+      idleOrbit: !!def.idleOrbit
+    };
+  },
+
   cameraTargets: {
     hero: {
       pos: [7.5, 6.2, 9.8],
       look: [0, 1.5, -1.5]
     },
     projects: {
-      pos: [0.3, 3.4, -2.0],
-      look: [0.3, 3.4, -4.6]
+      pos: [0.306, 3.75, 2.22],
+      look: [0.306, 3.416, -4.511]
     },
     experience: {
-      pos: [2.2, 2.8, -2.5],
-      look: [2.2, 2.6, -4.3]
+      pos: [1.18, 3.40, -0.92],
+      look: [2.230, 3.040, -4.320]
     },
     skills: {
-      pos: [-3.0, 3.5, -1.0],
-      look: [-4.0, 3.0, -4.0]
+      pos: [2.49, 3.61, 1.14],
+      look: [-3.5, 2.3, -2.8]
     },
     about: {
-      pos: [7.5, 6.2, 9.8],
-      look: [0, 1.5, -1.5]
+      pos: [5.83, 6.48, 3.85],
+      look: [0.9, 2.2, -2.8]
     },
     contact: {
-      pos: [4.2, 2.8, 4.5],
-      look: [4.2, 2.7, 1.8]
+      pos: [-1.54, 6.33, 8.02],
+      look: [1.6, 1.3, 1.2]
     }
   },
 
