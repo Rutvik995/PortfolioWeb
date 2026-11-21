@@ -340,14 +340,27 @@ html, body {
 }
 
 /* ==========================================================================
-   Floating Minimal HUD Dock (Bottom Center)
+   Floating Bottom Bar Container (Dock + TV Music Player Unified)
    ========================================================================== */
-.hud-dock {
+.bottom-bar-container {
     position: fixed;
-    bottom: 24px;
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 90;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    max-width: calc(100vw - 32px);
+    pointer-events: none;
+}
+
+.bottom-bar-container > * {
+    pointer-events: auto;
+}
+
+.hud-dock {
     display: flex;
     align-items: center;
     gap: 4px;
@@ -358,6 +371,7 @@ html, body {
     border: 1px solid var(--border-glass);
     border-radius: var(--radius-full);
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 25px rgba(56, 189, 248, 0.12);
+    flex-shrink: 0;
 }
 
 .dock-item {
@@ -999,22 +1013,21 @@ html, body {
 }
 
 /* ==========================================================================
-   Floating TV Music Player Widget
+   TV Music Player Widget (Side-by-side with HUD Dock in Bottom Bar)
    ========================================================================== */
 #tv-music-player {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    z-index: 90;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
     pointer-events: auto;
 }
 
 .tv-player-pill {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 8px 16px 8px 8px;
-    background: rgba(10, 15, 30, 0.82);
+    gap: 8px;
+    padding: 4px 12px 4px 5px;
+    background: rgba(8, 12, 24, 0.85);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--border-glass);
@@ -1022,24 +1035,25 @@ html, body {
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 20px -3px var(--accent, #a855f7);
     color: #ffffff;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
 }
 
 .tv-player-pill:hover {
-    background: rgba(15, 23, 42, 0.92);
+    background: rgba(15, 23, 42, 0.95);
     border-color: rgba(255, 255, 255, 0.25);
-    transform: translateY(-2px);
+    transform: translateY(-1px);
     box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 28px 0 var(--accent, #a855f7);
 }
 
 .tv-player-art {
     position: relative;
-    width: 38px;
-    height: 38px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     overflow: hidden;
     cursor: pointer;
     flex-shrink: 0;
-    box-shadow: 0 0 12px var(--accent, #a855f7);
+    box-shadow: 0 0 10px var(--accent, #a855f7);
 }
 
 .tv-player-art img {
@@ -1055,7 +1069,7 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
+    font-size: 11px;
     color: #ffffff;
     opacity: 0;
     transition: opacity 0.2s;
@@ -1068,46 +1082,47 @@ html, body {
 .tv-player-info {
     display: flex;
     flex-direction: column;
-    min-width: 90px;
-    max-width: 150px;
+    max-width: 105px;
     cursor: pointer;
 }
 
 .tv-title {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     color: #ffffff;
+    line-height: 1.2;
 }
 
 .tv-artist {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--text-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1.2;
 }
 
 .tv-player-btns {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
 }
 
 .tv-btn {
     background: transparent;
     border: none;
     color: var(--text-secondary);
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 11px;
+    font-size: 10px;
     transition: all 0.2s;
 }
 
@@ -1119,9 +1134,9 @@ html, body {
 .tv-btn-play {
     background: var(--accent, #a855f7);
     color: #ffffff;
-    width: 30px;
-    height: 30px;
-    font-size: 12px;
+    width: 26px;
+    height: 26px;
+    font-size: 11px;
 }
 
 .tv-btn-play:hover {
@@ -1130,20 +1145,21 @@ html, body {
     transform: scale(1.06);
 }
 
-.tv-vol-wrap {
+.tv-player-vol {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-left: 4px;
+    gap: 5px;
+    margin-left: 2px;
 }
 
-.tv-vol-icon {
-    font-size: 12px;
+.vol-icon {
+    font-size: 11px;
     color: var(--text-muted);
+    line-height: 1;
 }
 
-.tv-vol-slider {
-    width: 55px;
+.tv-player-vol input[type="range"] {
+    width: 48px;
     height: 4px;
     -webkit-appearance: none;
     appearance: none;
@@ -1153,23 +1169,23 @@ html, body {
     cursor: pointer;
 }
 
-.tv-vol-slider::-webkit-slider-thumb {
+.tv-player-vol input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 10px;
-    height: 10px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
     background: #ffffff;
     cursor: pointer;
 }
 
-.tv-sync-pill {
+.tv-badge {
     font-family: var(--font-mono);
     font-size: 9px;
     font-weight: 700;
     color: var(--accent, #a855f7);
     background: rgba(255, 255, 255, 0.08);
-    padding: 3px 6px;
+    padding: 2px 6px;
     border-radius: 9999px;
     letter-spacing: 0.05em;
     margin-left: 2px;
@@ -1178,16 +1194,6 @@ html, body {
 /* ==========================================================================
    Responsive Adaptations
    ========================================================================== */
-@media (max-width: 1440px) {
-    #tv-music-player .tv-vol-wrap,
-    #tv-music-player .tv-sync-pill {
-        display: none;
-    }
-    .tv-player-info {
-        max-width: 110px;
-    }
-}
-
 @media (max-width: 1024px) {
     .site-header .availability-status {
         display: none;
@@ -1207,29 +1213,22 @@ html, body {
         max-height: 55vh;
     }
 
-    .hud-dock {
-        bottom: 16px;
-        padding: 5px 8px;
-        max-width: 90vw;
-        overflow-x: auto;
+    .bottom-bar-container {
+        bottom: 12px;
+        gap: 6px;
+        max-width: 96vw;
     }
 
     .dock-item {
-        padding: 6px 10px;
-        font-size: 12px;
+        padding: 5px 8px;
+        font-size: 11px;
     }
 
-    .dock-badge {
+    .tv-player-vol, .tv-badge {
         display: none;
     }
 
-    #tv-music-player {
-        bottom: auto;
-        top: 68px;
-        right: 16px;
-    }
-
-    .tv-vol-wrap, .tv-sync-pill {
-        display: none;
+    .tv-player-info {
+        max-width: 75px;
     }
 }

@@ -499,7 +499,7 @@ export default class ScrollController {
 
     handleSpatialClick(e) {
         // Prevent click when clicking on HTML overlay UI elements
-        if (e.target.closest('#hud-dock, #context-card, #tv-music-player, .site-header, .btn-reopen-card')) {
+        if (e.target.closest('#hud-dock, #context-card, #tv-music-player, .site-header, .btn-reopen-card, .bottom-bar-container')) {
             return
         }
 
