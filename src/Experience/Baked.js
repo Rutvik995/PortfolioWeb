@@ -91,14 +91,11 @@ export default class CoffeeSteam
             const oldIndices = geometry.index.array
             const totalTriangles = oldIndices.length / 3
 
-            // Triangle ranges corresponding to the mic, boom arm, key light mount, and camera
+            // Triangle ranges corresponding to the mic, boom arm, key light mount, camera, and camera arm
             const removalRanges = [
-                [39875, 2664],
-                [46124, 864],
-                [47020, 612],
-                [47872, 1076],
-                [49006, 34],
-                [103922, 5]
+                [39875, 2664], // Boom arm upper & lower scissor struts, hinges, and springs
+                [43979, 4969], // DSLR camera, camera arm behind monitor, key light mount, and full microphone body & windscreen
+                [103922, 10]   // Mounting clamp caps and hardware
             ]
 
             let removedCount = 0
