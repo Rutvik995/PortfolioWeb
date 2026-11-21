@@ -28,7 +28,7 @@ export default class Navigation {
     }
 
     getFramingForSection(sectionName) {
-        const aspect = (this.config.width && this.config.height) ? (this.config.width / this.config.height) : 0.8
+        const aspect = (this.config.width && this.config.height) ? (this.config.width / this.config.height) : (window.innerWidth / window.innerHeight)
         const fov = this.camera.fov || 30
         return portfolioData.computeCameraFraming(sectionName, aspect, fov)
     }

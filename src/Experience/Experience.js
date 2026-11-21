@@ -80,8 +80,8 @@ export default class Experience
 
         // Width and height from target container
         const boundings = this.targetElement.getBoundingClientRect()
-        this.config.width = boundings.width || (isMobile ? window.innerWidth : window.innerWidth * 0.42)
-        this.config.height = boundings.height || (isMobile ? window.innerHeight * 0.32 : window.innerHeight)
+        this.config.width = boundings.width || window.innerWidth
+        this.config.height = boundings.height || window.innerHeight
         this.config.smallestSide = Math.min(this.config.width, this.config.height)
         this.config.largestSide = Math.max(this.config.width, this.config.height)
         
