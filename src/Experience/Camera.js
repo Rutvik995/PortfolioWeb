@@ -55,6 +55,13 @@ export default class Camera
         this.modes.debug.orbitControls.update()
     }
 
+    transitionTo(sectionName, duration)
+    {
+        if (this.experience.navigation)
+        {
+            this.experience.navigation.goToSection(sectionName, duration)
+        }
+    }
 
     resize()
     {

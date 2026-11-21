@@ -3,15 +3,542 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rutvik | 3D Portfolio</title>
+    <title>Rutvik Bhanderi | AI Systems Developer</title>
 
-    <meta name="description" content="Rutvik's Interactive 3D Portfolio Room">
+    <meta name="description" content="AI systems developer building autonomous agents, multi-agent orchestrations, and deterministic compound AI systems.">
+    <meta name="keywords" content="Rutvik Bhanderi, AI Engineer, LangGraph, Multi-Agent Systems, Compound AI, Python, FastAPI, Machine Learning, Three.js">
+    <meta name="author" content="Rutvik Bhanderi">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="experience"></div>
+    <a href="#main-content" class="skip-to-content">Skip to content</a>
+
+    <!-- Top Fixed Navigation -->
+    <header class="site-header">
+        <div class="header-inner">
+            <a href="#hero" class="brand-badge" aria-label="Rutvik Bhanderi Portfolio Home">
+                <span class="brand-name">Rutvik</span>
+                <span class="brand-slash">/</span>
+                <span class="brand-role">AI Systems</span>
+            </a>
+
+            <div class="availability-status" title="Open to full-time AI/ML engineering roles">
+                <span class="status-pulse"></span>
+                <span class="status-text">Available for AI/ML Roles</span>
+            </div>
+
+            <nav class="nav-links" aria-label="Primary navigation">
+                <a href="#about" class="nav-item">About</a>
+                <a href="#projects" class="nav-item">Projects</a>
+                <a href="#experience" class="nav-item">Experience</a>
+                <a href="#skills" class="nav-item">Skills</a>
+                <a href="#contact" class="nav-item">Contact</a>
+            </nav>
+
+            <div class="header-actions">
+                <a href="https://github.com/Rutvik995" target="_blank" rel="noopener noreferrer" class="btn-icon" title="GitHub Profile">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                    </svg>
+                </a>
+                <a href="#contact" class="btn-primary-header">Get in touch</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Two-Column Split Layout -->
+    <div class="portfolio-container">
+        <!-- Left Column: Scrollable Content -->
+        <main id="main-content" class="content-column">
+            
+            <!-- SECTION 1: HERO -->
+            <section id="hero" class="portfolio-section hero-section" data-section="hero">
+                <div class="hero-eyebrow">
+                    <span class="code-tag">SYSTEM / OVERVIEW</span>
+                    <span class="hero-dot"></span>
+                    <span class="hero-loc">Bhuj, India</span>
+                </div>
+
+                <h1 class="hero-title">
+                    Rutvik Bhanderi
+                </h1>
+
+                <p class="hero-subtitle">
+                    AI systems developer building <span class="text-cyan">autonomous agents</span>, multi-agent orchestrations, and <span class="text-magenta">deterministic compound AI systems</span>.
+                </p>
+
+                <p class="hero-description">
+                    Taking agent architectures beyond simple prompts: engineering strict state machines, 4-tier memory compaction layers, telemetry pipelines, and runtime verification harnesses that run predictably in production.
+                </p>
+
+                <div class="hero-actions">
+                    <a href="#projects" class="btn-primary">
+                        <span>View Projects</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </a>
+                    <a href="#contact" class="btn-secondary">
+                        <span>Let's Talk</span>
+                    </a>
+                </div>
+
+                <div class="hero-tags">
+                    <span class="tag-chip">LangGraph</span>
+                    <span class="tag-chip">Multi-Agent DAGs</span>
+                    <span class="tag-chip">FastAPI</span>
+                    <span class="tag-chip">PyTorch</span>
+                    <span class="tag-chip">Time-Series AI</span>
+                    <span class="tag-chip">Three.js / WebGL</span>
+                </div>
+            </section>
+
+            <!-- SECTION 2: PROJECTS -->
+            <section id="projects" class="portfolio-section" data-section="projects">
+                <div class="section-header">
+                    <span class="section-num">01 // PRODUCTION ARCHITECTURE</span>
+                    <h2 class="section-title">Selected Projects</h2>
+                    <p class="section-subtitle">
+                        Deterministic multi-agent workflows and telemetry backends. Click <strong class="text-cyan">Inspect in 3D Screen</strong> to view the live codebase on the room monitor.
+                    </p>
+                </div>
+
+                <div class="projects-list">
+                    <!-- Project 1: Cortex -->
+                    <article class="project-card" data-project-index="0">
+                        <div class="card-meta">
+                            <span class="project-num">PROJECT 01</span>
+                            <span class="project-tab-badge">cortex_supervisor.py</span>
+                        </div>
+                        <h3 class="card-title">Cortex — Autonomous Multi-Agent Engine</h3>
+                        
+                        <div class="problem-box">
+                            <span class="box-label">PROBLEM</span>
+                            <p class="problem-text">Standard single-prompt LLM wrappers fail beyond 3 steps, hallucinate schemas, and lack tenant memory isolation.</p>
+                        </div>
+
+                        <p class="card-description">
+                            A 10-node LangGraph orchestration engine featuring runtime tool synthesis, 4-tier memory compaction, and strict compound-key execution boundaries for deterministic multi-step agent workflows.
+                        </p>
+
+                        <div class="card-stack">
+                            <span class="stack-tag">LangGraph</span>
+                            <span class="stack-tag">Python</span>
+                            <span class="stack-tag">FastAPI</span>
+                            <span class="stack-tag">PostgreSQL</span>
+                            <span class="stack-tag">Redis</span>
+                            <span class="stack-tag">WebSocket</span>
+                        </div>
+
+                        <div class="card-actions">
+                            <button class="btn-focus-screen" data-project-index="0" title="Inspect on 3D Monitor">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                                <span>Inspect in 3D IDE</span>
+                            </button>
+                            <a href="https://github.com/Rutvik995" target="_blank" rel="noopener noreferrer" class="btn-link">
+                                <span>GitHub</span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+                            </a>
+                        </div>
+                    </article>
+
+                    <!-- Project 2: Solar Fault Detection -->
+                    <article class="project-card" data-project-index="1">
+                        <div class="card-meta">
+                            <span class="project-num">PROJECT 02</span>
+                            <span class="project-tab-badge">solar_fault_agent.py</span>
+                        </div>
+                        <h3 class="card-title">Solar Fault Detection & Predictive Grid Agent</h3>
+
+                        <div class="problem-box">
+                            <span class="box-label">PROBLEM</span>
+                            <p class="problem-text">Utility-scale solar fields lose up to 14% output from undetected string diode failures and dust degradation.</p>
+                        </div>
+
+                        <p class="card-description">
+                            Autonomous telemetry pipeline streaming multi-inverter sensor feeds through an ensemble anomaly detector to classify string faults and schedule automated drone dispatch.
+                        </p>
+
+                        <div class="card-stack">
+                            <span class="stack-tag">Python</span>
+                            <span class="stack-tag">PyTorch</span>
+                            <span class="stack-tag">FastAPI</span>
+                            <span class="stack-tag">TimescaleDB</span>
+                            <span class="stack-tag">Pandas</span>
+                            <span class="stack-tag">Scikit-Learn</span>
+                        </div>
+
+                        <div class="card-actions">
+                            <button class="btn-focus-screen" data-project-index="1" title="Inspect on 3D Monitor">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                                <span>Inspect in 3D IDE</span>
+                            </button>
+                            <a href="https://github.com/Rutvik995" target="_blank" rel="noopener noreferrer" class="btn-link">
+                                <span>GitHub</span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+                            </a>
+                        </div>
+                    </article>
+
+                    <!-- Project 3: Compound Lead Intelligence -->
+                    <article class="project-card" data-project-index="2">
+                        <div class="card-meta">
+                            <span class="project-num">PROJECT 03</span>
+                            <span class="project-tab-badge">sales_orchestrator.py</span>
+                        </div>
+                        <h3 class="card-title">Compound Lead Intelligence & Outreach Pipeline</h3>
+
+                        <div class="problem-box">
+                            <span class="box-label">PROBLEM</span>
+                            <p class="problem-text">B2B research teams spend 70% of time manually aggregating company registries, tech stacks, and hiring signals.</p>
+                        </div>
+
+                        <p class="card-description">
+                            Deterministic 5-agent pipeline that crawls domain telemetry, queries vector stores for market positioning, and drafts customized outreach briefs with strict Pydantic verification.
+                        </p>
+
+                        <div class="card-stack">
+                            <span class="stack-tag">LangChain</span>
+                            <span class="stack-tag">Python</span>
+                            <span class="stack-tag">ChromaDB</span>
+                            <span class="stack-tag">Playwright</span>
+                            <span class="stack-tag">Pydantic</span>
+                        </div>
+
+                        <div class="card-actions">
+                            <button class="btn-focus-screen" data-project-index="2" title="Inspect on 3D Monitor">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                                <span>Inspect in 3D IDE</span>
+                            </button>
+                            <a href="https://github.com/Rutvik995" target="_blank" rel="noopener noreferrer" class="btn-link">
+                                <span>GitHub</span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+                            </a>
+                        </div>
+                    </article>
+
+                    <!-- Project 4: IoT Supervisor -->
+                    <article class="project-card" data-project-index="3">
+                        <div class="card-meta">
+                            <span class="project-num">PROJECT 04</span>
+                            <span class="project-tab-badge">iot_supervisor.py</span>
+                        </div>
+                        <h3 class="card-title">Natural-Language IoT Control & Telemetry Bridge</h3>
+
+                        <div class="problem-box">
+                            <span class="box-label">PROBLEM</span>
+                            <p class="problem-text">Shopfloor operators struggle with complex SCADA panels when executing emergency protocol overrides.</p>
+                        </div>
+
+                        <p class="card-description">
+                            Voice and text-driven bridge translating natural language instructions into validated industrial hardware register writes via MQTT and WebSocket streaming.
+                        </p>
+
+                        <div class="card-stack">
+                            <span class="stack-tag">Python</span>
+                            <span class="stack-tag">FastAPI</span>
+                            <span class="stack-tag">MQTT</span>
+                            <span class="stack-tag">Whisper</span>
+                            <span class="stack-tag">WebSockets</span>
+                        </div>
+
+                        <div class="card-actions">
+                            <button class="btn-focus-screen" data-project-index="3" title="Inspect on 3D Monitor">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                                <span>Inspect in 3D IDE</span>
+                            </button>
+                            <a href="https://github.com/Rutvik995" target="_blank" rel="noopener noreferrer" class="btn-link">
+                                <span>GitHub</span>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+                            </a>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <!-- SECTION 3: EXPERIENCE -->
+            <section id="experience" class="portfolio-section" data-section="experience">
+                <div class="section-header">
+                    <span class="section-num">02 // TRACK RECORD</span>
+                    <h2 class="section-title">Engineering Experience</h2>
+                    <p class="section-subtitle">
+                        Applied AI, multi-agent orchestrations, and native client engineering.
+                    </p>
+                </div>
+
+                <div class="timeline">
+                    <!-- Experience 1 -->
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-header">
+                                <div>
+                                    <h3 class="role-title">AI Engineer Intern</h3>
+                                    <div class="company-name">Innovation Intellect Pvt Ltd</div>
+                                </div>
+                                <div class="timeline-meta">
+                                    <span class="period-badge">Apr 2026 — Jun 2026</span>
+                                    <span class="location-badge">Bhuj, India • On-site</span>
+                                </div>
+                            </div>
+                            <ul class="timeline-bullets">
+                                <li>Built autonomous multi-agent systems for real-time sensor analysis and workflow automation.</li>
+                                <li>Engineered natural-language IoT control pipelines enabling operators to command industrial hardware and inspect live telemetry in English and Hindi.</li>
+                                <li>Formulated predictive analytics models to forecast operational trends, coupled with dynamic data visualizations.</li>
+                                <li>Constructed automated root-cause troubleshooting knowledge-base querying systems.</li>
+                            </ul>
+                            <div class="timeline-tags">
+                                <span class="tag-chip">LangGraph</span>
+                                <span class="tag-chip">Multi-Agent AI</span>
+                                <span class="tag-chip">IoT Telemetry</span>
+                                <span class="tag-chip">Predictive Analytics</span>
+                                <span class="tag-chip">NLP</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Experience 2 -->
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-header">
+                                <div>
+                                    <h3 class="role-title">Android Developer Intern</h3>
+                                    <div class="company-name">Shreesoftech</div>
+                                </div>
+                                <div class="timeline-meta">
+                                    <span class="period-badge">Dec 2025 — Feb 2026</span>
+                                    <span class="location-badge">Bhuj, India • Remote</span>
+                                </div>
+                            </div>
+                            <ul class="timeline-bullets">
+                                <li>Developed native Android client features with Kotlin, implementing reactive UI state flows and RESTful endpoint synchronization.</li>
+                                <li>Collaborated on mobile architecture, offline-first data caching with Room, and asynchronous background services.</li>
+                            </ul>
+                            <div class="timeline-tags">
+                                <span class="tag-chip">Android</span>
+                                <span class="tag-chip">Kotlin</span>
+                                <span class="tag-chip">Room Database</span>
+                                <span class="tag-chip">REST APIs</span>
+                                <span class="tag-chip">Coroutines</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 4: SKILLS -->
+            <section id="skills" class="portfolio-section" data-section="skills">
+                <div class="section-header">
+                    <span class="section-num">03 // TOOLKIT</span>
+                    <h2 class="section-title">Skills & Tooling</h2>
+                    <p class="section-subtitle">
+                        Grouped by operational purpose. Emphasizing deterministic state machines, reliable data pipelines, and production systems.
+                    </p>
+                </div>
+
+                <div class="skills-grid">
+                    <!-- Skill Group 1 -->
+                    <div class="skill-card">
+                        <div class="skill-card-header">
+                            <span class="skill-icon">🧠</span>
+                            <h3 class="skill-category">Agents & Orchestration</h3>
+                        </div>
+                        <p class="skill-desc">Deterministic graph state machines, multi-agent coordination, runtime tool harnesses.</p>
+                        <div class="skill-chips">
+                            <span class="chip-item">LangGraph</span>
+                            <span class="chip-item">LangChain</span>
+                            <span class="chip-item">StateGraph</span>
+                            <span class="chip-item">Pydantic Schemas</span>
+                            <span class="chip-item">Tool Calling</span>
+                            <span class="chip-item">Multi-Agent DAGs</span>
+                            <span class="chip-item">Prompt Engineering</span>
+                        </div>
+                    </div>
+
+                    <!-- Skill Group 2 -->
+                    <div class="skill-card">
+                        <div class="skill-card-header">
+                            <span class="skill-icon">⚡</span>
+                            <h3 class="skill-category">Backend & Data</h3>
+                        </div>
+                        <p class="skill-desc">Relational persistence, time-series indexing, vector stores, streaming protocols.</p>
+                        <div class="skill-chips">
+                            <span class="chip-item">Python</span>
+                            <span class="chip-item">FastAPI</span>
+                            <span class="chip-item">PostgreSQL</span>
+                            <span class="chip-item">Redis</span>
+                            <span class="chip-item">TimescaleDB</span>
+                            <span class="chip-item">Pinecone</span>
+                            <span class="chip-item">ChromaDB</span>
+                            <span class="chip-item">WebSockets</span>
+                            <span class="chip-item">Docker</span>
+                        </div>
+                    </div>
+
+                    <!-- Skill Group 3 -->
+                    <div class="skill-card">
+                        <div class="skill-card-header">
+                            <span class="skill-icon">🔬</span>
+                            <h3 class="skill-category">Machine Learning & AI</h3>
+                        </div>
+                        <p class="skill-desc">Inference pipelines, open models, local and cloud LLM endpoints, neural vision.</p>
+                        <div class="skill-chips">
+                            <span class="chip-item">PyTorch</span>
+                            <span class="chip-item">Deep Learning</span>
+                            <span class="chip-item">Llama 3 (Groq)</span>
+                            <span class="chip-item">Gemini API</span>
+                            <span class="chip-item">OpenAI API</span>
+                            <span class="chip-item">Scikit-Learn</span>
+                            <span class="chip-item">Pandas</span>
+                            <span class="chip-item">NumPy</span>
+                        </div>
+                    </div>
+
+                    <!-- Skill Group 4 -->
+                    <div class="skill-card">
+                        <div class="skill-card-header">
+                            <span class="skill-icon">💻</span>
+                            <h3 class="skill-category">Full-Stack & Systems</h3>
+                        </div>
+                        <p class="skill-desc">Production web applications, interactive 3D WebGL graphics, mobile clients.</p>
+                        <div class="skill-chips">
+                            <span class="chip-item">Next.js</span>
+                            <span class="chip-item">React</span>
+                            <span class="chip-item">TypeScript</span>
+                            <span class="chip-item">Tailwind CSS</span>
+                            <span class="chip-item">Three.js / WebGL</span>
+                            <span class="chip-item">Android / Kotlin</span>
+                            <span class="chip-item">Git / CI/CD</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 5: ABOUT -->
+            <section id="about" class="portfolio-section" data-section="about">
+                <div class="section-header">
+                    <span class="section-num">04 // PERSPECTIVE</span>
+                    <h2 class="section-title">About Me</h2>
+                </div>
+
+                <div class="about-card">
+                    <p class="about-text">
+                        I'm an AI systems developer specializing in taking autonomous multi-agent architectures out of prototype notebooks and engineering the deterministic state machines, databases, APIs, and interfaces required to run them reliably in production.
+                    </p>
+                    <p class="about-text">
+                        My work focuses on compound AI systems: building verifiable multi-step execution graphs with LangGraph, designing tiered memory compaction layers that preserve LLM context windows, and isolating tenant execution via compound state boundaries.
+                    </p>
+                    <p class="about-text">
+                        When I'm not profiling database indexes or debugging agent loop topologies, I'm exploring distributed systems architecture and interactive WebGL experiences.
+                    </p>
+
+                    <div class="principles-box">
+                        <span class="principles-title">ENGINEERING PRINCIPLES</span>
+                        <div class="principles-grid">
+                            <div class="principle-item">
+                                <span class="p-num">01</span>
+                                <span class="p-title">Deterministic Over Stochastic</span>
+                                <span class="p-desc">Constrain LLM outputs with strict JSON schemas and conditional routing.</span>
+                            </div>
+                            <div class="principle-item">
+                                <span class="p-num">02</span>
+                                <span class="p-title">State Isolation</span>
+                                <span class="p-desc">Never bleed global context across tenant agent boundaries.</span>
+                            </div>
+                            <div class="principle-item">
+                                <span class="p-num">03</span>
+                                <span class="p-title">Observable Telemetry</span>
+                                <span class="p-desc">Every step, tool call, and token usage verified in real time.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 6: CONTACT -->
+            <section id="contact" class="portfolio-section" data-section="contact">
+                <div class="section-header">
+                    <span class="section-num">05 // COLLABORATION</span>
+                    <h2 class="section-title">Let's Build Something High-Impact</h2>
+                    <p class="section-subtitle">
+                        Open to full-time AI/ML engineering roles, strategic technical collaborations, and ambitious systems engineering work.
+                    </p>
+                </div>
+
+                <div class="contact-grid">
+                    <a href="mailto:rutvik.professional@gmail.com" class="contact-card">
+                        <div class="contact-icon-wrap">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        </div>
+                        <div class="contact-details">
+                            <span class="contact-label">EMAIL DIRECT</span>
+                            <span class="contact-value">rutvik.professional@gmail.com</span>
+                        </div>
+                        <span class="contact-arrow">↗</span>
+                    </a>
+
+                    <a href="https://github.com/Rutvik995" target="_blank" rel="noopener noreferrer" class="contact-card">
+                        <div class="contact-icon-wrap">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                            </svg>
+                        </div>
+                        <div class="contact-details">
+                            <span class="contact-label">GITHUB</span>
+                            <span class="contact-value">github.com/Rutvik995</span>
+                        </div>
+                        <span class="contact-arrow">↗</span>
+                    </a>
+
+                    <a href="https://linkedin.com/in/rutvikbhanderi" target="_blank" rel="noopener noreferrer" class="contact-card">
+                        <div class="contact-icon-wrap">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.761-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                            </svg>
+                        </div>
+                        <div class="contact-details">
+                            <span class="contact-label">LINKEDIN</span>
+                            <span class="contact-value">linkedin.com/in/rutvikbhanderi</span>
+                        </div>
+                        <span class="contact-arrow">↗</span>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Minimal Footer -->
+            <footer class="site-footer">
+                <div class="footer-inner">
+                    <p class="footer-copy">© 2026 Rutvik Bhanderi • AI Systems Developer</p>
+                    <p class="footer-tech">Engineered with LangGraph, Three.js & Modern Web Standards</p>
+                </div>
+            </footer>
+        </main>
+
+        <!-- Right Column: Pinned Sticky 3D Room -->
+        <aside class="room-column" aria-label="Interactive 3D Room Workspace">
+            <div class="room-sticky">
+                <!-- Fallback poster image before WebGL compiles or on low-power -->
+                <div class="room-fallback-poster" aria-hidden="true">
+                    <div class="fallback-glow"></div>
+                    <div class="fallback-spinner"></div>
+                    <span class="fallback-text">Loading 3D Workspace...</span>
+                </div>
+
+                <!-- 3D WebGL Canvas Container -->
+                <div class="experience"></div>
+
+                <!-- Minimal Interactive Hint -->
+                <div class="room-hint">
+                    <span class="hint-dot"></span>
+                    <span class="hint-text">Drag room to orbit • Scroll to navigate zones</span>
+                </div>
+
+                <!-- Mounted TV Music Player (Desktop bottom of room) -->
+                <div id="tv-music-player"></div>
+            </div>
+        </aside>
+    </div>
 </body>
 </html>

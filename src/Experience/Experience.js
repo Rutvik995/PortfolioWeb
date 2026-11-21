@@ -10,6 +10,7 @@ import Renderer from './Renderer.js'
 import Camera from './Camera.js'
 import World from './World.js'
 import Navigation from './Navigation.js'
+import ScrollController from './ScrollController.js'
 
 import assets from './assets.js'
 
@@ -45,40 +46,42 @@ export default class Experience
         this.setResources()
         this.setWorld()
         this.setNavigation()
+        this.setScrollController()
         
         this.sizes.on('resize', () =>
         {
             this.resize()
         })
 
+        // Reveal canvas when resources finish loading
+        this.resources.on('end', () =>
+        {
+            if (this.targetElement)
+            {
+                this.targetElement.classList.add('ready')
+            }
+            const fallback = document.querySelector('.room-fallback-poster')
+            if (fallback)
+            {
+                fallback.classList.add('hidden')
+            }
+        })
+
         this.update()
     }
-
-    // static getInstance(_options = {})
-    // {
-    //     console.log(Experience.instance)
-    //     if(Experience.instance)
-    //     {
-    //         return Experience.instance
-    //     }
-        
-    //     console.log('create')
-    //     Experience.instance = new Experience(_options)
-        
-    //     return Experience.instance
-    // }
 
     setConfig()
     {
         this.config = {}
     
-        // Pixel ratio
-        this.config.pixelRatio = Math.min(Math.max(window.devicePixelRatio, 1), 2)
+        // Pixel ratio (cap at 2.0 desktop, 1.5 mobile)
+        const isMobile = window.innerWidth < 1024
+        this.config.pixelRatio = Math.min(Math.max(window.devicePixelRatio, 1), isMobile ? 1.5 : 2)
 
-        // Width and height
+        // Width and height from target container
         const boundings = this.targetElement.getBoundingClientRect()
-        this.config.width = boundings.width
-        this.config.height = boundings.height || window.innerHeight
+        this.config.width = boundings.width || (isMobile ? window.innerWidth : window.innerWidth * 0.42)
+        this.config.height = boundings.height || (isMobile ? window.innerHeight * 0.32 : window.innerHeight)
         this.config.smallestSide = Math.min(this.config.width, this.config.height)
         this.config.largestSide = Math.max(this.config.width, this.config.height)
         
@@ -116,7 +119,6 @@ export default class Experience
     setRenderer()
     {
         this.renderer = new Renderer({ rendererInstance: this.rendererInstance })
-
         this.targetElement.appendChild(this.renderer.instance.domElement)
     }
 
@@ -135,8 +137,22 @@ export default class Experience
         this.navigation = new Navigation()
     }
 
+    setScrollController()
+    {
+        this.scrollController = new ScrollController()
+    }
+
     update()
     {
+        if(document.hidden)
+        {
+            window.requestAnimationFrame(() =>
+            {
+                this.update()
+            })
+            return
+        }
+
         if(this.stats)
             this.stats.update()
         
@@ -160,13 +176,14 @@ export default class Experience
     resize()
     {
         // Config
+        const isMobile = window.innerWidth < 1024
+        this.config.pixelRatio = Math.min(Math.max(window.devicePixelRatio, 1), isMobile ? 1.5 : 2)
+
         const boundings = this.targetElement.getBoundingClientRect()
         this.config.width = boundings.width
         this.config.height = boundings.height
         this.config.smallestSide = Math.min(this.config.width, this.config.height)
         this.config.largestSide = Math.max(this.config.width, this.config.height)
-
-        this.config.pixelRatio = Math.min(Math.max(window.devicePixelRatio, 1), 2)
 
         if(this.camera)
             this.camera.resize()
@@ -180,6 +197,13 @@ export default class Experience
 
     destroy()
     {
-        
+        if(this.world)
+            this.world.destroy()
+
+        if(this.navigation)
+            this.navigation.destroy()
+
+        if(this.scrollController)
+            this.scrollController.destroy()
     }
 }

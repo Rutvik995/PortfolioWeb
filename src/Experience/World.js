@@ -6,7 +6,8 @@ import LoupedeckButtons from './LoupedeckButtons.js'
 import CoffeeSteam from './CoffeeSteam.js'
 import TopChair from './TopChair.js'
 import TvPlayer from './TvPlayer.js'
-import Screen from './Screen.js'
+import PcScreen from './PcScreen.js'
+import LaptopScreen from './LaptopScreen.js'
 
 export default class World {
     constructor(_options) {
@@ -53,13 +54,11 @@ export default class World {
     }
 
     setScreens() {
-        this.pcScreen = new Screen(
-            this.resources.items.pcScreenModel.scene.children[0],
-            '/assets/videoPortfolio.mp4'
+        this.pcScreen = new PcScreen(
+            this.resources.items.pcScreenModel.scene.children[0]
         )
-        this.macScreen = new Screen(
-            this.resources.items.macScreenModel.scene.children[0],
-            '/assets/videoStream.mp4'
+        this.macScreen = new LaptopScreen(
+            this.resources.items.macScreenModel.scene.children[0]
         )
     }
 
@@ -81,8 +80,19 @@ export default class World {
 
         if (this.tvPlayer)
             this.tvPlayer.update()
+
+        if (this.pcScreen)
+            this.pcScreen.update()
+
+        if (this.macScreen)
+            this.macScreen.update()
     }
 
     destroy() {
+        if (this.pcScreen)
+            this.pcScreen.destroy()
+
+        if (this.macScreen)
+            this.macScreen.destroy()
     }
 }
