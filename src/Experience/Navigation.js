@@ -393,7 +393,7 @@ export default class Navigation {
         }
     }
 
-    goToSection(sectionName, duration = 1.5) {
+    goToSection(sectionName, duration = 1.2) {
         this.currentSectionName = sectionName
         const framing = this.getFramingForSection(sectionName)
         this.currentSectionTarget = framing
@@ -401,68 +401,65 @@ export default class Navigation {
     }
 
     resetToOverview() {
-        this.goToSection('hero', 1.4)
+        this.goToSection('hero', 1.2)
     }
 
-    goToTarget(target, duration = 1.5, ease = 'power2.inOut') {
+    goToTarget(target, duration = 1.2, ease = 'power2.out') {
         const targetLook = new THREE.Vector3(target.look[0], target.look[1], target.look[2])
         const targetPos = new THREE.Vector3(target.pos[0], target.pos[1], target.pos[2])
-        const offset = targetPos.clone().sub(targetLook)
-        const targetSpherical = new THREE.Spherical().setFromVector3(offset)
 
-        // Shortest arc rotation for theta
-        let diffTheta = targetSpherical.theta - this.view.spherical.value.theta
-        while (diffTheta > Math.PI) diffTheta -= 2 * Math.PI
-        while (diffTheta < -Math.PI) diffTheta += 2 * Math.PI
-        const destTheta = this.view.spherical.value.theta + diffTheta
+        const cam = this.camera.modes.default.instance
+        const startPos = cam.position.clone()
+        const startLook = this.view.target.smoothed.clone()
 
         if (this.prefersReducedMotion || duration === 0) {
+            cam.position.copy(targetPos)
+            cam.lookAt(targetLook)
             this.view.target.value.copy(targetLook)
             this.view.target.smoothed.copy(targetLook)
-            this.view.spherical.value.radius = targetSpherical.radius
-            this.view.spherical.value.phi = targetSpherical.phi
-            this.view.spherical.value.theta = destTheta
-            this.view.spherical.smoothed.radius = targetSpherical.radius
-            this.view.spherical.smoothed.phi = targetSpherical.phi
-            this.view.spherical.smoothed.theta = destTheta
+
+            const offset = targetPos.clone().sub(targetLook)
+            this.view.spherical.value.setFromVector3(offset)
+            this.view.spherical.smoothed.setFromVector3(offset)
+            this.isTransitioning = false
             return
         }
 
         if (this.currentTween) {
             this.currentTween.kill()
+            this.currentTween = null
         }
 
         this.isTransitioning = true
 
-        const animObj = {
-            tx: this.view.target.value.x,
-            ty: this.view.target.value.y,
-            tz: this.view.target.value.z,
-            radius: this.view.spherical.value.radius,
-            phi: this.view.spherical.value.phi,
-            theta: this.view.spherical.value.theta
-        }
+        const anim = { t: 0 }
 
-        this.currentTween = gsap.to(animObj, {
-            tx: targetLook.x,
-            ty: targetLook.y,
-            tz: targetLook.z,
-            radius: targetSpherical.radius,
-            phi: targetSpherical.phi,
-            theta: destTheta,
+        this.currentTween = gsap.to(anim, {
+            t: 1,
             duration: duration,
             ease: ease,
             onUpdate: () => {
-                this.view.target.value.set(animObj.tx, animObj.ty, animObj.tz)
-                this.view.target.smoothed.set(animObj.tx, animObj.ty, animObj.tz)
-                this.view.spherical.value.radius = animObj.radius
-                this.view.spherical.value.phi = animObj.phi
-                this.view.spherical.value.theta = animObj.theta
-                this.view.spherical.smoothed.radius = animObj.radius
-                this.view.spherical.smoothed.phi = animObj.phi
-                this.view.spherical.smoothed.theta = animObj.theta
+                // Ultra-smooth direct 3D vector interpolation without spherical coordinate distortion
+                const curPos = startPos.clone().lerp(targetPos, anim.t)
+                const curLook = startLook.clone().lerp(targetLook, anim.t)
+
+                cam.position.copy(curPos)
+                cam.lookAt(curLook)
+
+                this.view.target.value.copy(curLook)
+                this.view.target.smoothed.copy(curLook)
             },
             onComplete: () => {
+                cam.position.copy(targetPos)
+                cam.lookAt(targetLook)
+
+                this.view.target.value.copy(targetLook)
+                this.view.target.smoothed.copy(targetLook)
+
+                const finalOffset = targetPos.clone().sub(targetLook)
+                this.view.spherical.value.setFromVector3(finalOffset)
+                this.view.spherical.smoothed.setFromVector3(finalOffset)
+
                 this.isTransitioning = false
                 this.currentTween = null
             }
@@ -470,6 +467,11 @@ export default class Navigation {
     }
 
     update() {
+        // While camera is gliding into a zone, let the cinematic tween own the camera
+        if (this.isTransitioning) {
+            return
+        }
+
         const currentRadius = this.view.spherical.smoothed.radius
 
         // Apply drag input

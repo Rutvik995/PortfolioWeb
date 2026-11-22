@@ -82,7 +82,7 @@ export default class ScrollController {
 
         // Move 3D camera
         if (this.navigation) {
-            this.navigation.goToSection(targetKey, 1.4)
+            this.navigation.goToSection(targetKey, 1.2)
             this.navigation.dismissHint()
         }
 

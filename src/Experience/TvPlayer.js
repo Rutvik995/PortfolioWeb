@@ -905,7 +905,13 @@ export default class TvPlayer
 
     update()
     {
-        this.renderCanvas()
+        // Throttle TV canvas redraws to ~20fps to prevent bus stalls during camera animations
+        const now = performance.now()
+        if (!this.lastTvFrameTime || (now - this.lastTvFrameTime) > 50)
+        {
+            this.renderCanvas()
+            this.lastTvFrameTime = now
+        }
 
         if(this.isPlaying && this.world && this.world.baked && this.world.baked.model && this.world.baked.model.material)
         {
