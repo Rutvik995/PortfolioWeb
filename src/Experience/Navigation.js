@@ -545,12 +545,12 @@ export default class Navigation {
         if (this.windowObstacleBox.containsPoint(viewPosition)) {
             let iterations = 0
             while (this.windowObstacleBox.containsPoint(viewPosition) && camDist > 0.6 && iterations < 30) {
-                viewPosition.subScaledVector(camDir, 0.08)
+                viewPosition.addScaledVector(camDir, -0.08)
                 camDist = viewPosition.distanceTo(focusPt)
                 iterations++
             }
             // Add safety margin
-            viewPosition.subScaledVector(camDir, 0.12)
+            viewPosition.addScaledVector(camDir, -0.12)
             camDist = viewPosition.distanceTo(focusPt)
 
             // Keep radius in sync so zoom doesn't freeze or get sticky
