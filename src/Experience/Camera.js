@@ -25,8 +25,8 @@ export default class Camera
 
     setInstance()
     {
-        // Set up with 30 deg FOV for natural framing of room subjects
-        this.instance = new THREE.PerspectiveCamera(this.fov, this.config.width / this.config.height, 0.1, 150)
+        // Set up with 30 deg FOV for natural framing of room subjects, near 0.05 to prevent geometric slicing
+        this.instance = new THREE.PerspectiveCamera(this.fov, this.config.width / this.config.height, 0.05, 150)
         this.instance.rotation.reorder('YXZ')
 
         this.scene.add(this.instance)

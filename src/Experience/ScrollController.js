@@ -23,7 +23,6 @@ export default class ScrollController {
 
         this.initDOM()
         this.initHUDDock()
-        this.initHeaderNav()
         this.initContextCard()
         this.initRaycasting()
         this.initKeyboardControls()
@@ -58,28 +57,6 @@ export default class ScrollController {
                     this.goToZone(zone, true)
                 }
             }
-        })
-    }
-
-    initHeaderNav() {
-        // Brand home button -> Overview
-        const brandBtn = document.getElementById('btn-brand-home')
-        if (brandBtn) {
-            brandBtn.addEventListener('click', () => {
-                this.goToZone('overview', false)
-            })
-        }
-
-        // Header nav links
-        const navItems = document.querySelectorAll('.site-header .nav-item, #btn-header-contact')
-        navItems.forEach((btn) => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault()
-                const zone = btn.dataset.zone
-                if (zone) {
-                    this.goToZone(zone, true)
-                }
-            })
         })
     }
 
@@ -120,16 +97,6 @@ export default class ScrollController {
                 }
             })
         }
-
-        // Update Header nav active states
-        const headerNavButtons = document.querySelectorAll('.site-header .nav-item')
-        headerNavButtons.forEach((btn) => {
-            if (btn.dataset.zone === zoneName) {
-                btn.classList.add('active')
-            } else {
-                btn.classList.remove('active')
-            }
-        })
 
         // Manage contextual card
         if (zoneName === 'overview') {
@@ -441,13 +408,15 @@ export default class ScrollController {
 
         window.addEventListener('pointerup', (e) => {
             const dist = Math.hypot(e.clientX - this.mouseDownPos.x, e.clientY - this.mouseDownPos.y)
-            if (dist < 6) {
+            if (dist < 5) {
                 this.handleSpatialClick(e)
             }
         })
 
-        window.addEventListener('dblclick', () => {
-            this.goToZone('overview', false)
+        window.addEventListener('dblclick', (e) => {
+            if (!e.target.closest('#hud-dock, #context-card, #tv-music-player, .btn-reopen-card, .bottom-bar-container')) {
+                this.goToZone('overview', false)
+            }
         })
     }
 
@@ -499,7 +468,7 @@ export default class ScrollController {
 
     handleSpatialClick(e) {
         // Prevent click when clicking on HTML overlay UI elements
-        if (e.target.closest('#hud-dock, #context-card, #tv-music-player, .site-header, .btn-reopen-card, .bottom-bar-container')) {
+        if (e.target.closest('#hud-dock, #context-card, #tv-music-player, .btn-reopen-card, .bottom-bar-container')) {
             return
         }
 
@@ -514,7 +483,11 @@ export default class ScrollController {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
 
             if (e.key === 'Escape') {
-                this.closeContextCard()
+                if (this.isCardOpen) {
+                    this.closeContextCard()
+                } else {
+                    this.goToZone('overview', false)
+                }
             } else if (e.key === '1') {
                 this.goToZone('overview', false)
             } else if (e.key === '2') {

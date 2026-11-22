@@ -22,8 +22,26 @@ export default class Navigation {
         this.currentSectionName = 'hero'
         this.currentTween = null
 
+        // Room interior bounding box & obstacle geometry for collision prevention
+        this.roomTargetBounds = {
+            x: { min: -3.2, max: 3.8 },
+            y: { min: 0.4, max: 2.8 },
+            z: { min: -3.8, max: 3.0 }
+        }
+
+        this.roomCameraBounds = {
+            min: new THREE.Vector3(-3.8, 0.35, -4.4),
+            max: new THREE.Vector3(4.0, 3.4, 3.7)
+        }
+
+        // Window frame obstacle box (window on right wall with neon strip & bars)
+        this.windowObstacleBox = new THREE.Box3(
+            new THREE.Vector3(3.3, 0.7, -1.7),
+            new THREE.Vector3(4.3, 3.3, 1.4)
+        )
+
         this.setView()
-        this.initDebugHUD()
+        this.initKeyboardNavigation()
         this.initResizeObserver()
     }
 
@@ -45,40 +63,46 @@ export default class Navigation {
         const initialOffset = initialPos.clone().sub(initialLook)
         const initialSpherical = new THREE.Spherical().setFromVector3(initialOffset)
 
+        this.overviewRadius = initialSpherical.radius
+
         this.view.spherical = {}
         this.view.spherical.value = initialSpherical.clone()
         this.view.spherical.smoothed = initialSpherical.clone()
-        this.view.spherical.smoothing = 0.008
+        this.view.spherical.smoothing = 0.009
         this.view.spherical.limits = {
-            radius: { min: 1.5, max: 13.5 },
-            phi: { min: Math.PI * 0.12, max: Math.PI * 0.44 },
-            theta: { min: -0.6, max: 1.6 }
+            radius: { min: 0.6, max: Math.max(12.8, initialSpherical.radius + 1.0) },
+            phi: { min: Math.PI * 0.08, max: Math.PI * 0.48 },
+            theta: { min: -Math.PI * 0.95, max: Math.PI * 0.95 }
         }
 
         this.view.target = {}
         this.view.target.value = initialLook.clone()
         this.view.target.smoothed = initialLook.clone()
-        this.view.target.smoothing = 0.008
-        this.view.target.limits = {
-            x: { min: -15, max: 15 },
-            y: { min: -5, max: 15 },
-            z: { min: -15, max: 15 }
-        }
+        this.view.target.smoothing = 0.009
+        this.view.target.limits = this.roomTargetBounds
 
         this.view.drag = {}
         this.view.drag.delta = { x: 0, y: 0 }
         this.view.drag.previous = { x: 0, y: 0 }
-        this.view.drag.sensitivity = 1.0
+        this.view.drag.orbitSensitivity = 1.0
+        this.view.drag.panSensitivity = 1.0
         this.view.drag.alternative = false
 
+        // Touch tracking
+        this.touchState = {
+            count: 0,
+            prevMidX: 0,
+            prevMidY: 0,
+            prevDist: 0
+        }
+
         this.view.zoom = {}
-        this.view.zoom.sensitivity = 0.008
         this.view.zoom.delta = 0
 
         /**
          * Interaction Handlers
          */
-        this.view.down = (_x, _y) => {
+        this.view.down = (_x, _y, isAlternative = false) => {
             if (this.currentTween) {
                 this.currentTween.kill()
                 this.currentTween = null
@@ -88,6 +112,7 @@ export default class Navigation {
             this.lastInteractionTime = performance.now()
             this.dismissHint()
 
+            this.view.drag.alternative = isAlternative
             this.view.drag.previous.x = _x
             this.view.drag.previous.y = _y
         }
@@ -119,7 +144,16 @@ export default class Navigation {
             this.lastInteractionTime = performance.now()
             this.dismissHint()
 
-            this.view.zoom.delta += _delta
+            // Smooth distance-scaled zoom step
+            const currentR = this.view.spherical.smoothed.radius
+            const zoomSpeed = 0.0022 * Math.max(0.4, currentR / 5.5)
+            this.view.spherical.value.radius += _delta * zoomSpeed
+            this.view.spherical.value.radius = THREE.MathUtils.clamp(
+                this.view.spherical.value.radius,
+                this.view.spherical.limits.radius.min,
+                this.view.spherical.limits.radius.max
+            )
+
             setTimeout(() => {
                 this.isUserInteracting = false
                 this.lastInteractionTime = performance.now()
@@ -127,12 +161,14 @@ export default class Navigation {
         }
 
         /**
-         * Mouse events
+         * Mouse events:
+         * Left-drag: Orbit
+         * Right-drag, Middle-drag, or Shift/Ctrl-drag: Pan
          */
         this.view.onMouseDown = (_event) => {
             _event.preventDefault()
-            this.view.drag.alternative = _event.button === 2 || _event.button === 1 || _event.ctrlKey || _event.shiftKey
-            this.view.down(_event.clientX, _event.clientY)
+            const isPan = _event.button === 2 || _event.button === 1 || _event.shiftKey || _event.ctrlKey
+            this.view.down(_event.clientX, _event.clientY, isPan)
 
             window.addEventListener('mouseup', this.view.onMouseUp)
             window.addEventListener('mousemove', this.view.onMouseMove)
@@ -153,11 +189,32 @@ export default class Navigation {
         this.targetElement.addEventListener('mousedown', this.view.onMouseDown)
 
         /**
-         * Touch events
+         * Touch events:
+         * 1 finger = Orbit
+         * 2 fingers = Pan (midpoint movement) + Zoom (pinch distance)
          */
         this.view.onTouchStart = (_event) => {
-            this.view.drag.alternative = _event.touches.length > 1
-            this.view.down(_event.touches[0].clientX, _event.touches[0].clientY)
+            if (_event.cancelable) _event.preventDefault()
+            if (this.currentTween) {
+                this.currentTween.kill()
+                this.currentTween = null
+            }
+            this.isTransitioning = false
+            this.isUserInteracting = true
+            this.dismissHint()
+
+            if (_event.touches.length === 1) {
+                this.touchState.count = 1
+                this.view.down(_event.touches[0].clientX, _event.touches[0].clientY, false)
+            } else if (_event.touches.length >= 2) {
+                this.touchState.count = 2
+                const t0 = _event.touches[0]
+                const t1 = _event.touches[1]
+                this.touchState.prevMidX = (t0.clientX + t1.clientX) / 2
+                this.touchState.prevMidY = (t0.clientY + t1.clientY) / 2
+                this.touchState.prevDist = Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY)
+                this.view.down(this.touchState.prevMidX, this.touchState.prevMidY, true)
+            }
 
             window.addEventListener('touchend', this.view.onTouchEnd)
             window.addEventListener('touchmove', this.view.onTouchMove, { passive: false })
@@ -165,19 +222,54 @@ export default class Navigation {
 
         this.view.onTouchMove = (_event) => {
             if (_event.cancelable) _event.preventDefault()
-            this.view.move(_event.touches[0].clientX, _event.touches[0].clientY)
+            this.isUserInteracting = true
+            this.dismissHint()
+
+            if (_event.touches.length === 1) {
+                this.view.move(_event.touches[0].clientX, _event.touches[0].clientY)
+            } else if (_event.touches.length >= 2) {
+                const t0 = _event.touches[0]
+                const t1 = _event.touches[1]
+                const midX = (t0.clientX + t1.clientX) / 2
+                const midY = (t0.clientY + t1.clientY) / 2
+                const dist = Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY)
+
+                // Midpoint pan delta
+                const dMidX = midX - this.touchState.prevMidX
+                const dMidY = midY - this.touchState.prevMidY
+
+                this.view.drag.alternative = true
+                this.view.drag.delta.x += dMidX
+                this.view.drag.delta.y += dMidY
+
+                // Pinch zoom delta
+                const dDist = dist - this.touchState.prevDist
+                if (Math.abs(dDist) > 1) {
+                    this.view.zoomIn(-dDist * 3.5)
+                }
+
+                this.touchState.prevMidX = midX
+                this.touchState.prevMidY = midY
+                this.touchState.prevDist = dist
+            }
         }
 
         this.view.onTouchEnd = (_event) => {
-            this.view.up()
-            window.removeEventListener('touchend', this.view.onTouchEnd)
-            window.removeEventListener('touchmove', this.view.onTouchMove)
+            if (_event.touches.length === 0) {
+                this.view.up()
+                this.touchState.count = 0
+                window.removeEventListener('touchend', this.view.onTouchEnd)
+                window.removeEventListener('touchmove', this.view.onTouchMove)
+            } else if (_event.touches.length === 1) {
+                this.touchState.count = 1
+                this.view.down(_event.touches[0].clientX, _event.touches[0].clientY, false)
+            }
         }
 
         this.targetElement.addEventListener('touchstart', this.view.onTouchStart, { passive: false })
 
         /**
-         * Context menu
+         * Context menu prevent
          */
         this.view.onContextMenu = (_event) => {
             _event.preventDefault()
@@ -185,7 +277,7 @@ export default class Navigation {
         this.targetElement.addEventListener('contextmenu', this.view.onContextMenu)
 
         /**
-         * Wheel
+         * Mouse wheel zoom
          */
         this.view.onWheel = (_event) => {
             _event.preventDefault()
@@ -193,6 +285,85 @@ export default class Navigation {
             this.view.zoomIn(normalized.pixelY)
         }
         this.targetElement.addEventListener('wheel', this.view.onWheel, { passive: false })
+    }
+
+    initKeyboardNavigation() {
+        this.onKeyDown = (e) => {
+            // Ignore when typing inside input or textarea or button has focus
+            const activeTag = document.activeElement ? document.activeElement.tagName : ''
+            if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return
+
+            const cam = this.camera.modes.default.instance
+            const right = new THREE.Vector3(1, 0, 0).applyQuaternion(cam.quaternion)
+            const up = new THREE.Vector3(0, 1, 0).applyQuaternion(cam.quaternion)
+            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(cam.quaternion)
+            forward.y = 0
+            if (forward.lengthSq() > 0.001) forward.normalize()
+
+            const currentR = this.view.spherical.smoothed.radius
+            const panSpeed = 0.12 * Math.max(0.4, currentR / 5.5)
+
+            let handled = false
+
+            if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') {
+                this.dismissHint()
+                this.view.target.value.addScaledVector(forward, panSpeed)
+                handled = true
+            } else if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') {
+                this.dismissHint()
+                this.view.target.value.addScaledVector(forward, -panSpeed)
+                handled = true
+            } else if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') {
+                this.dismissHint()
+                this.view.target.value.addScaledVector(right, -panSpeed)
+                handled = true
+            } else if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') {
+                this.dismissHint()
+                this.view.target.value.addScaledVector(right, panSpeed)
+                handled = true
+            } else if (e.key === 'q' || e.key === 'Q') {
+                this.dismissHint()
+                this.view.target.value.y -= panSpeed
+                handled = true
+            } else if (e.key === 'e' || e.key === 'E') {
+                this.dismissHint()
+                this.view.target.value.y += panSpeed
+                handled = true
+            } else if (e.key === '+' || e.key === '=') {
+                this.dismissHint()
+                this.view.zoomIn(-80)
+                handled = true
+            } else if (e.key === '-' || e.key === '_') {
+                this.dismissHint()
+                this.view.zoomIn(80)
+                handled = true
+            }
+
+            if (handled) {
+                // Clamp target immediately
+                this.clampTargetToBounds()
+            }
+        }
+
+        window.addEventListener('keydown', this.onKeyDown)
+    }
+
+    clampTargetToBounds() {
+        this.view.target.value.x = THREE.MathUtils.clamp(
+            this.view.target.value.x,
+            this.roomTargetBounds.x.min,
+            this.roomTargetBounds.x.max
+        )
+        this.view.target.value.y = THREE.MathUtils.clamp(
+            this.view.target.value.y,
+            this.roomTargetBounds.y.min,
+            this.roomTargetBounds.y.max
+        )
+        this.view.target.value.z = THREE.MathUtils.clamp(
+            this.view.target.value.z,
+            this.roomTargetBounds.z.min,
+            this.roomTargetBounds.z.max
+        )
     }
 
     initResizeObserver() {
@@ -227,6 +398,10 @@ export default class Navigation {
         const framing = this.getFramingForSection(sectionName)
         this.currentSectionTarget = framing
         this.goToTarget(framing, duration)
+    }
+
+    resetToOverview() {
+        this.goToSection('hero', 1.4)
     }
 
     goToTarget(target, duration = 1.5, ease = 'power2.inOut') {
@@ -294,197 +469,97 @@ export default class Navigation {
         })
     }
 
-    getDistanceFromSectionTarget() {
-        if (!this.currentSectionTarget) return 0
-        const targetLook = new THREE.Vector3(
-            this.currentSectionTarget.look[0],
-            this.currentSectionTarget.look[1],
-            this.currentSectionTarget.look[2]
-        )
-        const targetPos = new THREE.Vector3(
-            this.currentSectionTarget.pos[0],
-            this.currentSectionTarget.pos[1],
-            this.currentSectionTarget.pos[2]
-        )
-        const offset = targetPos.clone().sub(targetLook)
-        const targetSpherical = new THREE.Spherical().setFromVector3(offset)
-
-        const dRadius = Math.abs(this.view.spherical.value.radius - targetSpherical.radius)
-        const dPhi = Math.abs(this.view.spherical.value.phi - targetSpherical.phi)
-        let dTheta = Math.abs(this.view.spherical.value.theta - targetSpherical.theta)
-        while (dTheta > Math.PI) dTheta -= 2 * Math.PI
-        dTheta = Math.abs(dTheta)
-
-        return dRadius + dPhi + dTheta
-    }
-
-    initDebugHUD() {
-        this.hud = document.createElement('div')
-        this.hud.id = 'camera-debug-hud'
-        this.hud.style.cssText = `
-            position: fixed;
-            top: 74px;
-            right: 20px;
-            background: rgba(3, 7, 18, 0.94);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            border: 1px solid rgba(56, 189, 248, 0.4);
-            border-radius: 8px;
-            padding: 12px 16px;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 11px;
-            color: #f8fafc;
-            z-index: 9999;
-            pointer-events: none;
-            display: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
-            line-height: 1.6;
-        `
-        document.body.appendChild(this.hud)
-
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'd' || e.key === 'D') {
-                if (this.hud) {
-                    const isVisible = this.hud.style.display === 'block'
-                    this.hud.style.display = isVisible ? 'none' : 'block'
-                }
-            } else if (e.key === 'p' || e.key === 'P') {
-                this.logCurrentTarget()
-            }
-        })
-    }
-
-    updateDebugHUD() {
-        if (!this.hud || this.hud.style.display !== 'block') return
-
-        const camPos = this.camera.modes.default.instance.position
-        const target = this.view.target.smoothed
-        const dist = camPos.distanceTo(target)
-        const aspect = (this.config.width / (this.config.height || 1)).toFixed(3)
-
-        this.hud.innerHTML = `
-            <div style="color: #38bdf8; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; margin-bottom: 6px;">
-                🎥 CAMERA FRAMING HUD (Press D to toggle, P to log)
-            </div>
-            <div>Target: <span style="color:#c084fc; font-weight:bold">${this.currentSectionName}</span></div>
-            <div>Pos: [${camPos.x.toFixed(2)}, ${camPos.y.toFixed(2)}, ${camPos.z.toFixed(2)}]</div>
-            <div>Look: [${target.x.toFixed(2)}, ${target.y.toFixed(2)}, ${target.z.toFixed(2)}]</div>
-            <div>Dist: <span style="color:#34d399">${dist.toFixed(2)}m</span> | FOV: ${this.camera.fov || 30}°</div>
-            <div>Panel: ${Math.round(this.config.width)}x${Math.round(this.config.height)} (aspect: ${aspect})</div>
-            <div style="font-size: 10px; color: #64748b; margin-top: 4px;">Wall Clamped: inside [-4.8..12, 0.5..10, -4.8..11]</div>
-        `
-    }
-
-    logCurrentTarget() {
-        const camPos = this.camera.modes.default.instance.position
-        const target = this.view.target.smoothed
-        const dist = camPos.distanceTo(target)
-        const data = {
-            section: this.currentSectionName,
-            look: [parseFloat(target.x.toFixed(3)), parseFloat(target.y.toFixed(3)), parseFloat(target.z.toFixed(3))],
-            pos: [parseFloat(camPos.x.toFixed(3)), parseFloat(camPos.y.toFixed(3)), parseFloat(camPos.z.toFixed(3))],
-            dist: parseFloat(dist.toFixed(2)),
-            aspect: parseFloat((this.config.width / (this.config.height || 1)).toFixed(3))
-        }
-        console.log('📸 [CAMERA FRAMING LOG]:', JSON.stringify(data, null, 2))
-        if (this.hud) {
-            this.hud.style.display = 'block'
-        }
-    }
-
     update() {
-        const now = performance.now()
-
-        // 4-second idle auto-return
-        if (!this.isUserInteracting && !this.isTransitioning && this.currentSectionTarget) {
-            if (now - this.lastInteractionTime > 4000) {
-                const diff = this.getDistanceFromSectionTarget()
-                if (diff > 0.08) {
-                    this.goToTarget(this.currentSectionTarget, 1.4, 'power2.out')
-                }
-            }
-        }
+        const currentRadius = this.view.spherical.smoothed.radius
 
         // Apply drag input
         if (this.view.drag.alternative) {
-            const up = new THREE.Vector3(0, 1, 0)
-            const right = new THREE.Vector3(-1, 0, 0)
+            // PAN: Move focus point sideways/up/down in camera screen space
+            const camQuat = this.camera.modes.default.instance.quaternion
+            const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camQuat)
+            const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camQuat)
 
-            up.applyQuaternion(this.camera.modes.default.instance.quaternion)
-            right.applyQuaternion(this.camera.modes.default.instance.quaternion)
+            // Pan speed scales smoothly with current distance
+            const panFactor = (currentRadius * 0.0016) * this.view.drag.panSensitivity
 
-            up.multiplyScalar(this.view.drag.delta.y * 0.01)
-            right.multiplyScalar(this.view.drag.delta.x * 0.01)
+            this.view.target.value.addScaledVector(right, -this.view.drag.delta.x * panFactor)
+            this.view.target.value.addScaledVector(up, this.view.drag.delta.y * panFactor)
 
-            this.view.target.value.add(up)
-            this.view.target.value.add(right)
+            // Clamp focus point to room interior bounding box
+            this.clampTargetToBounds()
         } else {
-            this.view.spherical.value.theta -= (this.view.drag.delta.x * this.view.drag.sensitivity) / this.config.smallestSide
-            this.view.spherical.value.phi -= (this.view.drag.delta.y * this.view.drag.sensitivity) / this.config.smallestSide
+            // ORBIT: Rotate around current focus point, scaled by distance
+            const orbitFactor = Math.max(0.4, Math.min(1.4, currentRadius / 7.0)) * this.view.drag.orbitSensitivity
+            this.view.spherical.value.theta -= (this.view.drag.delta.x * orbitFactor) / this.config.smallestSide
+            this.view.spherical.value.phi -= (this.view.drag.delta.y * orbitFactor) / this.config.smallestSide
         }
-
-        // Apply zoom input
-        this.view.spherical.value.radius += this.view.zoom.delta * this.view.zoom.sensitivity
-        this.view.spherical.value.radius = Math.min(
-            Math.max(this.view.spherical.value.radius, this.view.spherical.limits.radius.min),
-            this.view.spherical.limits.radius.max
-        )
 
         // Reset per-frame deltas
         this.view.drag.delta.x = 0
         this.view.drag.delta.y = 0
-        this.view.zoom.delta = 0
 
-        // Clamp spherical phi
-        this.view.spherical.value.phi = Math.min(
-            Math.max(this.view.spherical.value.phi, this.view.spherical.limits.phi.min),
+        // Clamp spherical angles
+        this.view.spherical.value.phi = THREE.MathUtils.clamp(
+            this.view.spherical.value.phi,
+            this.view.spherical.limits.phi.min,
             this.view.spherical.limits.phi.max
         )
 
-        // Clamp spherical theta (keeps camera in front of room, preventing orbiting into exterior diorama void)
-        if (isFinite(this.view.spherical.limits.theta.min)) {
-            this.view.spherical.value.theta = Math.min(
-                Math.max(this.view.spherical.value.theta, this.view.spherical.limits.theta.min),
-                this.view.spherical.limits.theta.max
-            )
-        }
+        this.view.spherical.value.theta = THREE.MathUtils.clamp(
+            this.view.spherical.value.theta,
+            this.view.spherical.limits.theta.min,
+            this.view.spherical.limits.theta.max
+        )
 
-        // Smoothing (only when not driven directly by transition tween)
+        // Smoothing (when not driven by transition tween)
         if (!this.isTransitioning) {
-            this.view.spherical.smoothed.radius += (this.view.spherical.value.radius - this.view.spherical.smoothed.radius) * this.view.spherical.smoothing * this.time.delta
-            this.view.spherical.smoothed.phi += (this.view.spherical.value.phi - this.view.spherical.smoothed.phi) * this.view.spherical.smoothing * this.time.delta
-            this.view.spherical.smoothed.theta += (this.view.spherical.value.theta - this.view.spherical.smoothed.theta) * this.view.spherical.smoothing * this.time.delta
+            const dt = Math.min(this.time.delta, 50)
+            this.view.spherical.smoothed.radius += (this.view.spherical.value.radius - this.view.spherical.smoothed.radius) * this.view.spherical.smoothing * dt
+            this.view.spherical.smoothed.phi += (this.view.spherical.value.phi - this.view.spherical.smoothed.phi) * this.view.spherical.smoothing * dt
+            this.view.spherical.smoothed.theta += (this.view.spherical.value.theta - this.view.spherical.smoothed.theta) * this.view.spherical.smoothing * dt
 
-            this.view.target.smoothed.x += (this.view.target.value.x - this.view.target.smoothed.x) * this.view.target.smoothing * this.time.delta
-            this.view.target.smoothed.y += (this.view.target.value.y - this.view.target.smoothed.y) * this.view.target.smoothing * this.time.delta
-            this.view.target.smoothed.z += (this.view.target.value.z - this.view.target.smoothed.z) * this.view.target.smoothing * this.time.delta
+            this.view.target.smoothed.x += (this.view.target.value.x - this.view.target.smoothed.x) * this.view.target.smoothing * dt
+            this.view.target.smoothed.y += (this.view.target.value.y - this.view.target.smoothed.y) * this.view.target.smoothing * dt
+            this.view.target.smoothed.z += (this.view.target.value.z - this.view.target.smoothed.z) * this.view.target.smoothing * dt
         }
 
-        // Subtle idle orbit when on hero/overview section
-        if (
-            (this.currentSectionName === 'hero' || this.currentSectionName === 'overview') &&
-            !this.isUserInteracting &&
-            !this.isTransitioning &&
-            !this.prefersReducedMotion
-        ) {
-            const idleWobble = Math.sin(this.time.elapsed * 0.0005) * 0.0003
-            this.view.spherical.smoothed.theta += idleWobble
-        }
-
-        // Reconstruct position and update camera
+        // Reconstruct position from spherical offset + target
         const viewPosition = new THREE.Vector3()
         viewPosition.setFromSpherical(this.view.spherical.smoothed)
         viewPosition.add(this.view.target.smoothed)
 
-        // Wall & boundary safety clamping so camera never clips through walls or furniture
-        viewPosition.x = Math.max(-4.8, Math.min(12.0, viewPosition.x))
-        viewPosition.y = Math.max(0.5, Math.min(10.0, viewPosition.y))
-        viewPosition.z = Math.max(-4.8, Math.min(11.0, viewPosition.z))
+        // Collision Check & Clamping against walls & window frame
+        const focusPt = this.view.target.smoothed
+        const toCam = viewPosition.clone().sub(focusPt)
+        let camDist = toCam.length()
+        const camDir = camDist > 0.001 ? toCam.clone().normalize() : new THREE.Vector3(0, 0, 1)
+
+        // 1. Room perimeter box clamping
+        const clampedPos = viewPosition.clone().clamp(this.roomCameraBounds.min, this.roomCameraBounds.max)
+        if (clampedPos.distanceToSquared(viewPosition) > 0.0001) {
+            viewPosition.copy(clampedPos)
+            camDist = viewPosition.distanceTo(focusPt)
+        }
+
+        // 2. Window frame obstacle collision (pull camera forward toward target if inside window obstacle)
+        if (this.windowObstacleBox.containsPoint(viewPosition)) {
+            let iterations = 0
+            while (this.windowObstacleBox.containsPoint(viewPosition) && camDist > 0.6 && iterations < 30) {
+                viewPosition.subScaledVector(camDir, 0.08)
+                camDist = viewPosition.distanceTo(focusPt)
+                iterations++
+            }
+            // Add safety margin
+            viewPosition.subScaledVector(camDir, 0.12)
+            camDist = viewPosition.distanceTo(focusPt)
+
+            // Keep radius in sync so zoom doesn't freeze or get sticky
+            this.view.spherical.value.radius = Math.max(0.6, camDist)
+            this.view.spherical.smoothed.radius = Math.max(0.6, camDist)
+        }
 
         this.camera.modes.default.instance.position.copy(viewPosition)
         this.camera.modes.default.instance.lookAt(this.view.target.smoothed)
-
-        this.updateDebugHUD()
     }
 
     destroy() {
@@ -494,8 +569,8 @@ export default class Navigation {
         if (this.resizeObserver) {
             this.resizeObserver.disconnect()
         }
-        if (this.hud && this.hud.parentElement) {
-            this.hud.parentElement.removeChild(this.hud)
+        if (this.onKeyDown) {
+            window.removeEventListener('keydown', this.onKeyDown)
         }
     }
 }

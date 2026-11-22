@@ -54,6 +54,37 @@ export const PLAYLIST = [
     }
 ]
 
+export const TRACK_ACCENT_PALETTE = {
+    'midnight-city': {
+        accent: '#e0529c', // room magenta
+        glow: 'rgba(224, 82, 156, 0.45)'
+    },
+    'gooey': {
+        accent: '#10b981', // emerald green
+        glow: 'rgba(16, 185, 129, 0.45)'
+    },
+    'tadow': {
+        accent: '#f59e0b', // warm amber / gold
+        glow: 'rgba(245, 158, 11, 0.45)'
+    },
+    'redbone': {
+        accent: '#ef4444', // warm red / coral
+        glow: 'rgba(239, 68, 68, 0.45)'
+    },
+    'breathe': {
+        accent: '#06b6d4', // cyan / turquoise
+        glow: 'rgba(6, 182, 212, 0.45)'
+    },
+    'day': {
+        accent: '#ff6700', // warm daylight orange
+        glow: 'rgba(255, 103, 0, 0.45)'
+    },
+    'default': {
+        accent: '#e0529c',
+        glow: 'rgba(224, 82, 156, 0.45)'
+    }
+}
+
 export default class TvPlayer
 {
     constructor()
@@ -80,10 +111,23 @@ export default class TvPlayer
         this.setModel()
         this.setRaycaster()
         this.setDOMControls()
+        this.updateUIAccent()
         this.setupAutoplayAndMobileUnlock()
 
         // Expose to window for external controls
         window.tvPlayer = this
+    }
+
+    updateUIAccent()
+    {
+        const track = this.playlist[this.currentIndex]
+        const palette = TRACK_ACCENT_PALETTE[track.id] || TRACK_ACCENT_PALETTE.default
+        const root = document.documentElement
+        if (root)
+        {
+            root.style.setProperty('--ui-accent', palette.accent)
+            root.style.setProperty('--ui-accent-glow', palette.glow)
+        }
     }
 
     preloadArtworks()
@@ -429,6 +473,7 @@ export default class TvPlayer
         }
 
         this.syncBacklight()
+        this.updateUIAccent()
         this.updateDOMPlayer()
     }
 
@@ -457,6 +502,7 @@ export default class TvPlayer
         })
 
         this.syncBacklight()
+        this.updateUIAccent()
         this.updateDOMPlayer()
     }
 
