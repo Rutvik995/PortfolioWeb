@@ -30,8 +30,8 @@ export default class Navigation {
         }
 
         this.roomCameraBounds = {
-            min: new THREE.Vector3(-3.8, 0.35, -4.4),
-            max: new THREE.Vector3(4.0, 3.4, 3.7)
+            min: new THREE.Vector3(-6.0, 0.35, -6.0),
+            max: new THREE.Vector3(25.0, 20.0, 30.0)
         }
 
         // Window frame obstacle box (window on right wall with neon strip & bars)
@@ -70,7 +70,7 @@ export default class Navigation {
         this.view.spherical.smoothed = initialSpherical.clone()
         this.view.spherical.smoothing = 0.009
         this.view.spherical.limits = {
-            radius: { min: 0.6, max: Math.max(12.8, initialSpherical.radius + 1.0) },
+            radius: { min: 0.6, max: Math.max(22.0, initialSpherical.radius + 4.0) },
             phi: { min: Math.PI * 0.08, max: Math.PI * 0.48 },
             theta: { min: -Math.PI * 0.95, max: Math.PI * 0.95 }
         }

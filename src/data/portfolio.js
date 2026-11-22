@@ -17,78 +17,78 @@ export const portfolioData = {
     hero: {
       name: "hero",
       alias: "overview",
-      look: [0.2, 1.9, -1.0],
-      size: [7.2, 4.4], // Tightly calibrated so the room fills the 16:9 widescreen edge-to-edge
-      normal: [0.48, 0.36, 0.80],
-      padding: 1.05,
+      look: [0.0, 1.5, -1.5], // Center of the room diorama
+      size: [11.8, 6.7], // Fits the entire room box (bookshelf, PC, desk, chair, TV, sofa, walls) on all screens
+      normal: [0.5226, 0.3275, 0.7875],
+      padding: 1.15,
       idleOrbit: true
     },
     overview: {
       name: "overview",
-      look: [0.2, 1.9, -1.0],
-      size: [7.2, 4.4],
-      normal: [0.48, 0.36, 0.80],
-      padding: 1.05,
+      look: [0.0, 1.5, -1.5],
+      size: [11.8, 6.7],
+      normal: [0.5226, 0.3275, 0.7875],
+      padding: 1.15,
       idleOrbit: true
     },
     projects: {
       name: "projects",
       alias: "pcScreen",
       look: [0.306, 3.416, -4.511], // Ultrawide PC monitor screen face
-      size: [2.45, 1.38],
-      normal: [0.02, 0.05, 0.998], // Directly in front, viewing screen straight-on
-      padding: 1.18
+      size: [2.5, 1.45],
+      normal: [0.0, 0.16, 0.985], // Elevated view looking over chair headrest straight onto screen
+      padding: 1.25
     },
     pcScreen: {
       name: "pcScreen",
       look: [0.306, 3.416, -4.511],
-      size: [2.45, 1.38],
-      normal: [0.02, 0.05, 0.998],
-      padding: 1.18
+      size: [2.5, 1.45],
+      normal: [0.0, 0.16, 0.985],
+      padding: 1.25
     },
     experience: {
       name: "experience",
       alias: "macScreen",
-      look: [2.230, 3.040, -4.320], // Laptop screen face (NOT the keyboard)
-      size: [1.28, 0.80],
-      normal: [-0.292, 0.10, 0.95], // Directly along the laptop screen face normal
-      padding: 1.20
+      look: [2.22, 2.70, -4.30], // Laptop screen face (NOT the keyboard)
+      size: [1.35, 0.85],
+      normal: [-0.28, 0.22, 0.93], // Directly along the laptop screen face normal with slight downward angle
+      padding: 1.30
     },
     macScreen: {
       name: "macScreen",
-      look: [2.230, 3.040, -4.320],
-      size: [1.28, 0.80],
-      normal: [-0.292, 0.10, 0.95],
-      padding: 1.20
+      look: [2.22, 2.70, -4.30],
+      size: [1.35, 0.85],
+      normal: [-0.28, 0.22, 0.93],
+      padding: 1.30
     },
     skills: {
       name: "skills",
       alias: "bookshelf",
-      look: [-3.2, 2.3, -2.7], // Whole bookshelf from floor to top + guitar, framed from interior
-      size: [2.5, 3.2],
-      normal: [0.65, 0.20, 0.74],
-      padding: 1.08
+      look: [-3.3, 2.3, -2.7], // Whole bookshelf from floor to top + guitar, framed from interior
+      size: [2.6, 3.4],
+      normal: [0.65, 0.22, 0.73],
+      padding: 1.15
     },
     bookshelf: {
       name: "bookshelf",
-      look: [-3.2, 2.3, -2.7],
-      size: [2.5, 3.2],
-      normal: [0.65, 0.20, 0.74],
-      padding: 1.08
+      look: [-3.3, 2.3, -2.7],
+      size: [2.6, 3.4],
+      normal: [0.65, 0.22, 0.73],
+      padding: 1.15
     },
     about: {
       name: "about",
-      look: [0.15, 2.05, -2.7], // Developer desk, chair, monitors, and coffee framed whole without looking past walls
-      size: [3.4, 2.4],
-      normal: [0.18, 0.32, 0.93],
-      padding: 1.08
+      look: [0.5, 2.1, -2.8], // Developer workstation (desk, chair, monitors, coffee) framed WHOLE
+      size: [4.6, 3.2],
+      normal: [0.38, 0.44, 0.81],
+      padding: 1.15
     },
     contact: {
       name: "contact",
-      look: [1.6, 1.35, 1.1], // Coffee table with smart speaker and sofa with mascot
-      size: [3.3, 2.1],
-      normal: [-0.30, 0.48, 0.82],
-      padding: 1.08
+      look: [0.8, 1.2, 1.2], // Lounge zone: coffee table with smart speaker/controller and sofa with mascot
+      size: [4.4, 2.6],
+      normal: [-0.25, 0.50, 0.83],
+      padding: 1.15
     },
     tvScreen: {
       name: "tvScreen",
@@ -123,10 +123,10 @@ export const portfolioData = {
     let py = ly + (ny / len) * dist;
     let pz = lz + (nz / len) * dist;
 
-    // Boundary / Wall Clamping: keep inside the room
-    px = Math.max(-4.8, Math.min(12.0, px));
-    py = Math.max(0.5, Math.min(10.0, py));
-    pz = Math.max(-4.8, Math.min(11.0, pz));
+    // Boundary / Wall Clamping: keep inside safe universe
+    px = Math.max(-6.0, Math.min(25.0, px));
+    py = Math.max(0.5, Math.min(20.0, py));
+    pz = Math.max(-6.0, Math.min(30.0, pz));
 
     return {
       name: targetKey,
@@ -144,24 +144,24 @@ export const portfolioData = {
       look: [0, 1.5, -1.5]
     },
     projects: {
-      pos: [0.306, 3.75, 2.22],
+      pos: [0.306, 3.96, -1.16],
       look: [0.306, 3.416, -4.511]
     },
     experience: {
-      pos: [1.18, 3.40, -0.92],
-      look: [2.230, 3.040, -4.320]
+      pos: [1.60, 3.18, -2.25],
+      look: [2.22, 2.70, -4.30]
     },
     skills: {
-      pos: [2.49, 3.61, 1.14],
-      look: [-3.5, 2.3, -2.8]
+      pos: [1.34, 3.87, 2.52],
+      look: [-3.3, 2.3, -2.7]
     },
     about: {
-      pos: [5.83, 6.48, 3.85],
-      look: [0.9, 2.2, -2.8]
+      pos: [3.11, 5.12, 2.77],
+      look: [0.5, 2.1, -2.8]
     },
     contact: {
-      pos: [-1.54, 6.33, 8.02],
-      look: [1.6, 1.3, 1.2]
+      pos: [-0.59, 3.98, 5.82],
+      look: [0.8, 1.2, 1.2]
     }
   },
 
