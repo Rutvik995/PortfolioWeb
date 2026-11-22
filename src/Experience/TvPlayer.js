@@ -482,6 +482,10 @@ export default class TvPlayer
         this.currentIndex = (index + this.playlist.length) % this.playlist.length
         const track = this.playlist[this.currentIndex]
 
+        if(this.audio)
+        {
+            this.audio.pause()
+        }
         this.audio.src = track.audioSrc
         this.progress = 0
 
