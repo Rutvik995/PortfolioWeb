@@ -241,6 +241,7 @@ export default class ScrollController {
         const inspectBtn = this.cardBody.querySelector('#btn-inspect-project')
         if (inspectBtn) {
             inspectBtn.addEventListener('click', () => {
+                screenSync.emit('run:code', { index: this.currentProjectIndex })
                 screenSync.emit('tab:select', { index: this.currentProjectIndex })
                 if (this.navigation) {
                     this.navigation.goToSection('projects', 1.2)
@@ -473,6 +474,9 @@ export default class ScrollController {
         }
 
         if (this.hoveredZone) {
+            if (this.hoveredZone === 'projects') {
+                screenSync.emit('run:code', { index: this.currentProjectIndex })
+            }
             this.goToZone(this.hoveredZone, true)
         }
     }
