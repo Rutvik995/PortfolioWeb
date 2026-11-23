@@ -1,5 +1,6 @@
 import Experience from './Experience.js'
 import screenSync from './ScreenSync.js'
+import chatService from './ChatService.js'
 import { portfolioData } from '../data/portfolio.js'
 import * as THREE from 'three'
 
@@ -14,6 +15,16 @@ export default class ScrollController {
         this.currentZone = 'overview'
         this.currentProjectIndex = 0
         this.isCardOpen = false
+
+        // Chat state
+        this.activeExpTab = 'chat'
+        this.isAiThinking = false
+        this.chatMessages = [
+            {
+                role: 'assistant',
+                content: "Hi! I'm **Rutvik AI**, powered by Groq. Ask me anything about Rutvik's autonomous multi-agent projects, tech stack, work experience, education, or how to contact him!"
+            }
+        ]
 
         // Raycasting
         this.raycaster = new THREE.Raycaster()
@@ -101,10 +112,14 @@ export default class ScrollController {
         // Manage contextual card
         if (zoneName === 'overview') {
             this.closeContextCard()
+            screenSync.emit('chat:close')
             if (this.reopenBtn) {
                 this.reopenBtn.classList.add('hidden')
             }
         } else if (openCard) {
+            if (zoneName === 'experience') {
+                screenSync.emit('chat:open')
+            }
             this.openContextCard(zoneName)
         } else {
             this.updateReopenButtonLabel(zoneName)
@@ -115,7 +130,7 @@ export default class ScrollController {
         if (!this.reopenBtn || !this.reopenLabel) return
         const labels = {
             projects: 'View Projects',
-            experience: 'View Experience',
+            experience: 'Chat with Rutvik AI',
             skills: 'View Skills',
             about: 'About Rutvik',
             contact: 'Get in Touch'
@@ -252,10 +267,197 @@ export default class ScrollController {
 
     renderExperienceView() {
         if (this.cardBadge) this.cardBadge.textContent = 'SYSTEM / 02'
-        if (this.cardTitle) this.cardTitle.textContent = 'Track Record'
+        if (this.cardTitle) this.cardTitle.textContent = this.activeExpTab === 'chat' ? 'Chat with Rutvik AI' : 'Track Record'
+
+        screenSync.emit('chat:open')
+
+        if (this.activeExpTab === 'chat') {
+            this.renderChatPane()
+        } else {
+            this.renderResumePane()
+        }
+    }
+
+    renderChatPane() {
+        if (!this.cardBody) return
+
+        const quickQuestions = [
+            "🤖 Tell me about Cortex Multi-Agent Engine",
+            "💼 What is your work experience?",
+            "⚡ What is your core tech stack?",
+            "☀️ Explain the Solar Fault detector",
+            "📬 How can I contact or hire Rutvik?",
+            "🎓 What is your education background?"
+        ]
+
+        const chipsHtml = quickQuestions.map(q => `
+            <button class="quick-chip-btn" data-question="${q}">${q}</button>
+        `).join('')
+
+        this.cardBody.innerHTML = `
+            <div class="chat-container-pane">
+                <div class="chat-subtabs-row">
+                    <button class="chat-subtab-btn active" id="tab-btn-chat">
+                        <span>💬 Chat with Rutvik AI</span>
+                    </button>
+                    <button class="chat-subtab-btn" id="tab-btn-resume">
+                        <span>📜 Track Record</span>
+                    </button>
+                </div>
+
+                <div class="chat-model-badge">
+                    <span>Model: <strong>Groq gpt-oss-120b</strong></span>
+                    <span class="chat-status-pill">
+                        <span class="chat-status-dot-pulse"></span>
+                        Online
+                    </span>
+                </div>
+
+                <div class="chat-quick-chips">
+                    ${chipsHtml}
+                </div>
+
+                <div class="chat-messages-box" id="chat-messages-box">
+                    ${this.renderMessageItemsHtml()}
+                </div>
+
+                <form class="chat-input-wrapper" id="chat-form">
+                    <input 
+                        type="text" 
+                        class="chat-input-field" 
+                        id="chat-input-field" 
+                        placeholder="Ask about Rutvik's projects, stack, experience..." 
+                        autocomplete="off"
+                    />
+                    <button type="submit" class="chat-send-btn" id="chat-send-btn">
+                        <span>Send</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    </button>
+                </form>
+            </div>
+        `
+
+        // Scroll to bottom
+        this.scrollChatToBottom()
+
+        // Attach listeners
+        const tabResume = this.cardBody.querySelector('#tab-btn-resume')
+        if (tabResume) {
+            tabResume.addEventListener('click', () => {
+                this.activeExpTab = 'resume'
+                this.renderExperienceView()
+            })
+        }
+
+        const chips = this.cardBody.querySelectorAll('.quick-chip-btn')
+        chips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                const q = chip.dataset.question.replace(/^[^a-zA-Z0-9]+/, '')
+                this.handleUserChatMessage(q)
+            })
+        })
+
+        const form = this.cardBody.querySelector('#chat-form')
+        const input = this.cardBody.querySelector('#chat-input-field')
+        if (form && input) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault()
+                const val = input.value.trim()
+                if (val) {
+                    input.value = ''
+                    this.handleUserChatMessage(val)
+                }
+            })
+        }
+    }
+
+    async handleUserChatMessage(text) {
+        if (!text || !text.trim()) return
+
+        this.chatMessages.push({ role: 'user', content: text })
+        screenSync.emit('chat:message', { role: 'user', content: text })
+
+        this.isAiThinking = true
+        this.updateChatMessagesDOM()
+
+        try {
+            const reply = await chatService.sendMessage(text)
+            this.isAiThinking = false
+            this.chatMessages.push({ role: 'assistant', content: reply })
+            screenSync.emit('chat:message', { role: 'assistant', content: reply })
+        } catch (err) {
+            console.error('Chat error:', err)
+            this.isAiThinking = false
+            const errMsg = "I encountered an issue connecting to the Groq LLM API. Please feel free to email Rutvik directly at rutvik.professional@gmail.com."
+            this.chatMessages.push({ role: 'assistant', content: errMsg })
+            screenSync.emit('chat:message', { role: 'assistant', content: errMsg })
+        }
+
+        this.updateChatMessagesDOM()
+    }
+
+    updateChatMessagesDOM() {
+        const box = document.getElementById('chat-messages-box')
+        if (box) {
+            box.innerHTML = this.renderMessageItemsHtml()
+            this.scrollChatToBottom()
+        }
+    }
+
+    scrollChatToBottom() {
+        const box = document.getElementById('chat-messages-box')
+        if (box) {
+            box.scrollTop = box.scrollHeight
+        }
+    }
+
+    renderMessageItemsHtml() {
+        let html = this.chatMessages.map(msg => {
+            const isUser = msg.role === 'user'
+            const formatted = this.formatMarkdown(msg.content)
+            return `
+                <div class="chat-msg ${isUser ? 'user' : 'assistant'}">
+                    <div class="chat-bubble">
+                        ${formatted}
+                    </div>
+                </div>
+            `
+        }).join('')
+
+        if (this.isAiThinking) {
+            html += `
+                <div class="chat-msg assistant">
+                    <div class="chat-thinking-indicator">
+                        <span>⚡ Rutvik AI is reasoning</span>
+                        <div class="chat-thinking-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                    </div>
+                </div>
+            `
+        }
+
+        return html
+    }
+
+    formatMarkdown(text) {
+        if (!text) return ''
+        let res = text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,0.1);padding:1px 4px;border-radius:3px;font-family:monospace;font-size:11px;">$1</code>')
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/\n/g, '<br/>')
+        return `<p>${res}</p>`
+    }
+
+    renderResumePane() {
+        if (!this.cardBody) return
 
         const experiences = portfolioData.experiences
-
         const expHtml = experiences.map((exp, idx) => `
             <div class="exp-card-item">
                 <div class="exp-header">
@@ -278,14 +480,32 @@ export default class ScrollController {
         `).join('')
 
         this.cardBody.innerHTML = `
-            <div class="experience-list-pane">
-                <div class="pane-hint-box">
-                    <span class="pane-hint-icon">⚡</span>
-                    <span>The MacBook on the riser is rendering the live multi-agent DAG orchestration.</span>
+            <div class="chat-container-pane">
+                <div class="chat-subtabs-row">
+                    <button class="chat-subtab-btn" id="tab-btn-chat">
+                        <span>💬 Chat with Rutvik AI</span>
+                    </button>
+                    <button class="chat-subtab-btn active" id="tab-btn-resume">
+                        <span>📜 Track Record</span>
+                    </button>
                 </div>
-                ${expHtml}
+                <div class="experience-list-pane">
+                    <div class="pane-hint-box">
+                        <span class="pane-hint-icon">⚡</span>
+                        <span>The 3D MacBook displays the live Spider-Man wallpaper and interactive AI Chatbot.</span>
+                    </div>
+                    ${expHtml}
+                </div>
             </div>
         `
+
+        const tabChat = this.cardBody.querySelector('#tab-btn-chat')
+        if (tabChat) {
+            tabChat.addEventListener('click', () => {
+                this.activeExpTab = 'chat'
+                this.renderExperienceView()
+            })
+        }
     }
 
     renderSkillsView() {
@@ -476,6 +696,8 @@ export default class ScrollController {
         if (this.hoveredZone) {
             if (this.hoveredZone === 'projects') {
                 screenSync.emit('run:code', { index: this.currentProjectIndex })
+            } else if (this.hoveredZone === 'experience') {
+                screenSync.emit('chat:open')
             }
             this.goToZone(this.hoveredZone, true)
         }

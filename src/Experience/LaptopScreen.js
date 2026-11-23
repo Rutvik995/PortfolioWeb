@@ -12,13 +12,25 @@ export default class LaptopScreen {
         // Motion preference
         this.prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-        // Canvas Setup (16:10 Laptop Aspect)
-        this.width = 768;
-        this.height = 480;
+        // Canvas Setup (16:9 matching wallpaper)
+        this.width = 1024;
+        this.height = 576;
         this.canvas = document.createElement('canvas');
         this.canvas.width = this.width;
         this.canvas.height = this.height;
         this.ctx = this.canvas.getContext('2d');
+
+        // Wallpaper Image Setup
+        this.wallpaper = new Image();
+        this.wallpaperLoaded = false;
+        this.wallpaper.onload = () => {
+            this.wallpaperLoaded = true;
+            this.render();
+        };
+        this.wallpaper.onerror = () => {
+            console.warn('Failed to load laptopWallpaper.jpg, using dark theme fallback.');
+        };
+        this.wallpaper.src = '/assets/laptopWallpaper.jpg';
 
         // Texture Setup
         this.texture = new THREE.CanvasTexture(this.canvas);
@@ -38,168 +50,77 @@ export default class LaptopScreen {
             this.scene.add(this.mesh);
         }
 
-        // Graph Architecture Definition
-        this.nodes = {
-            supervisor: {
-                id: 'supervisor',
-                name: 'SUPERVISOR',
-                subtitle: 'Task Orchestrator',
-                x: 384,
-                y: 84,
-                w: 168,
-                h: 48,
-                active: false,
-                color: '#38bdf8',
-                status: 'IDLE'
-            },
-            researcher: {
-                id: 'researcher',
-                name: 'RESEARCHER',
-                subtitle: 'Vector Retrieval',
-                x: 104,
-                y: 220,
-                w: 124,
-                h: 46,
-                active: false,
-                color: '#c084fc',
-                status: 'IDLE'
-            },
-            analyst: {
-                id: 'analyst',
-                name: 'ANALYST',
-                subtitle: 'Data Synthesis',
-                x: 274,
-                y: 220,
-                w: 124,
-                h: 46,
-                active: false,
-                color: '#fb923c',
-                status: 'IDLE'
-            },
-            tool_worker: {
-                id: 'tool_worker',
-                name: 'TOOL RUNNER',
-                subtitle: 'API Execution',
-                x: 444,
-                y: 220,
-                w: 124,
-                h: 46,
-                active: false,
-                color: '#38bdf8',
-                status: 'IDLE'
-            },
-            verifier: {
-                id: 'verifier',
-                name: 'VERIFIER',
-                subtitle: 'Schema Check',
-                x: 614,
-                y: 220,
-                w: 124,
-                h: 46,
-                active: false,
-                color: '#34d399',
-                status: 'IDLE'
+        // Chat State
+        this.isChatOpen = false;
+        this.isThinking = false;
+        this.messages = [
+            {
+                role: 'assistant',
+                text: "Hi! I'm Rutvik's AI agent. Ask me about his projects, multi-agent AI systems, experience, skills, or how to contact him!"
             }
-        };
-
-        // Edge Connections from Supervisor to Workers
-        this.edges = [
-            { from: 'supervisor', to: 'researcher' },
-            { from: 'supervisor', to: 'analyst' },
-            { from: 'supervisor', to: 'tool_worker' },
-            { from: 'supervisor', to: 'verifier' }
         ];
 
-        // Particles moving along edges
-        this.particles = [];
-        this.edges.forEach((edge, eIdx) => {
-            for (let i = 0; i < 3; i++) {
-                this.particles.push({
-                    edgeIndex: eIdx,
-                    t: (i / 3) + Math.random() * 0.2,
-                    speed: 0.004 + Math.random() * 0.003
-                });
-            }
-        });
+        // Typing animation for latest assistant message
+        this.displayedCharIndex = 0;
+        this.lastTypeTime = 0;
+        this.typeSpeed = 15; // ms per char
 
-        // Telemetry Mini Log
-        this.logs = [
-            { time: 'INIT', text: 'StateGraph daemon listening on loopback', status: 'OK' }
-        ];
-
-        // Offscreen & Visibility throttle
+        // Throttle & FPS
         this.isPaused = false;
         this.lastFrameTime = 0;
         this.targetFps = 30;
         this.fpsInterval = 1000 / this.targetFps;
 
-        this.initSyncListeners();
+        this.initEventListeners();
         this.render();
     }
 
-    initSyncListeners() {
+    initEventListeners() {
         document.addEventListener('visibilitychange', () => {
             this.isPaused = document.hidden;
         });
 
-        // 1. Run start event
-        screenSync.on('run:start', (data) => {
-            this.addLog(`RUN`, `Task initiated: ${data.tabName || 'agent_job'}`);
-            this.setAllNodesIdle();
-            this.setNodeActive('supervisor', 'ROUTING');
+        // Open chat screen event
+        screenSync.on('chat:open', () => {
+            this.isChatOpen = true;
+            this.render();
         });
 
-        // 2. Active node step event
-        screenSync.on('node:active', (data) => {
-            const nodeKey = data.name;
-            this.setNodeActive(nodeKey, data.status || 'ACTIVE');
-            this.addLog(nodeKey.toUpperCase().slice(0, 4), `${data.status || 'Step processing'}`);
-        });
-
-        // 3. Run complete event
-        screenSync.on('run:complete', (data) => {
-            this.addLog('DONE', `Run verified in ${data.duration || '1.8s'} — Exit 0`);
-            // Show verification success on verifier node
-            if (this.nodes.verifier) {
-                this.nodes.verifier.status = 'VERIFIED';
+        // New chat message event (User or Assistant)
+        screenSync.on('chat:message', (data) => {
+            this.isChatOpen = true;
+            if (data.role === 'user') {
+                this.messages.push({
+                    role: 'user',
+                    text: data.content
+                });
+                this.isThinking = true;
+            } else if (data.role === 'assistant') {
+                this.isThinking = false;
+                this.messages.push({
+                    role: 'assistant',
+                    text: data.content
+                });
+                this.displayedCharIndex = 0;
             }
-            setTimeout(() => {
-                this.setAllNodesIdle();
-            }, 1800);
+            this.render();
         });
 
-        // 4. Tab change event
-        screenSync.on('tab:change', (data) => {
-            this.addLog('DAG', `Switched context: ${data.tabName}`);
-        });
-    }
-
-    setAllNodesIdle() {
-        Object.values(this.nodes).forEach(n => {
-            n.active = false;
-            n.status = 'IDLE';
+        // Close chat screen event
+        screenSync.on('chat:close', () => {
+            this.isChatOpen = false;
+            this.render();
         });
     }
 
-    setNodeActive(name, status = 'ACTIVE') {
-        const node = this.nodes[name];
-        if (node) {
-            // Keep supervisor lit or light up current
-            if (name !== 'supervisor') {
-                if (this.nodes.supervisor) this.nodes.supervisor.active = true;
-            }
-            node.active = true;
-            node.status = status;
-        }
+    openChat() {
+        this.isChatOpen = true;
+        this.render();
     }
 
-    addLog(tag, text) {
-        const d = new Date();
-        const timeStr = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
-        this.logs.unshift({ time: timeStr, tag, text });
-        if (this.logs.length > 5) {
-            this.logs.pop();
-        }
+    closeChat() {
+        this.isChatOpen = false;
+        this.render();
     }
 
     update() {
@@ -210,15 +131,17 @@ export default class LaptopScreen {
         if (elapsed < this.fpsInterval) return;
         this.lastFrameTime = now - (elapsed % this.fpsInterval);
 
-        // Update particle positions
-        if (!this.prefersReducedMotion) {
-            this.particles.forEach(p => {
-                const edge = this.edges[p.edgeIndex];
-                const targetNode = this.nodes[edge.to];
-                // Particle moves faster if target node is active
-                const currentSpeed = targetNode.active ? p.speed * 2.8 : p.speed;
-                p.t = (p.t + currentSpeed) % 1.0;
-            });
+        // Typing animation for the latest assistant message
+        if (this.messages.length > 0) {
+            const lastMsg = this.messages[this.messages.length - 1];
+            if (lastMsg.role === 'assistant') {
+                if (this.displayedCharIndex < lastMsg.text.length) {
+                    if (now - this.lastTypeTime > this.typeSpeed) {
+                        this.displayedCharIndex += 3;
+                        this.lastTypeTime = now;
+                    }
+                }
+            }
         }
 
         this.render();
@@ -229,209 +152,322 @@ export default class LaptopScreen {
         const W = this.width;
         const H = this.height;
 
-        // 1. Sleek Background with Subtle Cyber Grid
-        ctx.fillStyle = '#060912';
-        ctx.fillRect(0, 0, W, H);
-
-        // Subtle background grid
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.025)';
-        ctx.lineWidth = 1;
-        const gridSize = 32;
-        for (let x = 0; x < W; x += gridSize) {
-            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-        }
-        for (let y = 0; y < H; y += gridSize) {
-            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+        // 1. Draw Spider-Man Desktop Wallpaper
+        if (this.wallpaperLoaded) {
+            ctx.drawImage(this.wallpaper, 0, 0, W, H);
+        } else {
+            const grad = ctx.createLinearGradient(0, 0, W, H);
+            grad.addColorStop(0, '#120b12');
+            grad.addColorStop(1, '#050406');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
         }
 
-        // 2. Header Bar (y: 0 to 42)
-        ctx.fillStyle = '#0a0f1d';
-        ctx.fillRect(0, 0, W, 42);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-        ctx.strokeRect(0, 42, W, 0);
+        // 2. macOS Top Menu Bar
+        this.renderMenuBar(ctx, W);
 
-        ctx.font = '700 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-        ctx.fillStyle = '#f8fafc';
-        ctx.fillText('MULTI-AGENT GRAPH ARCHITECTURE', 22, 26);
-
-        // Header status indicator
-        ctx.fillStyle = '#10b981';
-        ctx.beginPath(); ctx.arc(W - 130, 21, 5, 0, Math.PI * 2); ctx.fill();
-        ctx.font = '600 11px monospace';
-        ctx.fillStyle = '#34d399';
-        ctx.fillText('STATE_DAG: LIVE', W - 118, 25);
-
-        // 3. Draw Connecting Edges
-        const sup = this.nodes.supervisor;
-        const supBottomX = sup.x;
-        const supBottomY = sup.y + sup.h / 2;
-
-        this.edges.forEach((edge, eIdx) => {
-            const worker = this.nodes[edge.to];
-            const workerTopX = worker.x;
-            const workerTopY = worker.y - worker.h / 2;
-
-            const isEdgeActive = worker.active;
-
-            ctx.save();
-            ctx.beginPath();
-            ctx.moveTo(supBottomX, supBottomY);
-            // Cubic bezier curve
-            const controlY1 = supBottomY + 40;
-            const controlY2 = workerTopY - 40;
-            ctx.bezierCurveTo(supBottomX, controlY1, workerTopX, controlY2, workerTopX, workerTopY);
-
-            if (isEdgeActive) {
-                ctx.strokeStyle = worker.color;
-                ctx.lineWidth = 3;
-                ctx.shadowColor = worker.color;
-                ctx.shadowBlur = 12;
-            } else {
-                ctx.strokeStyle = 'rgba(100, 116, 139, 0.35)';
-                ctx.lineWidth = 1.5;
-            }
-            ctx.stroke();
-            ctx.restore();
-
-            // Draw traveling particles on this edge
-            if (!this.prefersReducedMotion) {
-                this.particles.filter(p => p.edgeIndex === eIdx).forEach(p => {
-                    const pt = this.getBezierPoint(
-                        supBottomX, supBottomY,
-                        supBottomX, controlY1,
-                        workerTopX, controlY2,
-                        workerTopX, workerTopY,
-                        p.t
-                    );
-
-                    ctx.save();
-                    ctx.fillStyle = isEdgeActive ? '#ffffff' : worker.color;
-                    ctx.shadowColor = worker.color;
-                    ctx.shadowBlur = isEdgeActive ? 14 : 6;
-                    ctx.beginPath();
-                    ctx.arc(pt.x, pt.y, isEdgeActive ? 3.5 : 2.2, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.restore();
-                });
-            }
-        });
-
-        // 4. Draw Graph Nodes
-        Object.values(this.nodes).forEach(node => {
-            const nodeLeft = node.x - node.w / 2;
-            const nodeTop = node.y - node.h / 2;
-            const isActive = node.active;
-
-            ctx.save();
-
-            // Node Glow when active
-            if (isActive) {
-                ctx.shadowColor = node.color;
-                ctx.shadowBlur = 20;
-            }
-
-            // Node Background Fill
-            ctx.fillStyle = isActive ? 'rgba(15, 23, 42, 0.95)' : 'rgba(11, 15, 25, 0.85)';
-            ctx.beginPath();
-            ctx.roundRect(nodeLeft, nodeTop, node.w, node.h, 8);
-            ctx.fill();
-
-            // Node Border
-            ctx.strokeStyle = isActive ? node.color : 'rgba(255, 255, 255, 0.12)';
-            ctx.lineWidth = isActive ? 2 : 1;
-            ctx.stroke();
-            ctx.restore();
-
-            // Node Name
-            ctx.font = 'bold 12px monospace';
-            ctx.fillStyle = isActive ? '#ffffff' : '#cbd5e1';
-            ctx.textAlign = 'center';
-            ctx.fillText(node.name, node.x, node.y - 4);
-
-            // Node Subtitle / Role
-            ctx.font = '500 10px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-            ctx.fillStyle = isActive ? node.color : '#64748b';
-            ctx.fillText(node.subtitle, node.x, node.y + 12);
-
-            // Status Badge on top-right of node
-            if (isActive) {
-                ctx.font = 'bold 9px monospace';
-                ctx.fillStyle = node.color;
-                ctx.fillText(node.status, node.x, node.y - node.h / 2 - 5);
-            }
-
-            ctx.textAlign = 'left';
-        });
-
-        // 5. Bottom Live Telemetry Log Area (y: 310 to 470)
-        const logTop = 310;
-        const logHeight = H - logTop - 12;
-        const logW = W - 32;
-
-        ctx.fillStyle = '#070b14';
-        ctx.beginPath();
-        ctx.roundRect(16, logTop, logW, logHeight, 8);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Log Header Bar
-        ctx.fillStyle = '#0d1322';
-        ctx.beginPath();
-        ctx.roundRect(16, logTop, logW, 26, [8, 8, 0, 0]);
-        ctx.fill();
-
-        ctx.font = '700 10px monospace';
-        ctx.fillStyle = '#64748b';
-        ctx.fillText('RUNTIME EXECUTION TELEMETRY', 28, logTop + 17);
-
-        ctx.textAlign = 'right';
-        ctx.fillStyle = '#38bdf8';
-        ctx.fillText('SYNC: PC_TERMINAL ⟷ GRAPH', W - 28, logTop + 17);
-        ctx.textAlign = 'left';
-
-        // Log lines
-        const logStartY = logTop + 46;
-        const logLineH = 22;
-
-        this.logs.slice(0, 5).forEach((entry, idx) => {
-            const entryY = logStartY + idx * logLineH;
-
-            // Timestamp
-            ctx.font = '500 11px monospace';
-            ctx.fillStyle = '#475569';
-            ctx.fillText(entry.time, 28, entryY);
-
-            // Tag badge
-            ctx.fillStyle = '#38bdf8';
-            ctx.fillText(`[${entry.tag || 'SYS'}]`, 92, entryY);
-
-            // Log text
-            ctx.fillStyle = '#e2e8f0';
-            ctx.fillText(entry.text, 150, entryY);
-        });
+        // 3. Render either Idle Prompt or Active Chat Window
+        if (!this.isChatOpen) {
+            this.renderIdlePrompt(ctx);
+        } else {
+            this.renderChatWindow(ctx, W, H);
+        }
 
         // Notify Three.js to upload updated canvas texture
         this.texture.needsUpdate = true;
     }
 
-    getBezierPoint(x0, y0, x1, y1, x2, y2, x3, y3, t) {
-        const cx = 3 * (x1 - x0);
-        const bx = 3 * (x2 - x1) - cx;
-        const ax = x3 - x0 - cx - bx;
+    renderMenuBar(ctx, W) {
+        const barH = 28;
 
-        const cy = 3 * (y1 - y0);
-        const by = 3 * (y2 - y1) - cy;
-        const ay = y3 - y0 - cy - by;
+        // Frosted macOS menu bar
+        ctx.fillStyle = 'rgba(8, 10, 16, 0.72)';
+        ctx.fillRect(0, 0, W, barH);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, barH);
+        ctx.lineTo(W, barH);
+        ctx.stroke();
 
-        const tSquared = t * t;
-        const tCubed = tSquared * t;
+        // Apple Logo & Menu Items
+        ctx.font = '600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('', 18, 18);
 
-        return {
-            x: (ax * tCubed) + (bx * tSquared) + (cx * t) + x0,
-            y: (ay * tCubed) + (by * tSquared) + (cy * t) + y0
-        };
+        ctx.font = '500 11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        const menus = ['Finder', 'File', 'Edit', 'View', 'Go', 'Window', 'Help'];
+        let mX = 42;
+        menus.forEach(m => {
+            ctx.fillText(m, mX, 18);
+            mX += ctx.measureText(m).width + 16;
+        });
+
+        // Right side indicators (Battery, Wi-Fi, Sound, Clock)
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", monospace';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.textAlign = 'right';
+        ctx.fillText(`⚡ 100%   📶 Wi-Fi   🔊   ${timeStr}`, W - 18, 18);
+        ctx.textAlign = 'left';
+    }
+
+    renderIdlePrompt(ctx) {
+        // Floating glass card on the left/center
+        const px = 70;
+        const py = 120;
+        const pw = 420;
+        const ph = 240;
+
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+        ctx.shadowBlur = 20;
+        ctx.shadowOffsetY = 8;
+
+        ctx.fillStyle = 'rgba(10, 12, 20, 0.84)';
+        ctx.beginPath();
+        ctx.roundRect(px, py, pw, ph, 14);
+        ctx.fill();
+        ctx.restore();
+
+        ctx.strokeStyle = 'rgba(224, 82, 156, 0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Top accent line
+        ctx.fillStyle = '#e0529c';
+        ctx.fillRect(px + 24, py, 70, 2.5);
+
+        // Badge
+        ctx.fillStyle = 'rgba(224, 82, 156, 0.18)';
+        ctx.beginPath();
+        ctx.roundRect(px + 24, py + 22, 160, 22, 11);
+        ctx.fill();
+
+        ctx.fillStyle = '#e0529c';
+        ctx.beginPath();
+        ctx.arc(px + 36, py + 33, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.font = 'bold 11px monospace';
+        ctx.fillText('RUTVIK AI CHATBOT', px + 46, py + 37);
+
+        // Header
+        ctx.font = '700 17px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('Chat with Rutvik AI', px + 24, py + 76);
+
+        // Description
+        ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('Ask anything about Rutvik\'s autonomous multi-agent', px + 24, py + 106);
+        ctx.fillText('projects, internships, LangGraph stack, and availability.', px + 24, py + 126);
+        ctx.fillText('Powered by Groq API (GPT-OSS-120B).', px + 24, py + 146);
+
+        // Click to Open Action Pill
+        ctx.fillStyle = 'rgba(224, 82, 156, 0.25)';
+        ctx.beginPath();
+        ctx.roundRect(px + 24, py + 172, 220, 36, 18);
+        ctx.fill();
+        ctx.strokeStyle = '#e0529c';
+        ctx.stroke();
+
+        ctx.font = '600 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('💬 Click Laptop to Chat', px + 44, py + 195);
+    }
+
+    renderChatWindow(ctx, W, H) {
+        // Positioned on the LEFT half (x: 36 to 560), keeping Spider-Man completely visible on the RIGHT!
+        const winX = 36;
+        const winY = 40;
+        const winW = 520;
+        const winH = 500;
+        const radius = 12;
+
+        // Window Drop Shadow
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+        ctx.shadowBlur = 24;
+        ctx.shadowOffsetY = 8;
+
+        // Window Glass Background
+        ctx.fillStyle = 'rgba(9, 11, 20, 0.92)';
+        ctx.beginPath();
+        ctx.roundRect(winX, winY, winW, winH, radius);
+        ctx.fill();
+        ctx.restore();
+
+        // Window Border with soft pink/cyan neon highlight
+        ctx.strokeStyle = 'rgba(224, 82, 156, 0.35)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // 1. Header (Height: 44px)
+        const headerH = 44;
+        ctx.fillStyle = 'rgba(16, 20, 32, 0.88)';
+        ctx.beginPath();
+        ctx.roundRect(winX, winY, winW, headerH, [radius, radius, 0, 0]);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.beginPath();
+        ctx.moveTo(winX, winY + headerH);
+        ctx.lineTo(winX + winW, winY + headerH);
+        ctx.stroke();
+
+        // Window control dots
+        const dotY = winY + 22;
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath(); ctx.arc(winX + 20, dotY, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath(); ctx.arc(winX + 36, dotY, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#10b981';
+        ctx.beginPath(); ctx.arc(winX + 52, dotY, 5, 0, Math.PI * 2); ctx.fill();
+
+        // Bot Avatar + Title
+        ctx.fillStyle = '#e0529c';
+        ctx.beginPath();
+        ctx.arc(winX + 76, dotY, 11, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('🤖', winX + 76, dotY + 4);
+        ctx.textAlign = 'left';
+
+        ctx.font = '700 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('Rutvik AI Assistant', winX + 96, dotY - 2);
+
+        ctx.font = '500 10px monospace';
+        ctx.fillStyle = '#34d399';
+        ctx.fillText('● Online • Groq gpt-oss-120b', winX + 96, dotY + 12);
+
+        // 2. Chat Message List Area
+        const msgAreaTop = winY + headerH + 10;
+        const msgAreaHeight = winH - headerH - 55;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(winX + 10, msgAreaTop, winW - 20, msgAreaHeight);
+        ctx.clip();
+
+        // Calculate rendered bubbles from bottom up
+        let currentY = msgAreaTop + 10;
+        const maxBubbleWidth = 340;
+
+        // Display the last 3-4 messages to fit the screen cleanly
+        const recentMessages = this.messages.slice(-4);
+
+        recentMessages.forEach((msg, mIdx) => {
+            const isUser = msg.role === 'user';
+            const isLastAssistant = !isUser && (mIdx === recentMessages.length - 1);
+
+            let displayText = msg.text;
+            if (isLastAssistant && this.displayedCharIndex < msg.text.length) {
+                displayText = msg.text.substring(0, this.displayedCharIndex);
+            }
+
+            // Word wrap
+            ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+            const wrappedLines = this.wrapText(ctx, displayText, maxBubbleWidth - 24);
+            const bubbleHeight = Math.max(34, wrappedLines.length * 18 + 16);
+
+            if (isUser) {
+                // User Bubble (Right-aligned, Cyan/Blue gradient)
+                const bx = winX + winW - maxBubbleWidth - 16;
+                ctx.fillStyle = 'rgba(56, 189, 248, 0.22)';
+                ctx.beginPath();
+                ctx.roundRect(bx, currentY, maxBubbleWidth, bubbleHeight, 10);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+                ctx.stroke();
+
+                ctx.fillStyle = '#e0f2fe';
+                wrappedLines.forEach((l, lIdx) => {
+                    ctx.fillText(l, bx + 12, currentY + 18 + lIdx * 18);
+                });
+            } else {
+                // Assistant Bubble (Left-aligned, Dark glass with pink border)
+                const bx = winX + 16;
+                ctx.fillStyle = 'rgba(20, 26, 40, 0.85)';
+                ctx.beginPath();
+                ctx.roundRect(bx, currentY, maxBubbleWidth, bubbleHeight, 10);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(224, 82, 156, 0.35)';
+                ctx.stroke();
+
+                ctx.fillStyle = '#f1f5f9';
+                wrappedLines.forEach((l, lIdx) => {
+                    ctx.fillText(l, bx + 12, currentY + 18 + lIdx * 18);
+                });
+            }
+
+            currentY += bubbleHeight + 10;
+        });
+
+        // 3. Thinking Indicator (if AI is waiting for response)
+        if (this.isThinking) {
+            const bx = winX + 16;
+            ctx.fillStyle = 'rgba(20, 26, 40, 0.85)';
+            ctx.beginPath();
+            ctx.roundRect(bx, currentY, 180, 28, 8);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(224, 82, 156, 0.35)';
+            ctx.stroke();
+
+            ctx.font = 'italic 11px monospace';
+            ctx.fillStyle = '#e0529c';
+            ctx.fillText('⚡ Rutvik AI is reasoning...', bx + 12, currentY + 18);
+        }
+
+        ctx.restore();
+
+        // 4. Bottom Input Bar Mockup on 3D Screen
+        const barY = winY + winH - 40;
+        ctx.fillStyle = 'rgba(15, 20, 32, 0.8)';
+        ctx.beginPath();
+        ctx.roundRect(winX + 16, barY, winW - 32, 30, 15);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+        ctx.stroke();
+
+        ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.fillText('Type question in card or click quick questions...', winX + 30, barY + 19);
+
+        ctx.fillStyle = '#e0529c';
+        ctx.beginPath();
+        ctx.arc(winX + winW - 32, barY + 15, 9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 10px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('➤', winX + winW - 32, barY + 18);
+        ctx.textAlign = 'left';
+    }
+
+    wrapText(ctx, text, maxWidth) {
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = words[0] || '';
+
+        for (let i = 1; i < words.length; i++) {
+            const word = words[i];
+            const width = ctx.measureText(currentLine + ' ' + word).width;
+            if (width < maxWidth) {
+                currentLine += ' ' + word;
+            } else {
+                lines.push(currentLine);
+                currentLine = word;
+            }
+        }
+        lines.push(currentLine);
+        return lines;
     }
 
     destroy() {
