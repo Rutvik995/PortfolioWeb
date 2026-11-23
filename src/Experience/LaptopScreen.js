@@ -29,11 +29,13 @@ export default class LaptopScreen {
 
         // Material & Mesh
         this.material = new THREE.MeshBasicMaterial({
-            map: this.texture
+            map: this.texture,
+            side: THREE.DoubleSide
         });
 
         if (this.mesh) {
             this.mesh.material = this.material;
+            this.scene.add(this.mesh);
         }
 
         // Graph Architecture Definition
@@ -433,6 +435,7 @@ export default class LaptopScreen {
     }
 
     destroy() {
+        if (this.mesh) this.scene.remove(this.mesh);
         if (this.material) this.material.dispose();
         if (this.texture) this.texture.dispose();
     }

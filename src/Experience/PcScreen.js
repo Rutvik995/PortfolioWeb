@@ -61,11 +61,13 @@ export default class PcScreen {
 
         // Material & Mesh
         this.material = new THREE.MeshBasicMaterial({
-            map: this.texture
+            map: this.texture,
+            side: THREE.DoubleSide
         });
 
         if (this.mesh) {
             this.mesh.material = this.material;
+            this.scene.add(this.mesh);
         }
 
         // Throttle & FPS
@@ -670,6 +672,7 @@ def execute_override(instruction: str):
     }
 
     destroy() {
+        if (this.mesh) this.scene.remove(this.mesh);
         if (this.material) this.material.dispose();
         if (this.texture) this.texture.dispose();
     }
