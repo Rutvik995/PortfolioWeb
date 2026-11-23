@@ -360,22 +360,23 @@ export default class LaptopScreen {
         let currentY = msgAreaTop + 10;
         const maxBubbleWidth = 340;
 
-        // Display the last 3-4 messages to fit the screen cleanly
-        const recentMessages = this.messages.slice(-4);
+        // Display the last 3 messages so conversation is always cleanly visible
+        const recentMessages = this.messages.slice(-3);
 
         recentMessages.forEach((msg, mIdx) => {
             const isUser = msg.role === 'user';
             const isLastAssistant = !isUser && (mIdx === recentMessages.length - 1);
 
-            let displayText = msg.text;
-            if (isLastAssistant && this.displayedCharIndex < msg.text.length) {
-                displayText = msg.text.substring(0, this.displayedCharIndex);
+            let cleanText = this.cleanTextForCanvas(msg.text);
+            let displayText = cleanText;
+            if (isLastAssistant && this.displayedCharIndex < cleanText.length) {
+                displayText = cleanText.substring(0, this.displayedCharIndex);
             }
 
-            // Word wrap
+            // Word wrap with newline & paragraph awareness
             ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
             const wrappedLines = this.wrapText(ctx, displayText, maxBubbleWidth - 24);
-            const bubbleHeight = Math.max(34, wrappedLines.length * 18 + 16);
+            const bubbleHeight = Math.max(32, wrappedLines.length * 17 + 16);
 
             if (isUser) {
                 // User Bubble (Right-aligned, Cyan/Blue gradient)
@@ -389,12 +390,14 @@ export default class LaptopScreen {
 
                 ctx.fillStyle = '#e0f2fe';
                 wrappedLines.forEach((l, lIdx) => {
-                    ctx.fillText(l, bx + 12, currentY + 18 + lIdx * 18);
+                    if (l !== '') {
+                        ctx.fillText(l, bx + 12, currentY + 18 + lIdx * 17);
+                    }
                 });
             } else {
                 // Assistant Bubble (Left-aligned, Dark glass with pink border)
                 const bx = winX + 16;
-                ctx.fillStyle = 'rgba(20, 26, 40, 0.85)';
+                ctx.fillStyle = 'rgba(20, 26, 40, 0.88)';
                 ctx.beginPath();
                 ctx.roundRect(bx, currentY, maxBubbleWidth, bubbleHeight, 10);
                 ctx.fill();
@@ -403,7 +406,9 @@ export default class LaptopScreen {
 
                 ctx.fillStyle = '#f1f5f9';
                 wrappedLines.forEach((l, lIdx) => {
-                    ctx.fillText(l, bx + 12, currentY + 18 + lIdx * 18);
+                    if (l !== '') {
+                        ctx.fillText(l, bx + 12, currentY + 18 + lIdx * 17);
+                    }
                 });
             }
 
@@ -451,23 +456,94 @@ export default class LaptopScreen {
         ctx.textAlign = 'left';
     }
 
-    wrapText(ctx, text, maxWidth) {
-        const words = text.split(' ');
-        const lines = [];
-        let currentLine = words[0] || '';
+    cleanTextForCanvas(text) {
+        if (!text) return '';
+        let cleaned = text;
 
-        for (let i = 1; i < words.length; i++) {
-            const word = words[i];
-            const width = ctx.measureText(currentLine + ' ' + word).width;
-            if (width < maxWidth) {
-                currentLine += ' ' + word;
-            } else {
-                lines.push(currentLine);
-                currentLine = word;
+        // 1. Replace HTML line breaks and normalize
+        cleaned = cleaned.replace(/<br\s*\/?>/gi, '\n');
+        cleaned = cleaned.replace(/<\/?[^>]+(>|$)/g, '');
+
+        // 2. Parse & flatten Markdown table lines if present
+        const lines = cleaned.split('\n');
+        const processedLines = [];
+
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i].trim();
+            // Skip markdown table dividers like |---|---|
+            if (/^\|[-:\s|]+\|$/.test(line)) {
+                continue;
+            }
+            // If table row: | col1 | col2 | col3 |
+            if (line.startsWith('|') && line.endsWith('|')) {
+                const cells = line.split('|')
+                    .map(c => c.trim())
+                    .filter(c => c.length > 0);
+                if (cells.length > 0) {
+                    if (cells.length === 1) {
+                        processedLines.push(cells[0]);
+                    } else if (cells.length === 2) {
+                        processedLines.push(`• ${cells[0]}: ${cells[1]}`);
+                    } else {
+                        processedLines.push(`• ${cells[0]} (${cells[1]}): ${cells.slice(2).join(' - ')}`);
+                    }
+                    continue;
+                }
+            }
+
+            // Remove headers #
+            line = line.replace(/^#{1,6}\s+/, '');
+            processedLines.push(line);
+        }
+
+        cleaned = processedLines.join('\n');
+
+        // 3. Strip markdown syntax that shouldn't appear raw on canvas
+        cleaned = cleaned
+            .replace(/\*\*(.*?)\*\*/g, '$1')   // Bold
+            .replace(/\*(.*?)\*/g, '$1')       // Italic
+            .replace(/__([^_]+)__/g, '$1')
+            .replace(/_([^_]+)_/g, '$1')
+            .replace(/`([^`]+)`/g, '$1')       // Inline code
+            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1'); // Links
+
+        return cleaned;
+    }
+
+    wrapText(ctx, text, maxWidth) {
+        if (!text) return [];
+        const paragraphs = text.split('\n');
+        const allLines = [];
+
+        for (let p = 0; p < paragraphs.length; p++) {
+            const rawPara = paragraphs[p].trim();
+            if (!rawPara) {
+                // Keep empty lines sparse
+                if (allLines.length > 0 && allLines[allLines.length - 1] !== '') {
+                    allLines.push('');
+                }
+                continue;
+            }
+
+            const words = rawPara.split(/\s+/);
+            let currentLine = words[0] || '';
+
+            for (let i = 1; i < words.length; i++) {
+                const word = words[i];
+                const testLine = currentLine + ' ' + word;
+                if (ctx.measureText(testLine).width <= maxWidth) {
+                    currentLine = testLine;
+                } else {
+                    allLines.push(currentLine);
+                    currentLine = word;
+                }
+            }
+            if (currentLine) {
+                allLines.push(currentLine);
             }
         }
-        lines.push(currentLine);
-        return lines;
+
+        return allLines;
     }
 
     destroy() {

@@ -1175,10 +1175,10 @@ html, body {
 }
 
 .chat-bubble {
-    padding: 8px 12px;
-    font-size: 12px;
-    line-height: 1.5;
-    border-radius: 9px;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    line-height: 1.55;
+    border-radius: 10px;
     word-break: break-word;
 }
 
@@ -1190,21 +1190,89 @@ html, body {
 }
 
 .chat-msg.assistant .chat-bubble {
-    background: rgba(22, 28, 44, 0.9);
+    background: rgba(20, 26, 42, 0.94);
     border: 1px solid rgba(224, 82, 156, 0.35);
     color: #f1f5f9;
     border-bottom-left-radius: 2px;
 }
 
 .chat-bubble p {
-    margin-bottom: 5px;
+    margin-bottom: 6px;
 }
 .chat-bubble p:last-child {
     margin-bottom: 0;
 }
-.chat-bubble ul, .chat-bubble ol {
-    margin-left: 14px;
-    margin-bottom: 5px;
+
+.chat-h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 8px 0 4px 0;
+}
+
+.chat-list {
+    margin: 6px 0 6px 18px;
+    padding: 0;
+}
+.chat-list li {
+    margin-bottom: 4px;
+    color: #e2e8f0;
+    line-height: 1.5;
+}
+
+.chat-inline-code {
+    background: rgba(255, 255, 255, 0.12);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #38bdf8;
+}
+
+.chat-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    margin: 8px 0;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.chat-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    text-align: left;
+}
+
+.chat-table th {
+    background: rgba(224, 82, 156, 0.2);
+    color: #ffffff;
+    padding: 6px 8px;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.chat-table td {
+    padding: 6px 8px;
+    color: #cbd5e1;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.chat-table tr:last-child td {
+    border-bottom: none;
+}
+
+.chat-table tr:nth-child(even) td {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.chat-bubble a {
+    color: #38bdf8;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.chat-bubble a:hover {
+    color: #7dd3fc;
 }
 .chat-bubble strong {
     color: #ffffff;

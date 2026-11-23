@@ -442,16 +442,127 @@ export default class ScrollController {
 
     formatMarkdown(text) {
         if (!text) return ''
-        let res = text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,0.1);padding:1px 4px;border-radius:3px;font-family:monospace;font-size:11px;">$1</code>')
-            .replace(/\n\n/g, '</p><p>')
-            .replace(/\n/g, '<br/>')
-        return `<p>${res}</p>`
+
+        // Normalize raw HTML breaks
+        let raw = text.replace(/<br\s*\/?>/gi, '\n')
+
+        // Split into lines
+        const lines = raw.split('\n')
+        const output = []
+        let inTable = false
+        let tableHeaders = []
+        let tableRows = []
+        let inList = false
+        let listType = 'ul' // 'ul' or 'ol'
+        let listItems = []
+
+        const flushList = () => {
+            if (inList && listItems.length > 0) {
+                const tag = listType
+                output.push(`<${tag} class="chat-list">${listItems.map(li => `<li>${li}</li>`).join('')}</${tag}>`)
+                listItems = []
+                inList = false
+            }
+        }
+
+        const flushTable = () => {
+            if (inTable) {
+                let html = '<div class="chat-table-wrapper"><table class="chat-table">'
+                if (tableHeaders.length > 0) {
+                    html += `<thead><tr>${tableHeaders.map(h => `<th>${h}</th>`).join('')}</tr></thead>`
+                }
+                if (tableRows.length > 0) {
+                    html += `<tbody>${tableRows.map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>`
+                }
+                html += '</table></div>'
+                output.push(html)
+                tableHeaders = []
+                tableRows = []
+                inTable = false
+            }
+        }
+
+        const formatInline = (str) => {
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`([^`]+)`/g, '<code class="chat-inline-code">$1</code>')
+                .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+        }
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim()
+
+            // 1. Check Table row
+            if (/^\|.*\|$/.test(line)) {
+                flushList()
+                // Check if separator line e.g. |---|---|
+                if (/^\|[-:\s|]+\|$/.test(line)) {
+                    continue
+                }
+                const cells = line.split('|')
+                    .slice(1, -1)
+                    .map(c => formatInline(c.trim()))
+                if (!inTable) {
+                    inTable = true
+                    tableHeaders = cells
+                } else {
+                    tableRows.push(cells)
+                }
+                continue
+            } else {
+                flushTable()
+            }
+
+            // 2. Check Bullet List (- or * or •)
+            const bulletMatch = line.match(/^[-*•]\s+(.*)$/)
+            if (bulletMatch) {
+                flushTable()
+                if (!inList || listType !== 'ul') {
+                    flushList()
+                    inList = true
+                    listType = 'ul'
+                }
+                listItems.push(formatInline(bulletMatch[1]))
+                continue
+            }
+
+            // 3. Check Numbered List (1. or 2.)
+            const numMatch = line.match(/^\d+\.\s+(.*)$/)
+            if (numMatch) {
+                flushTable()
+                if (!inList || listType !== 'ol') {
+                    flushList()
+                    inList = true
+                    listType = 'ol'
+                }
+                listItems.push(formatInline(numMatch[1]))
+                continue
+            }
+
+            // Not a list item: flush list
+            flushList()
+
+            // 4. Check Headers (#, ##, ###)
+            const headerMatch = line.match(/^#{1,4}\s+(.*)$/)
+            if (headerMatch) {
+                output.push(`<h4 class="chat-h4">${formatInline(headerMatch[1])}</h4>`)
+                continue
+            }
+
+            // 5. Normal text line / paragraph
+            if (line.length > 0) {
+                output.push(`<p>${formatInline(line)}</p>`)
+            }
+        }
+
+        flushList()
+        flushTable()
+
+        return output.join('')
     }
 
     renderResumePane() {

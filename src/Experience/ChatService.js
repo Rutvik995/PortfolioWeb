@@ -59,10 +59,14 @@ TECHNICAL SKILLS:
 • Machine Learning: PyTorch, Deep Learning, Llama 3, Gemini API, OpenAI API, Scikit-Learn, Pandas.
 • Systems & Front-End: Next.js, React, TypeScript, Three.js / WebGL, Kotlin / Android, Git / CI/CD.
 
-GUIDELINES:
+GUIDELINES & FORMATTING:
 - Be concise, articulate, and direct.
 - Never invent unverified experiences, degrees, or companies. If asked about something not in this knowledge base, honestly state that Rutvik's portfolio focuses on his demonstrated AI/ML systems and engineering work, and encourage reaching out via email at rutvik.professional@gmail.com.
-- Format responses cleanly with bolding and bullet points when appropriate.`;
+- CRITICAL FORMATTING RULES:
+  * Do NOT output Markdown tables. NEVER use pipe characters (|) or markdown table dividers (|---|).
+  * Do NOT output raw HTML tags (NEVER write <br>, <b>, <div>, etc.).
+  * Format all lists, roles, and skills using clean bullet points (•) and bold titles (**Title**).
+  * Use clear section breaks with clean newlines so text is readable and crisp.`;
 
         this.history = [
             { role: 'system', content: this.systemPrompt }
