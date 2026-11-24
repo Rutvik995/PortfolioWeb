@@ -75,6 +75,7 @@ export default class RoomExtension {
         leftWallGeo.rotateY(Math.PI * 0.5) // Faces towards +X into the room
 
         const wallMat = new THREE.ShaderMaterial({
+            side: THREE.DoubleSide,
             uniforms: {
                 uWallBase: { value: new THREE.Color('#dfd2c8') },
                 uWallShadow: { value: new THREE.Color('#2a1e18') },
@@ -114,14 +115,14 @@ export default class RoomExtension {
         })
 
         this.leftWall = new THREE.Mesh(leftWallGeo, wallMat)
-        this.leftWall.position.set(-4.16, 3.0, -0.5)
+        this.leftWall.position.set(-4.85, 3.0, -0.5)
         this.group.add(this.leftWall)
 
         // Architectural Skirting / Baseboard along left wall
         const baseboardGeo = new THREE.BoxGeometry(0.08, 0.22, 16)
         const baseboardMat = new THREE.MeshBasicMaterial({ color: 0x1f1612 })
         const baseboard = new THREE.Mesh(baseboardGeo, baseboardMat)
-        baseboard.position.set(-4.14, 0.11, -0.5)
+        baseboard.position.set(-4.83, 0.11, -0.5)
         this.group.add(baseboard)
 
         // Back Wall Extension (continues left behind the bookshelf)
@@ -136,7 +137,7 @@ export default class RoomExtension {
         const frameGeo = new THREE.BoxGeometry(0.04, 2.4, 1.8)
         const frameMat = new THREE.MeshBasicMaterial({ color: 0x18181b })
         const frame = new THREE.Mesh(frameGeo, frameMat)
-        frame.position.set(-4.13, 3.2, 1.6)
+        frame.position.set(-4.82, 3.2, 1.6)
         this.group.add(frame)
 
         // Canvas inside frame with generative geometric art
@@ -183,14 +184,14 @@ export default class RoomExtension {
         artGeo.rotateY(Math.PI * 0.5)
         const artMat = new THREE.MeshBasicMaterial({ map: canvasTexture, toneMapped: false })
         const art = new THREE.Mesh(artGeo, artMat)
-        art.position.set(-4.10, 3.2, 1.6)
+        art.position.set(-4.79, 3.2, 1.6)
         this.group.add(art)
 
         // 2. Warm Architectural Light Column in the left corner
         const lightColumnGeo = new THREE.CylinderGeometry(0.04, 0.04, 4.8, 16)
         const lightColumnMat = new THREE.MeshBasicMaterial({ color: 0xffaa55, toneMapped: false })
         const lightColumn = new THREE.Mesh(lightColumnGeo, lightColumnMat)
-        lightColumn.position.set(-4.12, 2.4, -4.75)
+        lightColumn.position.set(-4.81, 2.4, -4.75)
         this.group.add(lightColumn)
 
         // Soft glow halo plane behind light column
@@ -222,7 +223,7 @@ export default class RoomExtension {
             `
         })
         const glow = new THREE.Mesh(glowGeo, glowMat)
-        glow.position.set(-4.11, 2.4, -4.75)
+        glow.position.set(-4.80, 2.4, -4.75)
         this.group.add(glow)
     }
 
