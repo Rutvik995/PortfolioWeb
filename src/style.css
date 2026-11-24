@@ -1359,6 +1359,123 @@ html, body {
 }
 
 /* ==========================================================================
+   Direct In-Room 3D Laptop Chat Controller Bar
+   ========================================================================== */
+.laptop-chat-bar {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 120;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 92%;
+    max-width: 680px;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: auto;
+}
+
+.laptop-chat-bar.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(24px);
+}
+
+.laptop-chips-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    max-width: 100%;
+}
+
+.laptop-chip {
+    background: rgba(12, 17, 30, 0.88);
+    border: 1px solid rgba(224, 82, 156, 0.35);
+    color: #f1f5f9;
+    padding: 5px 12px;
+    border-radius: var(--radius-full);
+    font-size: 11.5px;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    cursor: pointer;
+    backdrop-filter: blur(14px);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.laptop-chip:hover {
+    background: rgba(224, 82, 156, 0.22);
+    border-color: #e0529c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(224, 82, 156, 0.35);
+}
+
+.laptop-chat-form {
+    width: 100%;
+}
+
+.laptop-input-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    background: rgba(10, 14, 26, 0.94);
+    border: 1.5px solid rgba(224, 82, 156, 0.4);
+    border-radius: var(--radius-full);
+    padding: 6px 8px 6px 16px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 10px 36px rgba(0, 0, 0, 0.7), 0 0 24px rgba(224, 82, 156, 0.2);
+    transition: all 0.2s ease;
+}
+
+.laptop-input-box:focus-within {
+    border-color: #e0529c;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(224, 82, 156, 0.45);
+}
+
+.laptop-input-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.laptop-chat-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 13px;
+    font-family: var(--font-sans);
+    outline: none;
+}
+
+.laptop-chat-input::placeholder {
+    color: rgba(255, 255, 255, 0.48);
+}
+
+.laptop-chat-send {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: linear-gradient(135deg, #e0529c, #d946ef);
+    border: none;
+    border-radius: var(--radius-full);
+    color: #ffffff;
+    padding: 8px 18px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.laptop-chat-send:hover {
+    transform: scale(1.04);
+    box-shadow: 0 0 16px rgba(224, 82, 156, 0.6);
+}
+
+/* ==========================================================================
    Responsive Adaptations
    ========================================================================== */
 @media (max-width: 1024px) {

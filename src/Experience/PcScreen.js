@@ -525,20 +525,6 @@ def execute_override(instruction: str):
         ctx.fillStyle = '#e2e8f0';
         ctx.fillText(`${project.tabName || 'agent_supervisor.py'} — Python 3.11`, winX + 75, winY + 24);
 
-        // Running Pulse Pill (Right of header)
-        ctx.fillStyle = 'rgba(16, 185, 129, 0.18)';
-        ctx.beginPath();
-        ctx.roundRect(winX + winW - 105, winY + 9, 88, 20, 10);
-        ctx.fill();
-
-        ctx.fillStyle = '#10b981';
-        ctx.beginPath();
-        ctx.arc(winX + winW - 93, winY + 19, 3.5, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.font = 'bold 10px monospace';
-        ctx.fillText('LOOPING', winX + winW - 83, winY + 23);
-
         // 2. Code Area (Height: 310px)
         const editorTop = winY + headerH;
         const editorHeight = 310;

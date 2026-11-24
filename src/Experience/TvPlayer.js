@@ -902,7 +902,6 @@ export default class TvPlayer
                         oninput="window.tvPlayer.setVolume(this.value)"
                         title="Volume: ${Math.round(this.volume * 100)}%" />
                 </div>
-                <div class="tv-badge">TV SYNC</div>
             </div>
         `
     }

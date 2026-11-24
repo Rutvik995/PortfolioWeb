@@ -22,7 +22,7 @@ export default class ScrollController {
         this.chatMessages = [
             {
                 role: 'assistant',
-                content: "Hi! I'm **Rutvik AI**, powered by Groq. Ask me anything about Rutvik's autonomous multi-agent projects, tech stack, work experience, education, or how to contact him!"
+                content: "Hi! I'm **Rutvik AI**. Ask me anything about Rutvik's autonomous multi-agent projects, tech stack, work experience, education, or how to contact him!"
             }
         ]
 
@@ -35,6 +35,7 @@ export default class ScrollController {
         this.initDOM()
         this.initHUDDock()
         this.initContextCard()
+        this.initLaptopChatBar()
         this.initRaycasting()
         this.initKeyboardControls()
     }
@@ -57,8 +58,12 @@ export default class ScrollController {
             if (!btn) return
             const zone = btn.dataset.zone
             if (zone) {
-                // If clicking currently active zone, toggle card open/close
-                if (zone === this.currentZone && this.currentZone !== 'overview') {
+                if (zone === 'experience') {
+                    this.goToZone('experience', false)
+                    if (this.laptopChatInput) {
+                        this.laptopChatInput.focus()
+                    }
+                } else if (zone === this.currentZone && this.currentZone !== 'overview') {
                     if (this.isCardOpen) {
                         this.closeContextCard()
                     } else {
@@ -86,6 +91,81 @@ export default class ScrollController {
         }
     }
 
+    initLaptopChatBar() {
+        let bar = document.getElementById('laptop-chat-bar')
+        if (!bar) {
+            bar = document.createElement('div')
+            bar.id = 'laptop-chat-bar'
+            bar.className = 'laptop-chat-bar hidden'
+            bar.innerHTML = `
+                <div class="laptop-chips-row">
+                    <button class="laptop-chip" data-q="Tell me about Cortex Multi-Agent Platform">🤖 Cortex Platform</button>
+                    <button class="laptop-chip" data-q="What is your professional work experience?">💼 Work Experience</button>
+                    <button class="laptop-chip" data-q="What is your technical skill stack?">🛠️ Technical Skills</button>
+                    <button class="laptop-chip" data-q="Explain the Solar Power Agentic Analytics System">☀️ Solar Power System</button>
+                    <button class="laptop-chip" data-q="What is your education background?">🎓 Education</button>
+                    <button class="laptop-chip" data-q="How can I contact or hire Rutvik?">📬 Contact & Hire</button>
+                </div>
+                <form id="laptop-chat-form" class="laptop-chat-form">
+                    <div class="laptop-input-box">
+                        <span class="laptop-input-icon">💬</span>
+                        <input 
+                            type="text" 
+                            id="laptop-chat-input" 
+                            class="laptop-chat-input" 
+                            placeholder="Ask Rutvik AI anything — answers appear directly on the 3D laptop screen..." 
+                            autocomplete="off"
+                        />
+                        <button type="submit" id="laptop-chat-send" class="laptop-chat-send">
+                            <span>Send</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        </button>
+                    </div>
+                </form>
+            `
+            document.body.appendChild(bar)
+        }
+
+        this.laptopChatBar = bar
+        this.laptopChatInput = bar.querySelector('#laptop-chat-input')
+        const form = bar.querySelector('#laptop-chat-form')
+        if (form && this.laptopChatInput) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault()
+                const val = this.laptopChatInput.value.trim()
+                if (val) {
+                    this.laptopChatInput.value = ''
+                    this.handleUserChatMessage(val)
+                }
+            })
+        }
+
+        const chips = bar.querySelectorAll('.laptop-chip')
+        chips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                const q = chip.dataset.q
+                if (q) {
+                    this.handleUserChatMessage(q)
+                }
+            })
+        })
+    }
+
+    showLaptopChatBar(show) {
+        if (!this.laptopChatBar) return
+        if (show) {
+            this.laptopChatBar.classList.remove('hidden')
+            if (this.laptopChatInput) {
+                setTimeout(() => this.laptopChatInput.focus(), 300)
+            }
+        } else {
+            this.laptopChatBar.classList.add('hidden')
+            if (this.laptopChatInput) {
+                this.laptopChatInput.blur()
+            }
+        }
+    }
+
     goToZone(zoneName, openCard = true) {
         // Map alias if needed
         const targetKey = zoneName === 'overview' ? 'hero' : zoneName
@@ -109,20 +189,30 @@ export default class ScrollController {
             })
         }
 
-        // Manage contextual card
+        // Manage contextual card & floating laptop chat
         if (zoneName === 'overview') {
             this.closeContextCard()
+            this.showLaptopChatBar(false)
             screenSync.emit('chat:close')
             if (this.reopenBtn) {
                 this.reopenBtn.classList.add('hidden')
             }
-        } else if (openCard) {
-            if (zoneName === 'experience') {
-                screenSync.emit('chat:open')
+        } else if (zoneName === 'experience') {
+            // For laptop view, do NOT open the side context card.
+            // The chat is displayed directly on the 3D laptop in the room!
+            this.closeContextCard()
+            if (this.reopenBtn) {
+                this.reopenBtn.classList.add('hidden')
             }
-            this.openContextCard(zoneName)
+            screenSync.emit('chat:open')
+            this.showLaptopChatBar(true)
         } else {
-            this.updateReopenButtonLabel(zoneName)
+            this.showLaptopChatBar(false)
+            if (openCard) {
+                this.openContextCard(zoneName)
+            } else {
+                this.updateReopenButtonLabel(zoneName)
+            }
         }
     }
 
@@ -210,7 +300,6 @@ export default class ScrollController {
             <div class="active-project-pane">
                 <div class="project-header-row">
                     <span class="project-tab-badge">file: ${activeProject.tabName}</span>
-                    <span class="live-indicator"><span class="live-pulse"></span> Screen Synced</span>
                 </div>
 
                 <h3 class="pane-project-title">${activeProject.title}</h3>
@@ -305,14 +394,6 @@ export default class ScrollController {
                     </button>
                 </div>
 
-                <div class="chat-model-badge">
-                    <span>Model: <strong>Groq gpt-oss-120b</strong></span>
-                    <span class="chat-status-pill">
-                        <span class="chat-status-dot-pulse"></span>
-                        Online
-                    </span>
-                </div>
-
                 <div class="chat-quick-chips">
                     ${chipsHtml}
                 </div>
@@ -388,7 +469,7 @@ export default class ScrollController {
         } catch (err) {
             console.error('Chat error:', err)
             this.isAiThinking = false
-            const errMsg = "I encountered an issue connecting to the Groq LLM API. Please feel free to email Rutvik directly at rutvik.professional@gmail.com."
+            const errMsg = "I encountered an issue connecting to the AI assistant service. Please feel free to email Rutvik directly at rutvik.professional@gmail.com."
             this.chatMessages.push({ role: 'assistant', content: errMsg })
             screenSync.emit('chat:message', { role: 'assistant', content: errMsg })
         }
@@ -800,17 +881,23 @@ export default class ScrollController {
 
     handleSpatialClick(e) {
         // Prevent click when clicking on HTML overlay UI elements
-        if (e.target.closest('#hud-dock, #context-card, #tv-music-player, .btn-reopen-card, .bottom-bar-container')) {
+        if (e.target.closest('#hud-dock, #context-card, #tv-music-player, .btn-reopen-card, .bottom-bar-container, #laptop-chat-bar')) {
             return
         }
 
         if (this.hoveredZone) {
             if (this.hoveredZone === 'projects') {
                 screenSync.emit('run:code', { index: this.currentProjectIndex })
+                this.goToZone('projects', true)
             } else if (this.hoveredZone === 'experience') {
                 screenSync.emit('chat:open')
+                this.goToZone('experience', false)
+                if (this.laptopChatInput) {
+                    this.laptopChatInput.focus()
+                }
+            } else {
+                this.goToZone(this.hoveredZone, true)
             }
-            this.goToZone(this.hoveredZone, true)
         }
     }
 
@@ -820,7 +907,9 @@ export default class ScrollController {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
 
             if (e.key === 'Escape') {
-                if (this.isCardOpen) {
+                if (this.currentZone === 'experience') {
+                    this.goToZone('overview', false)
+                } else if (this.isCardOpen) {
                     this.closeContextCard()
                 } else {
                     this.goToZone('overview', false)
@@ -830,7 +919,7 @@ export default class ScrollController {
             } else if (e.key === '2') {
                 this.goToZone('projects', true)
             } else if (e.key === '3') {
-                this.goToZone('experience', true)
+                this.goToZone('experience', false)
             } else if (e.key === '4') {
                 this.goToZone('skills', true)
             } else if (e.key === '5') {

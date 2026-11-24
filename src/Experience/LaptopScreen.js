@@ -265,7 +265,6 @@ export default class LaptopScreen {
         ctx.fillStyle = '#94a3b8';
         ctx.fillText('Ask anything about Rutvik\'s autonomous multi-agent', px + 24, py + 106);
         ctx.fillText('projects, internships, LangGraph stack, and availability.', px + 24, py + 126);
-        ctx.fillText('Powered by Groq API (GPT-OSS-120B).', px + 24, py + 146);
 
         // Click to Open Action Pill
         ctx.fillStyle = 'rgba(224, 82, 156, 0.25)';
@@ -344,8 +343,8 @@ export default class LaptopScreen {
         ctx.fillText('Rutvik AI Assistant', winX + 96, dotY - 2);
 
         ctx.font = '500 10px monospace';
-        ctx.fillStyle = '#34d399';
-        ctx.fillText('● Online • Groq gpt-oss-120b', winX + 96, dotY + 12);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('Agentic AI & LLM Systems', winX + 96, dotY + 12);
 
         // 2. Chat Message List Area
         const msgAreaTop = winY + headerH + 10;
@@ -356,12 +355,11 @@ export default class LaptopScreen {
         ctx.rect(winX + 10, msgAreaTop, winW - 20, msgAreaHeight);
         ctx.clip();
 
-        // Calculate rendered bubbles from bottom up
-        let currentY = msgAreaTop + 10;
+        // Prepare rendered bubbles with auto-scroll calculation
         const maxBubbleWidth = 340;
-
-        // Display the last 3 messages so conversation is always cleanly visible
-        const recentMessages = this.messages.slice(-3);
+        const recentMessages = this.messages.slice(-4);
+        const preparedItems = [];
+        let totalContentH = 0;
 
         recentMessages.forEach((msg, mIdx) => {
             const isUser = msg.role === 'user';
@@ -378,18 +376,35 @@ export default class LaptopScreen {
             const wrappedLines = this.wrapText(ctx, displayText, maxBubbleWidth - 24);
             const bubbleHeight = Math.max(32, wrappedLines.length * 17 + 16);
 
-            if (isUser) {
+            preparedItems.push({ isUser, wrappedLines, bubbleHeight });
+            totalContentH += bubbleHeight + 10;
+        });
+
+        if (this.isThinking) {
+            totalContentH += 38;
+        }
+
+        // Auto-scroll so latest messages/characters stay in view
+        let scrollOffset = 0;
+        if (totalContentH > msgAreaHeight) {
+            scrollOffset = totalContentH - msgAreaHeight;
+        }
+
+        let currentY = msgAreaTop + 8 - scrollOffset;
+
+        preparedItems.forEach((item) => {
+            if (item.isUser) {
                 // User Bubble (Right-aligned, Cyan/Blue gradient)
                 const bx = winX + winW - maxBubbleWidth - 16;
                 ctx.fillStyle = 'rgba(56, 189, 248, 0.22)';
                 ctx.beginPath();
-                ctx.roundRect(bx, currentY, maxBubbleWidth, bubbleHeight, 10);
+                ctx.roundRect(bx, currentY, maxBubbleWidth, item.bubbleHeight, 10);
                 ctx.fill();
                 ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
                 ctx.stroke();
 
                 ctx.fillStyle = '#e0f2fe';
-                wrappedLines.forEach((l, lIdx) => {
+                item.wrappedLines.forEach((l, lIdx) => {
                     if (l !== '') {
                         ctx.fillText(l, bx + 12, currentY + 18 + lIdx * 17);
                     }
@@ -399,20 +414,20 @@ export default class LaptopScreen {
                 const bx = winX + 16;
                 ctx.fillStyle = 'rgba(20, 26, 40, 0.88)';
                 ctx.beginPath();
-                ctx.roundRect(bx, currentY, maxBubbleWidth, bubbleHeight, 10);
+                ctx.roundRect(bx, currentY, maxBubbleWidth, item.bubbleHeight, 10);
                 ctx.fill();
                 ctx.strokeStyle = 'rgba(224, 82, 156, 0.35)';
                 ctx.stroke();
 
                 ctx.fillStyle = '#f1f5f9';
-                wrappedLines.forEach((l, lIdx) => {
+                item.wrappedLines.forEach((l, lIdx) => {
                     if (l !== '') {
                         ctx.fillText(l, bx + 12, currentY + 18 + lIdx * 17);
                     }
                 });
             }
 
-            currentY += bubbleHeight + 10;
+            currentY += item.bubbleHeight + 10;
         });
 
         // 3. Thinking Indicator (if AI is waiting for response)
@@ -443,7 +458,7 @@ export default class LaptopScreen {
 
         ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
         ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-        ctx.fillText('Type question in card or click quick questions...', winX + 30, barY + 19);
+        ctx.fillText('Type below to chat directly on screen...', winX + 30, barY + 19);
 
         ctx.fillStyle = '#e0529c';
         ctx.beginPath();
