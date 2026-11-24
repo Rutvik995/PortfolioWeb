@@ -34,6 +34,15 @@ export default class TopChair
 
     update()
     {
-        this.model.group.rotation.y = Math.sin(this.time.elapsed * 0.0005) * 0.5
+        const isLaptopView = this.experience.navigation?.currentSectionName === 'experience' || 
+                             this.experience.navigation?.currentSectionName === 'macScreen';
+
+        // When viewing the laptop, turn the chair gently towards the desk/PC monitor away from the laptop view
+        const targetRot = isLaptopView 
+            ? -0.25 
+            : Math.sin(this.time.elapsed * 0.0005) * 0.5;
+
+        // Smoothly interpolate towards target rotation
+        this.model.group.rotation.y += (targetRot - this.model.group.rotation.y) * 0.05;
     }
 }

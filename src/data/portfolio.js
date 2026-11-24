@@ -49,17 +49,17 @@ export const portfolioData = {
     experience: {
       name: "experience",
       alias: "macScreen",
-      look: [2.05, 2.68, -4.10], // Centered on entire laptop (screen + keyboard + riser) shifted for left card
-      size: [2.4, 1.7],
-      normal: [-0.20, 0.32, 0.92], // Elevated angle looking down at keyboard and straight onto screen
-      padding: 1.30
+      look: [2.05, 2.65, -4.20], // Whole laptop framed cleanly
+      size: [2.2, 1.55],
+      normal: [0.08, 0.30, 0.95], // Elevated view from right of chair looking directly onto laptop without chair obstruction
+      padding: 1.25
     },
     macScreen: {
       name: "macScreen",
-      look: [2.05, 2.68, -4.10],
-      size: [2.4, 1.7],
-      normal: [-0.20, 0.32, 0.92],
-      padding: 1.30
+      look: [2.05, 2.65, -4.20],
+      size: [2.2, 1.55],
+      normal: [0.08, 0.30, 0.95],
+      padding: 1.25
     },
     skills: {
       name: "skills",
@@ -148,8 +148,8 @@ export const portfolioData = {
       look: [0.306, 3.416, -4.511]
     },
     experience: {
-      pos: [1.22, 4.01, -0.29],
-      look: [2.05, 2.68, -4.10]
+      pos: [2.34, 3.74, -0.76],
+      look: [2.05, 2.65, -4.20]
     },
     skills: {
       pos: [1.34, 3.87, 2.52],
