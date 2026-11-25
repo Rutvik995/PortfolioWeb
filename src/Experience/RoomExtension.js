@@ -1,6 +1,5 @@
 import * as THREE from 'three'
 import Experience from './Experience.js'
-import ShoeShowcase from './ShoeShowcase.js'
 
 export default class RoomExtension {
     constructor() {
@@ -14,7 +13,6 @@ export default class RoomExtension {
         this.setFloorExtension()
         this.setWallExtensions()
         this.setArchitecturalDetails()
-        this.setShoeShowcase()
         this.setAtmosphericDome()
 
         this.scene.add(this.group)
@@ -288,10 +286,6 @@ export default class RoomExtension {
         this.group.add(glow)
     }
 
-    setShoeShowcase() {
-        this.shoeShowcase = new ShoeShowcase(this.group)
-    }
-
     setAtmosphericDome() {
         // Enclosing 360-degree environment dome that wraps the entire studio in room-coherent warm lighting
         const domeGeo = new THREE.SphereGeometry(45, 32, 20, 0, Math.PI * 2, 0, Math.PI * 0.5)
@@ -352,9 +346,6 @@ export default class RoomExtension {
     }
 
     destroy() {
-        if (this.shoeShowcase) {
-            this.shoeShowcase.destroy()
-        }
         if (this.group) {
             this.scene.remove(this.group)
         }
