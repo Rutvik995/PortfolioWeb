@@ -133,59 +133,67 @@ export default class RoomExtension {
     }
 
     setArchitecturalDetails() {
-        // 1. Sleek Framed Artwork on the extended left wall (covers the empty void)
-        const frameGeo = new THREE.BoxGeometry(0.04, 2.4, 1.8)
+        // 1. Twin Matched Framed Posters side-by-side above the sofa on the left wall (elevated placement)
+        const posterSpecs = [
+            { z: 2.15, src: '/assets/posterSisyphus.jpg', name: 'posterSisyphus' },
+            { z: 0.35, src: '/assets/posterMindset.jpg', name: 'posterMindset' }
+        ]
+
+        const frameW = 1.55
+        const frameH = 2.10
+        const artW = 1.45
+        const artH = 2.00
+        const posY = 3.65
+
+        const frameGeo = new THREE.BoxGeometry(0.04, frameH, frameW)
         const frameMat = new THREE.MeshBasicMaterial({ color: 0x18181b })
-        const frame = new THREE.Mesh(frameGeo, frameMat)
-        frame.position.set(-4.82, 3.2, 1.6)
-        this.group.add(frame)
-
-        // Canvas inside frame with generative geometric art
-        const canvas = document.createElement('canvas')
-        canvas.width = 512
-        canvas.height = 680
-        const ctx = canvas.getContext('2d')
-
-        // Dark modern art design
-        ctx.fillStyle = '#0f172a'
-        ctx.fillRect(0, 0, 512, 680)
-
-        // Geometric gradients
-        const grad = ctx.createLinearGradient(60, 80, 440, 580)
-        grad.addColorStop(0, '#38bdf8')
-        grad.addColorStop(0.5, '#c084fc')
-        grad.addColorStop(1, '#ff115e')
-
-        ctx.strokeStyle = grad
-        ctx.lineWidth = 6
-        ctx.beginPath()
-        ctx.arc(256, 300, 150, 0, Math.PI * 2)
-        ctx.stroke()
-
-        ctx.beginPath()
-        ctx.moveTo(140, 450)
-        ctx.lineTo(372, 450)
-        ctx.lineTo(256, 180)
-        ctx.closePath()
-        ctx.stroke()
-
-        ctx.font = '700 22px monospace'
-        ctx.fillStyle = '#94a3b8'
-        ctx.textAlign = 'center'
-        ctx.fillText('COMPOUND AI ARCHITECTURE', 256, 560)
-        ctx.font = '500 16px monospace'
-        ctx.fillStyle = '#38bdf8'
-        ctx.fillText('AUTONOMOUS AGENTS • 2026', 256, 595)
-
-        const canvasTexture = new THREE.CanvasTexture(canvas)
-        canvasTexture.encoding = THREE.sRGBEncoding
-
-        const artGeo = new THREE.PlaneGeometry(1.7, 2.3)
+        const artGeo = new THREE.PlaneGeometry(artW, artH)
         artGeo.rotateY(Math.PI * 0.5)
-        const artMat = new THREE.MeshBasicMaterial({ map: canvasTexture, toneMapped: false })
-        const art = new THREE.Mesh(artGeo, artMat)
-        art.position.set(-4.79, 3.2, 1.6)
-        this.group.add(art)
+
+        posterSpecs.forEach(({ z, src, name }) => {
+            const frame = new THREE.Mesh(frameGeo, frameMat)
+            frame.name = `${name}Frame`
+            frame.position.set(-4.82, posY, z)
+            this.group.add(frame)
+
+            // Contain-fit each poster onto an identical 512x704 matte black canvas so proportions stay crisp
+            const canvas = document.createElement('canvas')
+            canvas.width = 512
+            canvas.height = 704
+            const ctx = canvas.getContext('2d')
+            ctx.fillStyle = '#000000'
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+            const texture = new THREE.CanvasTexture(canvas)
+            texture.encoding = THREE.sRGBEncoding
+            texture.generateMipmaps = false
+            texture.minFilter = THREE.LinearFilter
+            texture.magFilter = THREE.LinearFilter
+
+            const img = new Image()
+            img.onload = () => {
+                ctx.fillStyle = '#000000'
+                ctx.fillRect(0, 0, canvas.width, canvas.height)
+                const padX = 24
+                const padY = 28
+                const maxW = canvas.width - padX * 2
+                const maxH = canvas.height - padY * 2
+                const scale = Math.min(maxW / img.width, maxH / img.height)
+                const drawW = img.width * scale
+                const drawH = img.height * scale
+                const dx = (canvas.width - drawW) / 2
+                const dy = (canvas.height - drawH) / 2
+                ctx.drawImage(img, dx, dy, drawW, drawH)
+                texture.needsUpdate = true
+            }
+            img.src = src
+
+            const artMat = new THREE.MeshBasicMaterial({ map: texture, toneMapped: false })
+            const art = new THREE.Mesh(artGeo, artMat)
+            art.name = `${name}Art`
+            art.position.set(-4.79, posY, z)
+            this.group.add(art)
+        })
 
         // 2. Warm Architectural Light Column in the left corner
         const lightColumnGeo = new THREE.CylinderGeometry(0.04, 0.04, 4.8, 16)
