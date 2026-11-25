@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import Experience from './Experience.js'
+import ShoeShowcase from './ShoeShowcase.js'
 
 export default class RoomExtension {
     constructor() {
@@ -13,6 +14,7 @@ export default class RoomExtension {
         this.setFloorExtension()
         this.setWallExtensions()
         this.setArchitecturalDetails()
+        this.setShoeShowcase()
         this.setAtmosphericDome()
 
         this.scene.add(this.group)
@@ -70,16 +72,16 @@ export default class RoomExtension {
     }
 
     setWallExtensions() {
-        // Left Interior Wall Extension (continues behind and to the left of the bookshelf)
-        const leftWallGeo = new THREE.PlaneGeometry(16, 8)
-        leftWallGeo.rotateY(Math.PI * 0.5) // Faces towards +X into the room
-
+        // Unified interior wall shader: ALL walls use THREE.FrontSide facing INWARD into the room.
+        // That encloses the entire room with 4 walls when looking from inside, while any wall behind
+        // the camera automatically becomes transparent so the room remains visible from all sides.
         const wallMat = new THREE.ShaderMaterial({
-            side: THREE.DoubleSide,
+            side: THREE.FrontSide,
             uniforms: {
                 uWallBase: { value: new THREE.Color('#dfd2c8') },
-                uWallShadow: { value: new THREE.Color('#2a1e18') },
-                uDeskGlow: { value: new THREE.Color('#ff6700') }
+                uWallShadow: { value: new THREE.Color('#30221b') },
+                uDeskGlow: { value: new THREE.Color('#ff6700') },
+                uTvGlow: { value: new THREE.Color('#ff115e') }
             },
             vertexShader: `
                 varying vec3 vWorldPosition;
@@ -95,41 +97,81 @@ export default class RoomExtension {
                 uniform vec3 uWallBase;
                 uniform vec3 uWallShadow;
                 uniform vec3 uDeskGlow;
+                uniform vec3 uTvGlow;
                 varying vec3 vWorldPosition;
                 varying vec2 vUv;
 
                 void main() {
-                    // Vertical gradient (warm shadow near floor)
-                    float vFactor = smoothstep(0.0, 4.5, vWorldPosition.y);
+                    // Warm plaster vertical gradient (rich studio shadow near floor)
+                    float vFactor = smoothstep(0.0, 4.2, vWorldPosition.y);
                     vec3 col = mix(uWallShadow, uWallBase, vFactor);
 
-                    // Ambient glow from desk strip behind bookshelf
-                    float deskLight = smoothstep(8.0, 0.5, length(vWorldPosition.yz - vec2(2.5, -3.5))) * 0.35;
+                    // Soft corner ambient darkening where adjacent walls meet
+                    float cornerDistX = min(abs(vWorldPosition.x - (-4.85)), abs(vWorldPosition.x - 4.50));
+                    float cornerDistZ = min(abs(vWorldPosition.z - (-4.86)), abs(vWorldPosition.z - 4.72));
+                    float cornerAO = mix(0.76, 1.0, smoothstep(0.0, 1.4, cornerDistX + cornerDistZ));
+                    col *= cornerAO;
+
+                    // Ambient warm glow from desk strip
+                    float deskLight = smoothstep(8.5, 0.8, length(vWorldPosition - vec3(0.3, 2.5, -3.5))) * 0.28;
                     col += uDeskGlow * deskLight;
 
-                    // Edge vignetting to merge softly
-                    float edgeBlend = smoothstep(7.0, 3.0, abs(vWorldPosition.z - (-0.5)));
-                    gl_FragColor = vec4(col * edgeBlend, 1.0);
+                    // Subtle cool/magenta TV ambient bounce near front-right
+                    float tvLight = smoothstep(7.5, 0.8, length(vWorldPosition - vec3(4.1, 2.4, 1.8))) * 0.22;
+                    col += uTvGlow * tvLight;
+
+                    gl_FragColor = vec4(col, 1.0);
                 }
             `
         })
 
+        const wallH = 6.32
+        const wallMidY = wallH / 2
+        const zCenter = (-4.86 + 4.72) / 2 // -0.07
+        const leftLen = 4.72 - (-4.86)     // 9.58
+        const xCenter = (-4.85 + 4.52) / 2 // -0.165
+        const frontLen = 4.52 - (-4.85)    // 9.37
+
+        // 1. Left Interior Wall (X = -4.85, FrontSide facing +X inward)
+        const leftWallGeo = new THREE.PlaneGeometry(leftLen, wallH)
+        leftWallGeo.rotateY(Math.PI * 0.5)
         this.leftWall = new THREE.Mesh(leftWallGeo, wallMat)
-        this.leftWall.position.set(-4.85, 3.0, -0.5)
+        this.leftWall.position.set(-4.85, wallMidY, zCenter)
         this.group.add(this.leftWall)
 
-        // Architectural Skirting / Baseboard along left wall
-        const baseboardGeo = new THREE.BoxGeometry(0.08, 0.22, 16)
-        const baseboardMat = new THREE.MeshBasicMaterial({ color: 0x1f1612 })
-        const baseboard = new THREE.Mesh(baseboardGeo, baseboardMat)
-        baseboard.position.set(-4.83, 0.11, -0.5)
-        this.group.add(baseboard)
+        // 2. Front Interior Wall (4th wall closing the room at Z = 4.72, FrontSide facing -Z inward)
+        const frontWallGeo = new THREE.PlaneGeometry(frontLen, wallH)
+        frontWallGeo.rotateY(Math.PI)
+        this.frontWall = new THREE.Mesh(frontWallGeo, wallMat)
+        this.frontWall.position.set(xCenter, wallMidY, 4.72)
+        this.group.add(this.frontWall)
 
-        // Back Wall Extension (continues left behind the bookshelf)
-        const backWallGeo = new THREE.PlaneGeometry(12, 8)
-        const backWall = new THREE.Mesh(backWallGeo, wallMat)
-        backWall.position.set(-8.5, 3.0, -4.86)
-        this.group.add(backWall)
+        // 3. Corner seam closures (FrontSide facing inward so front-right & back-left corners stay seamless)
+        const rightSeamGeo = new THREE.PlaneGeometry(0.30, wallH)
+        rightSeamGeo.rotateY(-Math.PI * 0.5)
+        const rightSeam = new THREE.Mesh(rightSeamGeo, wallMat)
+        rightSeam.position.set(4.26, wallMidY, 4.58)
+        this.group.add(rightSeam)
+
+        const backSeamGeo = new THREE.PlaneGeometry(1.10, wallH)
+        const backSeam = new THREE.Mesh(backSeamGeo, wallMat)
+        backSeam.position.set(-4.35, wallMidY, -4.87)
+        this.group.add(backSeam)
+
+        // Single-sided architectural baseboards (FrontSide inward so they never block camera from outside)
+        const trimMat = new THREE.MeshBasicMaterial({ color: 0x1f1612, side: THREE.FrontSide })
+
+        const leftTrimGeo = new THREE.PlaneGeometry(leftLen, 0.22)
+        leftTrimGeo.rotateY(Math.PI * 0.5)
+        const leftTrim = new THREE.Mesh(leftTrimGeo, trimMat)
+        leftTrim.position.set(-4.835, 0.11, zCenter)
+        this.group.add(leftTrim)
+
+        const frontTrimGeo = new THREE.PlaneGeometry(frontLen, 0.22)
+        frontTrimGeo.rotateY(Math.PI)
+        const frontTrim = new THREE.Mesh(frontTrimGeo, trimMat)
+        frontTrim.position.set(xCenter, 0.11, 4.705)
+        this.group.add(frontTrim)
     }
 
     setArchitecturalDetails() {
@@ -145,16 +187,26 @@ export default class RoomExtension {
         const artH = 2.00
         const posY = 3.65
 
-        const frameGeo = new THREE.BoxGeometry(0.04, frameH, frameW)
         const frameMat = new THREE.MeshBasicMaterial({ color: 0x18181b })
+        const hBarGeo = new THREE.BoxGeometry(0.04, 0.05, frameW)
+        const vBarGeo = new THREE.BoxGeometry(0.04, frameH, 0.05)
         const artGeo = new THREE.PlaneGeometry(artW, artH)
         artGeo.rotateY(Math.PI * 0.5)
 
         posterSpecs.forEach(({ z, src, name }) => {
-            const frame = new THREE.Mesh(frameGeo, frameMat)
-            frame.name = `${name}Frame`
-            frame.position.set(-4.82, posY, z)
-            this.group.add(frame)
+            // Hollow 4-bar frame so camera behind left wall still sees straight into room
+            const frameGroup = new THREE.Group()
+            frameGroup.name = `${name}Frame`
+            const topBar = new THREE.Mesh(hBarGeo, frameMat)
+            topBar.position.set(-4.82, posY + (frameH - 0.05) / 2, z)
+            const botBar = new THREE.Mesh(hBarGeo, frameMat)
+            botBar.position.set(-4.82, posY - (frameH - 0.05) / 2, z)
+            const leftBar = new THREE.Mesh(vBarGeo, frameMat)
+            leftBar.position.set(-4.82, posY, z + (frameW - 0.05) / 2)
+            const rightBar = new THREE.Mesh(vBarGeo, frameMat)
+            rightBar.position.set(-4.82, posY, z - (frameW - 0.05) / 2)
+            frameGroup.add(topBar, botBar, leftBar, rightBar)
+            this.group.add(frameGroup)
 
             // Contain-fit each poster onto an identical 512x704 matte black canvas so proportions stay crisp
             const canvas = document.createElement('canvas')
@@ -188,10 +240,11 @@ export default class RoomExtension {
             }
             img.src = src
 
-            const artMat = new THREE.MeshBasicMaterial({ map: texture, toneMapped: false })
+            // FrontSide facing +X inward into room (invisible when orbiting behind left wall)
+            const artMat = new THREE.MeshBasicMaterial({ map: texture, toneMapped: false, side: THREE.FrontSide })
             const art = new THREE.Mesh(artGeo, artMat)
             art.name = `${name}Art`
-            art.position.set(-4.79, posY, z)
+            art.position.set(-4.81, posY, z)
             this.group.add(art)
         })
 
@@ -233,6 +286,10 @@ export default class RoomExtension {
         const glow = new THREE.Mesh(glowGeo, glowMat)
         glow.position.set(-4.80, 2.4, -4.75)
         this.group.add(glow)
+    }
+
+    setShoeShowcase() {
+        this.shoeShowcase = new ShoeShowcase(this.group)
     }
 
     setAtmosphericDome() {
@@ -295,6 +352,9 @@ export default class RoomExtension {
     }
 
     destroy() {
+        if (this.shoeShowcase) {
+            this.shoeShowcase.destroy()
+        }
         if (this.group) {
             this.scene.remove(this.group)
         }

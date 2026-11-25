@@ -30,7 +30,7 @@ export default class Navigation {
         }
 
         this.roomCameraBounds = {
-            min: new THREE.Vector3(-6.0, 0.35, -6.0),
+            min: new THREE.Vector3(-18.0, 0.35, -18.0),
             max: new THREE.Vector3(25.0, 20.0, 30.0)
         }
 
@@ -72,7 +72,7 @@ export default class Navigation {
         this.view.spherical.limits = {
             radius: { min: 0.6, max: Math.max(22.0, initialSpherical.radius + 4.0) },
             phi: { min: Math.PI * 0.08, max: Math.PI * 0.48 },
-            theta: { min: -Math.PI * 0.95, max: Math.PI * 0.95 }
+            theta: { min: -Math.PI, max: Math.PI }
         }
 
         this.view.target = {}
@@ -510,17 +510,11 @@ export default class Navigation {
         this.view.drag.delta.x = 0
         this.view.drag.delta.y = 0
 
-        // Clamp spherical angles
+        // Clamp vertical elevation angle only (allow seamless 360-degree horizontal orbit around all 4 walls)
         this.view.spherical.value.phi = THREE.MathUtils.clamp(
             this.view.spherical.value.phi,
             this.view.spherical.limits.phi.min,
             this.view.spherical.limits.phi.max
-        )
-
-        this.view.spherical.value.theta = THREE.MathUtils.clamp(
-            this.view.spherical.value.theta,
-            this.view.spherical.limits.theta.min,
-            this.view.spherical.limits.theta.max
         )
 
         // Smoothing (when not driven by transition tween)
