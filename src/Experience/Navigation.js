@@ -277,10 +277,20 @@ export default class Navigation {
         this.targetElement.addEventListener('contextmenu', this.view.onContextMenu)
 
         /**
-         * Mouse wheel zoom
+         * Mouse wheel zoom (suppressed while scrolling laptop chat history)
          */
         this.view.onWheel = (_event) => {
             _event.preventDefault()
+            const macScreen = this.experience.world?.macScreen
+            const sc = this.experience.scrollController
+            const inLaptopChat = macScreen?.isChatOpen && (
+                this.currentSectionName === 'experience' ||
+                this.currentSectionName === 'macScreen' ||
+                sc?.hoveredZone === 'experience'
+            )
+            if (inLaptopChat) {
+                return
+            }
             const normalized = normalizeWheel(_event)
             this.view.zoomIn(normalized.pixelY)
         }

@@ -37,9 +37,9 @@ export default class TopChair
         const isLaptopView = this.experience.navigation?.currentSectionName === 'experience' || 
                              this.experience.navigation?.currentSectionName === 'macScreen';
 
-        // When viewing the laptop, turn the chair gently towards the desk/PC monitor away from the laptop view
+        // When viewing the laptop, keep the chair squarely facing the PC monitor (max X <= 1.57) clear of the laptop view
         const targetRot = isLaptopView 
-            ? -0.25 
+            ? 0.0 
             : Math.sin(this.time.elapsed * 0.0005) * 0.5;
 
         // Smoothly interpolate towards target rotation

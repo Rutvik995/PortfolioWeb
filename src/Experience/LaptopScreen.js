@@ -2,23 +2,23 @@ import * as THREE from 'three';
 import Experience from './Experience.js';
 import screenSync from './ScreenSync.js';
 
+const QUICK_CHIPS = [
+    { label: '🤖 Projects', q: 'Tell me about Cortex Multi-Agent Platform and your featured projects.' },
+    { label: '💼 Experience', q: 'What is your professional work experience?' },
+    { label: '🛠️ Skills', q: 'What is your technical skill stack?' },
+    { label: '☀️ Solar AI', q: 'Explain the Solar Power Agentic Analytics System.' },
+    { label: '🎓 Education', q: 'What is your education background?' },
+    { label: '📬 Contact', q: 'How can I contact or hire Rutvik?' }
+];
+
+const BODY_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+const MONO_FONT = '"JetBrains Mono", Consolas, "Courier New", monospace';
+
 /**
- * LaptopScreen — renders the MacBook display as a full 3D canvas texture.
- *
- * Layout (always visible on the laptop):
- *   ┌─────────────────────────────────────────┐
- *   │  macOS Menu Bar (28px)                  │
- *   ├─────────────────────────────────────────┤
- *   │  Wallpaper / Idle Card  OR              │
- *   │  Chat Message Scroll Area (fills space) │
- *   │  ...scrolls upward as replies come in.. │
- *   ├─────────────────────────────────────────┤
- *   │  Bottom Input Bar Mockup  (40px)        │
- *   └─────────────────────────────────────────┘
- *
- * The bottom input bar is cosmetic only — real input comes from the
- * floating HTML #laptop-chat-bar overlay. That overlay's submit fires
- * screenSync 'chat:message' events which update this canvas.
+ * LaptopScreen — interactive AI chat canvas rendered directly on the 3D MacBook screen.
+ * Supports live typed text + caret directly in the MacBook input bar, clickable topic chips
+ * and Send button via Three.js UV raycasting, rich-text formatting (**bold**, `code`, bullets,
+ * headings), top-anchored layout, and smooth wheel / button scrolling through full Q&A history.
  */
 export default class LaptopScreen {
     constructor(mesh) {
@@ -27,31 +27,27 @@ export default class LaptopScreen {
         this.time = this.experience.time;
         this.mesh = mesh;
 
-        // Motion preference
         this.prefersReducedMotion =
             window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-        // Canvas — high-res for crisp text on the 3D mesh
         this.width = 1280;
-        this.height = 720;
+        this.height = 800;
         this.canvas = document.createElement('canvas');
         this.canvas.width = this.width;
         this.canvas.height = this.height;
         this.ctx = this.canvas.getContext('2d');
 
-        // Wallpaper
+        // Desktop wallpaper shown before entering chat
         this.wallpaper = new Image();
         this.wallpaperLoaded = false;
         this.wallpaper.onload = () => {
             this.wallpaperLoaded = true;
-            this.render();
+            this.markDirty();
         };
-        this.wallpaper.onerror = () => {
-            console.warn('laptopWallpaper.jpg failed to load — using dark fallback.');
-        };
+        this.wallpaper.onerror = () => {};
         this.wallpaper.src = '/assets/laptopWallpaper.jpg';
 
-        // Three.js texture → material → mesh
+        // Three.js CanvasTexture
         this.texture = new THREE.CanvasTexture(this.canvas);
         this.texture.encoding = THREE.sRGBEncoding;
         this.texture.generateMipmaps = false;
@@ -69,564 +65,1064 @@ export default class LaptopScreen {
             this.scene.add(this.mesh);
         }
 
-        // ── Chat State ────────────────────────────────────────────────────────
+        // Chat state
         this.isChatOpen = false;
         this.isThinking = false;
-
-        // Full message history (kept, never truncated — renders only visible slice)
         this.messages = [
             {
                 role: 'assistant',
-                text: "Hi! I'm Rutvik's AI — ask me anything about his projects, skills, experience, or how to reach him."
+                text: "Hi! I'm **Rutvik AI**. Ask me anything below about Rutvik's **AI projects**, **work experience**, **technical skills**, **education**, or how to **contact** him."
             }
         ];
 
-        // Manual scroll: user can "scroll up" via the overlay scroll wheel or touch
-        // scrollTop = 0 means view is at the bottom (newest message visible)
-        // scrollTop > 0 means user has scrolled up by that many pixels
-        this.chatScrollTop = 0;
+        // Live input bar state synced with hidden DOM input for OS/IME/mobile typing
+        this.inputText = '';
+        this.isInputFocused = false;
+        this.cursorBlink = true;
+        this.lastBlinkTime = performance.now();
 
-        // Typing animation for the latest assistant reply
-        this.displayedCharIndex = 0;
+        // Scroll state: 0 = newest bottom visible; positive = pixels scrolled UP to older Q&A
+        this.chatScrollOffset = 0;
+        this._maxScroll = 0;
+        this._prevTotalH = 0;
+
+        // Typewriter reveal for newest assistant reply
+        this.displayedCharIndex = this.messages[0].text.length;
         this.lastTypeTime = 0;
-        this.typeSpeed = 12; // ms per char
+        this.typeSpeed = 12;
 
-        // FPS throttle
+        // Interactive hitboxes in canvas coordinates (updated each render)
+        this.hitTargets = {
+            input: null,
+            send: null,
+            scrollUp: null,
+            scrollDown: null,
+            latestPill: null,
+            windowBox: null,
+            chips: []
+        };
+        this.hoverId = null;
+
+        // Render throttling & dirty flag
         this.isPaused = false;
         this.lastFrameTime = 0;
         this.targetFps = 30;
         this.fpsInterval = 1000 / this.targetFps;
+        this.needsRender = true;
+        this.lastClockText = '';
 
-        this.initEventListeners();
+        this._initEvents();
         this.render();
     }
 
-    // ── Event Listeners ────────────────────────────────────────────────────────
-    initEventListeners() {
+    markDirty() {
+        this.needsRender = true;
+    }
+
+    _initEvents() {
         document.addEventListener('visibilitychange', () => {
             this.isPaused = document.hidden;
         });
 
         screenSync.on('chat:open', () => {
             this.isChatOpen = true;
-            this.chatScrollTop = 0; // snap to bottom on open
-            this.render();
-        });
-
-        screenSync.on('chat:message', (data) => {
-            this.isChatOpen = true;
-            if (data.role === 'user') {
-                this.messages.push({ role: 'user', text: data.content });
-                this.isThinking = true;
-                this.chatScrollTop = 0; // scroll to bottom for new user msg
-            } else if (data.role === 'assistant') {
-                this.isThinking = false;
-                this.messages.push({ role: 'assistant', text: data.content });
-                this.displayedCharIndex = 0;
-                this.chatScrollTop = 0; // scroll to bottom when reply arrives
-            }
+            this.chatScrollOffset = 0;
+            this.cursorBlink = true;
+            this.lastBlinkTime = performance.now();
+            this.markDirty();
             this.render();
         });
 
         screenSync.on('chat:close', () => {
             this.isChatOpen = false;
+            this.hoverId = null;
+            this.markDirty();
             this.render();
         });
 
-        // Scroll wheel on the 3D canvas element — allow reading older messages
+        screenSync.on('chat:input-change', (data) => {
+            if (!data) return;
+            const nextText = typeof data.value === 'string' ? data.value : this.inputText;
+            const nextFocus = typeof data.focused === 'boolean' ? data.focused : this.isInputFocused;
+            if (nextText !== this.inputText || nextFocus !== this.isInputFocused) {
+                this.inputText = nextText;
+                this.isInputFocused = nextFocus;
+                this.cursorBlink = true;
+                this.lastBlinkTime = performance.now();
+                this.markDirty();
+                this.render();
+            }
+        });
+
+        screenSync.on('chat:message', (data) => {
+            if (!data) return;
+            this.isChatOpen = true;
+            if (data.role === 'user') {
+                this.messages.push({ role: 'user', text: data.content });
+                this.isThinking = true;
+                this.chatScrollOffset = 0;
+            } else if (data.role === 'assistant') {
+                this.isThinking = false;
+                this.messages.push({ role: 'assistant', text: data.content });
+                this.displayedCharIndex = this.prefersReducedMotion ? data.content.length : 0;
+                this.chatScrollOffset = 0;
+                this.lastTypeTime = performance.now();
+            }
+            this.markDirty();
+            this.render();
+        });
+
+        // Scroll past questions & answers with mouse wheel over WebGL canvas
         const expEl = document.querySelector('.experience');
         if (expEl) {
             expEl.addEventListener('wheel', (e) => {
-                if (this.isChatOpen) {
-                    // scrollTop increases = scroll up (read older)
-                    this.chatScrollTop = Math.max(0, this.chatScrollTop + e.deltaY * 0.5);
-                    this.render();
+                if (!this.isChatOpen) return;
+                const sc = this.experience.scrollController;
+                const nav = this.experience.navigation;
+                const activeOnLaptop =
+                    nav?.currentSectionName === 'experience' ||
+                    nav?.currentSectionName === 'macScreen' ||
+                    sc?.hoveredZone === 'experience';
+
+                if (activeOnLaptop && this._maxScroll > 0) {
+                    // Wheel UP (negative deltaY) -> increase offset (show older messages above)
+                    // Wheel DOWN (positive deltaY) -> decrease offset (return toward latest)
+                    const nextOffset = THREE.MathUtils.clamp(
+                        this.chatScrollOffset - e.deltaY * 0.7,
+                        0,
+                        this._maxScroll
+                    );
+                    if (nextOffset !== this.chatScrollOffset) {
+                        this.chatScrollOffset = nextOffset;
+                        this.markDirty();
+                        this.render();
+                    }
                 }
             }, { passive: true });
         }
     }
 
-    // ── Update loop (called every frame by World.js) ───────────────────────────
+    /** Convert Three.js mesh UV (origin bottom-left) to Canvas coordinates (origin top-left). */
+    uvToCanvas(uv) {
+        if (!uv) return null;
+        return {
+            x: uv.x * this.width,
+            y: (1 - uv.y) * this.height
+        };
+    }
+
+    _inRect(pt, rect) {
+        return !!(rect && pt && pt.x >= rect.x && pt.x <= rect.x + rect.w && pt.y >= rect.y && pt.y <= rect.y + rect.h);
+    }
+
+    _hitTest(pt) {
+        if (!this.isChatOpen || !pt) return null;
+        if (this._inRect(pt, this.hitTargets.send)) return 'send';
+        if (this._inRect(pt, this.hitTargets.input)) return 'input';
+        if (this._inRect(pt, this.hitTargets.scrollUp)) return 'scroll-up';
+        if (this._inRect(pt, this.hitTargets.scrollDown)) return 'scroll-down';
+        if (this._inRect(pt, this.hitTargets.latestPill)) return 'latest-pill';
+        for (let i = 0; i < this.hitTargets.chips.length; i++) {
+            if (this._inRect(pt, this.hitTargets.chips[i])) {
+                return `chip:${i}`;
+            }
+        }
+        return null;
+    }
+
+    /** Returns desired CSS cursor and updates subtle hover highlight when moving across laptop screen. */
+    getHoverCursor(uv) {
+        if (!this.isChatOpen) return 'pointer';
+        const pt = this.uvToCanvas(uv);
+        const hit = this._hitTest(pt);
+        if (hit !== this.hoverId) {
+            this.hoverId = hit;
+            this.markDirty();
+        }
+        if (hit === 'input') return 'text';
+        if (hit) return 'pointer';
+        return 'default';
+    }
+
+    clearHover() {
+        if (this.hoverId !== null) {
+            this.hoverId = null;
+            this.markDirty();
+        }
+    }
+
+    /** Handles a click inside the 3D laptop display; returns next action hint for ScrollController. */
+    handleCanvasClick(uv) {
+        if (!this.isChatOpen) return 'open';
+        const pt = this.uvToCanvas(uv);
+        const hit = this._hitTest(pt);
+
+        if (hit === 'input') {
+            return 'focus-input';
+        }
+        if (hit === 'send') {
+            screenSync.emit('chat:submit');
+            return 'focus-input';
+        }
+        if (hit && hit.startsWith('chip:')) {
+            const idx = parseInt(hit.slice(5), 10);
+            const chip = QUICK_CHIPS[idx];
+            if (chip && !this.isThinking) {
+                screenSync.emit('chat:send', { text: chip.q });
+            }
+            return 'focus-input';
+        }
+        if (hit === 'scroll-up') {
+            this.scrollBy(220);
+            return 'scrolled';
+        }
+        if (hit === 'scroll-down') {
+            this.scrollBy(-220);
+            return 'scrolled';
+        }
+        if (hit === 'latest-pill') {
+            this.chatScrollOffset = 0;
+            this.markDirty();
+            this.render();
+            return 'scrolled';
+        }
+        if (this._inRect(pt, this.hitTargets.windowBox)) {
+            return 'focus-input';
+        }
+        return 'focus-input';
+    }
+
+    scrollBy(deltaUpPx) {
+        if (this._maxScroll <= 0) return;
+        const next = THREE.MathUtils.clamp(this.chatScrollOffset + deltaUpPx, 0, this._maxScroll);
+        if (next !== this.chatScrollOffset) {
+            this.chatScrollOffset = next;
+            this.markDirty();
+            this.render();
+        }
+    }
+
     update() {
         if (this.isPaused) return;
-
         const now = performance.now();
         const elapsed = now - this.lastFrameTime;
         if (elapsed < this.fpsInterval) return;
         this.lastFrameTime = now - (elapsed % this.fpsInterval);
 
-        // Typewriter animation for latest assistant message
-        if (this.messages.length > 0) {
-            const lastMsg = this.messages[this.messages.length - 1];
-            if (lastMsg.role === 'assistant' && this.displayedCharIndex < lastMsg.text.length) {
-                if (now - this.lastTypeTime > this.typeSpeed) {
-                    this.displayedCharIndex += 4;
+        // Advance typewriter reveal for the latest assistant message
+        if (this.isChatOpen && this.messages.length > 0) {
+            const last = this.messages[this.messages.length - 1];
+            const fullLen = last.text.length;
+            if (last.role === 'assistant' && this.displayedCharIndex < fullLen) {
+                if (now - this.lastTypeTime >= this.typeSpeed) {
+                    this.displayedCharIndex = Math.min(fullLen, this.displayedCharIndex + 8);
                     this.lastTypeTime = now;
-                    this.render();
-                    return;
+                    this.needsRender = true;
                 }
             }
         }
 
-        this.render();
+        // Blink input cursor or thinking pulse when chat is open
+        if (this.isChatOpen && now - this.lastBlinkTime > 520) {
+            this.cursorBlink = !this.cursorBlink;
+            this.lastBlinkTime = now;
+            if (this.isInputFocused || this.isThinking) {
+                this.needsRender = true;
+            }
+        }
+
+        // Refresh menu bar clock only when displayed minute changes
+        const nowDate = new Date();
+        const minuteStamp = `${nowDate.getHours()}:${nowDate.getMinutes()}`;
+        if (minuteStamp !== this.lastClockText) {
+            this.lastClockText = minuteStamp;
+            this.needsRender = true;
+        }
+
+        if (this.needsRender) {
+            this.needsRender = false;
+            this.render();
+        }
     }
 
-    // ── Main render ────────────────────────────────────────────────────────────
     render() {
         const ctx = this.ctx;
         const W = this.width;
         const H = this.height;
 
-        // 1. Wallpaper or fallback
-        if (this.wallpaperLoaded) {
+        if (!this.isChatOpen && this.wallpaperLoaded) {
             ctx.drawImage(this.wallpaper, 0, 0, W, H);
         } else {
-            const grad = ctx.createLinearGradient(0, 0, W, H);
-            grad.addColorStop(0, '#0d0612');
-            grad.addColorStop(1, '#050309');
-            ctx.fillStyle = grad;
+            ctx.fillStyle = '#070a12';
             ctx.fillRect(0, 0, W, H);
         }
 
-        // 2. macOS-style menu bar (always on top)
-        this.renderMenuBar(ctx, W);
+        this._drawMenuBar(ctx, W);
 
-        // 3. If chat is open → full-screen chat; otherwise idle card
         if (this.isChatOpen) {
-            this.renderChatScreen(ctx, W, H);
+            this._drawChatScreen(ctx, W, H);
         } else {
-            this.renderIdleScreen(ctx, W, H);
+            this._drawIdleScreen(ctx, W, H);
         }
 
         this.texture.needsUpdate = true;
     }
 
-    // ── macOS menu bar ─────────────────────────────────────────────────────────
-    renderMenuBar(ctx, W) {
-        const barH = 28;
-
-        ctx.fillStyle = 'rgba(8, 10, 16, 0.80)';
-        ctx.fillRect(0, 0, W, barH);
-
-        ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+    _drawMenuBar(ctx, W) {
+        const H = 32;
+        ctx.fillStyle = 'rgba(10, 12, 20, 0.94)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.10)';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(0, barH);
-        ctx.lineTo(W, barH);
+        ctx.moveTo(0, H);
+        ctx.lineTo(W, H);
         ctx.stroke();
 
-        // Apple  + menu items
-        ctx.font = '600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('\uF8FF', 18, 18);
-
-        ctx.font = '500 11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.85)';
-        const menus = ['Finder', 'File', 'Edit', 'View', 'Go', 'Window', 'Help'];
-        let mX = 42;
-        menus.forEach(m => {
-            ctx.fillText(m, mX, 18);
-            mX += ctx.measureText(m).width + 16;
+        ctx.font = `600 13px ${BODY_FONT}`;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.90)';
+        const menus = ['◆', 'Finder', 'File', 'Edit', 'View', 'Go', 'Window', 'Help'];
+        let x = 18;
+        menus.forEach((m) => {
+            ctx.fillText(m, x, 21);
+            x += ctx.measureText(m).width + 18;
         });
 
-        // Right-side clock
         const now = new Date();
-        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const dateStr = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
-
-        ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", monospace';
-        ctx.fillStyle = 'rgba(255,255,255,0.80)';
+        const t = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const d = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+        ctx.font = `500 13px ${MONO_FONT}`;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.78)';
         ctx.textAlign = 'right';
-        ctx.fillText(`⚡ 100%  \uD83D\uDCF6 Wi-Fi  ${dateStr}  ${timeStr}`, W - 14, 18);
+        ctx.fillText(`⚡ 100%   📶   ${d}   ${t}`, W - 18, 21);
         ctx.textAlign = 'left';
     }
 
-    // ── Idle / wallpaper screen ────────────────────────────────────────────────
-    renderIdleScreen(ctx, W, H) {
-        // Dark overlay so the card is readable over the wallpaper
-        ctx.fillStyle = 'rgba(0,0,0,0.30)';
-        ctx.fillRect(0, 28, W, H - 28);
+    _drawIdleScreen(ctx, W, H) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+        ctx.fillRect(0, 32, W, H - 32);
 
-        const px = 80;
-        const py = 120;
-        const pw = 480;
-        const ph = 260;
+        const cx = W / 2;
+        const cy = H / 2;
+        const pw = 560;
+        const ph = 290;
+        const px = cx - pw / 2;
+        const py = cy - ph / 2;
 
-        // Card shadow
         ctx.save();
-        ctx.shadowColor = 'rgba(0,0,0,0.65)';
-        ctx.shadowBlur = 28;
-        ctx.shadowOffsetY = 10;
-
-        ctx.fillStyle = 'rgba(10,12,22,0.86)';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+        ctx.shadowBlur = 32;
+        ctx.shadowOffsetY = 12;
+        ctx.fillStyle = 'rgba(10, 13, 24, 0.90)';
         ctx.beginPath();
-        ctx.roundRect(px, py, pw, ph, 16);
+        ctx.roundRect(px, py, pw, ph, 18);
         ctx.fill();
         ctx.restore();
 
-        // Card border
-        ctx.strokeStyle = 'rgba(224,82,156,0.42)';
+        ctx.strokeStyle = 'rgba(224, 82, 156, 0.48)';
         ctx.lineWidth = 1.5;
         ctx.stroke();
-
-        // Top accent line
         ctx.fillStyle = '#e0529c';
-        ctx.fillRect(px + 24, py, 72, 2.5);
+        ctx.fillRect(px + 28, py, 96, 3);
 
-        // Badge
-        ctx.fillStyle = 'rgba(224,82,156,0.18)';
+        ctx.fillStyle = 'rgba(224, 82, 156, 0.18)';
         ctx.beginPath();
-        ctx.roundRect(px + 24, py + 20, 170, 24, 12);
+        ctx.roundRect(px + 28, py + 24, 210, 28, 14);
         ctx.fill();
-
         ctx.fillStyle = '#e0529c';
         ctx.beginPath();
-        ctx.arc(px + 38, py + 32, 4.5, 0, Math.PI * 2);
+        ctx.arc(px + 44, py + 38, 5, 0, Math.PI * 2);
         ctx.fill();
-
-        ctx.font = 'bold 11px monospace';
+        ctx.font = `700 13px ${MONO_FONT}`;
         ctx.fillStyle = '#e0529c';
-        ctx.fillText('RUTVIK AI CHATBOT', px + 50, py + 37);
+        ctx.fillText('RUTVIK AI ASSISTANT', px + 58, py + 43);
 
-        // Title
-        ctx.font = '700 20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.font = `700 26px ${BODY_FONT}`;
         ctx.fillStyle = '#ffffff';
-        ctx.fillText('Chat with Rutvik AI', px + 24, py + 85);
+        ctx.fillText('Chat with Rutvik AI', px + 28, py + 104);
 
-        // Description
-        ctx.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText("Ask anything about Rutvik's autonomous multi-agent", px + 24, py + 118);
-        ctx.fillText('projects, internships, LangGraph stack, and availability.', px + 24, py + 138);
+        ctx.font = `400 17px ${BODY_FONT}`;
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillText("Ask about Rutvik's projects, skills, work experience,", px + 28, py + 142);
+        ctx.fillText('education, and contact info — right here on the laptop.', px + 28, py + 168);
 
-        // CTA pill
-        ctx.fillStyle = 'rgba(224,82,156,0.22)';
+        ctx.fillStyle = 'rgba(224, 82, 156, 0.24)';
         ctx.beginPath();
-        ctx.roundRect(px + 24, py + 180, 240, 40, 20);
+        ctx.roundRect(px + 28, py + 210, 285, 48, 24);
         ctx.fill();
         ctx.strokeStyle = '#e0529c';
         ctx.lineWidth = 1.5;
         ctx.stroke();
-
-        ctx.font = '600 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.font = `600 17px ${BODY_FONT}`;
         ctx.fillStyle = '#ffffff';
-        ctx.fillText('💬  Click Rutvik AI to Chat', px + 48, py + 206);
+        ctx.fillText('💬  Click Laptop to Chat', px + 56, py + 240);
     }
 
-    // ── Full chat screen ────────────────────────────────────────────────────────
-    renderChatScreen(ctx, W, H) {
-        const MENU_H = 28;         // menu bar height
-        const FOOTER_H = 50;       // bottom input bar
-        const HEADER_H = 52;       // chat window header
-        const PAD = 14;            // horizontal outer padding
+    _drawChatScreen(ctx, W, H) {
+        const MENU_H = 32;
+        const PAD = 18;
+        const HDR_H = 60;
+        const CHIPS_H = 44;
+        const FOOT_H = 72;
 
-        const totalH = H - MENU_H; // usable height below menu bar
-
-        // Semi-transparent overlay so chat reads cleanly over wallpaper
-        ctx.fillStyle = 'rgba(6,8,16,0.88)';
-        ctx.fillRect(0, MENU_H, W, totalH);
-
-        // ── Chat window frame ────────────────────────────────────────────────
         const winX = PAD;
         const winY = MENU_H + 8;
         const winW = W - PAD * 2;
-        const winH = totalH - 16;
+        const winH = H - winY - 14;
+        this.hitTargets.windowBox = { x: winX, y: winY, w: winW, h: winH };
 
-        // Shadow
-        ctx.save();
-        ctx.shadowColor = 'rgba(0,0,0,0.75)';
-        ctx.shadowBlur = 32;
-        ctx.shadowOffsetY = 10;
-
-        ctx.fillStyle = 'rgba(9,11,22,0.95)';
+        // Outer glass window
+        ctx.fillStyle = 'rgba(9, 13, 24, 0.98)';
         ctx.beginPath();
-        ctx.roundRect(winX, winY, winW, winH, 14);
+        ctx.roundRect(winX, winY, winW, winH, 16);
         ctx.fill();
-        ctx.restore();
-
-        ctx.strokeStyle = 'rgba(224,82,156,0.32)';
+        ctx.strokeStyle = 'rgba(224, 82, 156, 0.36)';
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // ── Header ───────────────────────────────────────────────────────────
-        ctx.fillStyle = 'rgba(14,18,34,0.95)';
+        // ── Header ──────────────────────────────────────────────────────────
+        ctx.fillStyle = 'rgba(15, 20, 36, 1.0)';
         ctx.beginPath();
-        ctx.roundRect(winX, winY, winW, HEADER_H, [14, 14, 0, 0]);
+        ctx.roundRect(winX, winY, winW, HDR_H, [16, 16, 0, 0]);
         ctx.fill();
-
-        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.09)';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(winX, winY + HEADER_H);
-        ctx.lineTo(winX + winW, winY + HEADER_H);
+        ctx.moveTo(winX, winY + HDR_H);
+        ctx.lineTo(winX + winW, winY + HDR_H);
         ctx.stroke();
 
-        // Window traffic-light dots
-        const dotY = winY + HEADER_H / 2;
-        [[winX + 22, '#ef4444'], [winX + 40, '#f59e0b'], [winX + 58, '#10b981']].forEach(([dx, col]) => {
-            ctx.fillStyle = col;
+        const dotY = winY + HDR_H / 2;
+        [[winX + 26, '#ef4444'], [winX + 48, '#f59e0b'], [winX + 70, '#10b981']].forEach(([dx, c]) => {
+            ctx.fillStyle = c;
             ctx.beginPath();
-            ctx.arc(dx, dotY, 6, 0, Math.PI * 2);
+            ctx.arc(dx, dotY, 7, 0, Math.PI * 2);
             ctx.fill();
         });
 
-        // Bot avatar
+        // Avatar badge
         ctx.fillStyle = '#e0529c';
         ctx.beginPath();
-        ctx.arc(winX + 86, dotY, 13, 0, Math.PI * 2);
+        ctx.arc(winX + 108, dotY, 17, 0, Math.PI * 2);
         ctx.fill();
-        ctx.font = '14px sans-serif';
+        ctx.font = `18px ${BODY_FONT}`;
         ctx.textAlign = 'center';
         ctx.fillStyle = '#ffffff';
-        ctx.fillText('🤖', winX + 86, dotY + 5);
+        ctx.fillText('🤖', winX + 108, dotY + 6);
         ctx.textAlign = 'left';
 
-        ctx.font = '700 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.font = `700 20px ${BODY_FONT}`;
         ctx.fillStyle = '#ffffff';
-        ctx.fillText('Rutvik AI Assistant', winX + 108, dotY - 3);
-
-        ctx.font = '500 11px monospace';
+        ctx.fillText('Rutvik AI Assistant', winX + 136, dotY - 2);
+        ctx.font = `500 13px ${MONO_FONT}`;
         ctx.fillStyle = '#94a3b8';
-        ctx.fillText('Agentic AI & LLM Systems', winX + 108, dotY + 13);
+        ctx.fillText('Projects  •  Experience  •  Skills  •  Education  •  Contact', winX + 136, dotY + 17);
 
-        // Live indicator dot
-        ctx.fillStyle = '#10b981';
-        ctx.beginPath();
-        ctx.arc(winX + winW - 24, dotY, 5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.font = '10px sans-serif';
-        ctx.fillStyle = '#10b981';
-        ctx.fillText('live', winX + winW - 16, dotY + 4);
+        // ── Message Viewport Layout ─────────────────────────────────────────
+        const footY = winY + winH - FOOT_H;
+        const chipsY = footY - CHIPS_H;
+        const msgTop = winY + HDR_H + 4;
+        const msgBot = chipsY - 4;
+        const msgH = msgBot - msgTop;
 
-        // ── Message area ──────────────────────────────────────────────────────
-        const msgAreaTop = winY + HEADER_H;
-        const msgAreaBot = winY + winH - FOOTER_H;
-        const msgAreaH = msgAreaBot - msgAreaTop;
+        // Render and measure all message blocks
+        const items = this._buildItems(ctx, winW);
+        const padV = 16;
+        let totalH = padV;
+        items.forEach((it) => {
+            totalH += it.h + 16;
+        });
+        if (this.isThinking) {
+            totalH += 56 + 16;
+        }
+        totalH += padV;
+
+        // Keep reading anchor steady if new content grows while user is scrolled up reading older Q&A
+        if (this.chatScrollOffset > 0 && this._prevTotalH > 0 && totalH > this._prevTotalH) {
+            this.chatScrollOffset += totalH - this._prevTotalH;
+        }
+        this._prevTotalH = totalH;
+
+        const maxScroll = Math.max(0, totalH - msgH);
+        this._maxScroll = maxScroll;
+        this.chatScrollOffset = THREE.MathUtils.clamp(this.chatScrollOffset, 0, maxScroll);
+
+        // Header scroll buttons (placed after maxScroll is known so enabled/disabled state renders accurately)
+        this._drawHeaderScrollControls(ctx, winX, winW, dotY, maxScroll);
+
+        // Top-anchored when content fits; bottom-pinned by default when scrollable (scroll UP increases offset)
+        const drawStartY = totalH <= msgH ? msgTop : msgTop - (maxScroll - this.chatScrollOffset);
 
         ctx.save();
         ctx.beginPath();
-        ctx.rect(winX + 1, msgAreaTop, winW - 2, msgAreaH);
+        ctx.rect(winX + 4, msgTop, winW - 8, msgH);
         ctx.clip();
 
-        // Build all rendered lines into an array of drawing items
-        const MAX_BUBBLE_W = Math.min(winW - 100, 740);
-        ctx.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        let curY = drawStartY + padV;
+        const rightMargin = maxScroll > 0 ? 28 : 20;
 
-        const items = this._buildMessageItems(ctx, MAX_BUBBLE_W);
+        items.forEach((item) => {
+            const by = curY;
+            curY += item.h + 16;
 
-        // Calculate total content height
-        let totalContentH = 0;
-        items.forEach(item => { totalContentH += item.h + 12; });
-        if (this.isThinking) totalContentH += 42;
+            if (by + item.h < msgTop || by > msgBot) return;
 
-        // scrollTop = 0 → bottom of content visible
-        // scrollTop = max → top of content visible
-        const maxScroll = Math.max(0, totalContentH - msgAreaH + 20);
-        // Clamp scroll
-        this.chatScrollTop = Math.min(this.chatScrollTop, maxScroll);
-
-        // Starting Y: draw from bottom minus total content plus scroll
-        let startY = msgAreaBot - 10 - totalContentH + this.chatScrollTop;
-
-        items.forEach(item => {
             const bx = item.isUser
-                ? winX + winW - MAX_BUBBLE_W - 20
+                ? winX + winW - rightMargin - item.boxW
                 : winX + 20;
 
-            const by = startY;
-            startY += item.h + 12;
+            if (item.isUser) {
+                const grad = ctx.createLinearGradient(bx, by, bx + item.boxW, by + item.h);
+                grad.addColorStop(0, 'rgba(30, 88, 138, 0.92)');
+                grad.addColorStop(1, 'rgba(17, 56, 98, 0.96)');
+                ctx.fillStyle = grad;
+            } else {
+                ctx.fillStyle = 'rgba(18, 25, 44, 0.97)';
+            }
 
-            // Skip fully off-screen items for perf
-            if (by + item.h < msgAreaTop || by > msgAreaBot) return;
-
-            // Bubble background
-            ctx.fillStyle = item.isUser
-                ? 'rgba(56,189,248,0.18)'
-                : 'rgba(20,26,42,0.92)';
             ctx.beginPath();
-            ctx.roundRect(bx, by, MAX_BUBBLE_W, item.h, 12);
+            ctx.roundRect(bx, by, item.boxW, item.h, 14);
             ctx.fill();
 
-            // Bubble border
-            ctx.strokeStyle = item.isUser
-                ? 'rgba(56,189,248,0.42)'
-                : 'rgba(224,82,156,0.32)';
-            ctx.lineWidth = 1;
+            ctx.strokeStyle = item.isUser ? 'rgba(56, 189, 248, 0.55)' : 'rgba(224, 82, 156, 0.42)';
+            ctx.lineWidth = 1.25;
             ctx.stroke();
 
-            // Sender label
-            ctx.font = 'bold 10px monospace';
+            // Sender badge
+            ctx.font = `700 13px ${MONO_FONT}`;
             ctx.fillStyle = item.isUser ? '#38bdf8' : '#e0529c';
-            ctx.fillText(item.isUser ? 'YOU' : 'RUTVIK AI', bx + 14, by + 16);
+            ctx.fillText(item.isUser ? '▶  YOU' : '🤖  RUTVIK AI', bx + 20, by + 24);
 
-            // Message text lines
-            ctx.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-            ctx.fillStyle = item.isUser ? '#e0f2fe' : '#f1f5f9';
-            item.lines.forEach((line, li) => {
-                if (line !== '') {
-                    ctx.fillText(line, bx + 14, by + 30 + li * 18);
+            // Rich formatted lines
+            let lineY = by + 54;
+            item.lines.forEach((row) => {
+                if (row.type === 'spacer') {
+                    lineY += 12;
+                    return;
                 }
+                if (lineY > msgTop - 30 && lineY < msgBot + 30) {
+                    this._drawRichRow(ctx, row, bx + 20, lineY, item.isUser);
+                }
+                lineY += row.height;
             });
         });
 
-        // Thinking indicator
+        // Thinking indicator below newest message
         if (this.isThinking) {
-            const tby = startY;
             const tbx = winX + 20;
-            ctx.fillStyle = 'rgba(20,26,42,0.9)';
-            ctx.beginPath();
-            ctx.roundRect(tbx, tby, 220, 36, 10);
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(224,82,156,0.35)';
-            ctx.lineWidth = 1;
-            ctx.stroke();
+            const tby = curY;
+            if (tby < msgBot) {
+                const dots = '.'.repeat(1 + (Math.floor(performance.now() / 320) % 3));
+                ctx.fillStyle = 'rgba(18, 25, 44, 0.96)';
+                ctx.beginPath();
+                ctx.roundRect(tbx, tby, 340, 52, 14);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(224, 82, 156, 0.45)';
+                ctx.lineWidth = 1.25;
+                ctx.stroke();
+                ctx.font = `600 18px ${BODY_FONT}`;
+                ctx.fillStyle = '#f472b6';
+                ctx.fillText(`⚡ Rutvik AI is thinking${dots}`, tbx + 20, tby + 33);
+            }
+        }
 
-            ctx.font = 'italic 12px monospace';
-            ctx.fillStyle = '#e0529c';
-            ctx.fillText('⚡ Rutvik AI is reasoning...', tbx + 14, tby + 22);
+        // Scrollbar & "Jump to latest" pill
+        this.hitTargets.latestPill = null;
+        if (maxScroll > 0) {
+            const trackX = winX + winW - 15;
+            const trackY = msgTop + 8;
+            const trackH = msgH - 16;
+            const thumbH = Math.max(44, trackH * (msgH / totalH));
+            const scrollPct = this.chatScrollOffset / maxScroll;
+            const thumbY = trackY + (trackH - thumbH) * (1 - scrollPct);
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.beginPath();
+            ctx.roundRect(trackX, trackY, 7, trackH, 4);
+            ctx.fill();
+
+            ctx.fillStyle = this.chatScrollOffset > 5 ? 'rgba(224, 82, 156, 0.85)' : 'rgba(255, 255, 255, 0.30)';
+            ctx.beginPath();
+            ctx.roundRect(trackX, thumbY, 7, thumbH, 4);
+            ctx.fill();
+
+            if (this.chatScrollOffset > 35) {
+                const pw = 236;
+                const ph = 34;
+                const px = winX + (winW - pw) / 2;
+                const py = msgBot - ph - 8;
+                const isHover = this.hoverId === 'latest-pill';
+                this.hitTargets.latestPill = { x: px, y: py, w: pw, h: ph };
+
+                ctx.fillStyle = isHover ? 'rgba(224, 82, 156, 0.92)' : 'rgba(15, 23, 42, 0.94)';
+                ctx.beginPath();
+                ctx.roundRect(px, py, pw, ph, 17);
+                ctx.fill();
+                ctx.strokeStyle = isHover ? '#ffffff' : 'rgba(56, 189, 248, 0.65)';
+                ctx.lineWidth = 1.25;
+                ctx.stroke();
+
+                ctx.font = `600 14px ${BODY_FONT}`;
+                ctx.fillStyle = isHover ? '#ffffff' : '#7dd3fc';
+                ctx.textAlign = 'center';
+                ctx.fillText('↓ Jump to latest message', px + pw / 2, py + 22);
+                ctx.textAlign = 'left';
+            }
         }
 
         ctx.restore();
 
-        // ── Scroll indicator ─────────────────────────────────────────────────
-        if (this.chatScrollTop > 10 && maxScroll > 0) {
-            const scrollPct = this.chatScrollTop / maxScroll;
-            // Small scrollbar track on the right edge
-            const trackH = msgAreaH - 20;
-            const thumbH = Math.max(32, trackH * (msgAreaH / totalContentH));
-            const thumbY = msgAreaTop + 10 + (trackH - thumbH) * (1 - scrollPct);
+        // ── Quick-Ask Chips Row (Clickable Inside Screen) ───────────────────
+        this._drawChipsRow(ctx, winX, winW, chipsY, CHIPS_H);
 
-            ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        // ── Interactive Footer Input + Send Button ──────────────────────────
+        this._drawInputFooter(ctx, winX, winW, footY, FOOT_H);
+    }
+
+    _drawHeaderScrollControls(ctx, winX, winW, dotY, maxScroll) {
+        const canUp = maxScroll > 0 && this.chatScrollOffset < maxScroll - 2;
+        const canDown = maxScroll > 0 && this.chatScrollOffset > 2;
+
+        const btnW = 92;
+        const btnH = 34;
+        const btnY = dotY - btnH / 2;
+        const downX = winX + winW - 18 - btnW;
+        const upX = downX - 10 - btnW;
+
+        this.hitTargets.scrollUp = canUp ? { x: upX, y: btnY, w: btnW, h: btnH } : null;
+        this.hitTargets.scrollDown = canDown ? { x: downX, y: btnY, w: btnW, h: btnH } : null;
+
+        [
+            { x: upX, label: '▲ Older', enabled: canUp, hover: this.hoverId === 'scroll-up' },
+            { x: downX, label: '▼ Newer', enabled: canDown, hover: this.hoverId === 'scroll-down' }
+        ].forEach((b) => {
+            ctx.fillStyle = b.hover
+                ? 'rgba(224, 82, 156, 0.28)'
+                : b.enabled
+                    ? 'rgba(255, 255, 255, 0.08)'
+                    : 'rgba(255, 255, 255, 0.03)';
             ctx.beginPath();
-            ctx.roundRect(winX + winW - 10, msgAreaTop + 10, 4, trackH, 2);
+            ctx.roundRect(b.x, btnY, btnW, btnH, 10);
             ctx.fill();
 
-            ctx.fillStyle = 'rgba(224,82,156,0.55)';
-            ctx.beginPath();
-            ctx.roundRect(winX + winW - 10, thumbY, 4, thumbH, 2);
-            ctx.fill();
+            ctx.strokeStyle = b.hover
+                ? '#e0529c'
+                : b.enabled
+                    ? 'rgba(255, 255, 255, 0.18)'
+                    : 'rgba(255, 255, 255, 0.06)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
 
-            // "↑ scroll up to see more" hint
-            ctx.font = 'bold 11px monospace';
-            ctx.fillStyle = 'rgba(224,82,156,0.7)';
-            ctx.textAlign = 'right';
-            ctx.fillText('↑ scroll to read older', winX + winW - 16, msgAreaTop + msgAreaH / 2);
+            ctx.font = `600 13px ${BODY_FONT}`;
+            ctx.fillStyle = b.enabled ? '#f8fafc' : 'rgba(255, 255, 255, 0.25)';
+            ctx.textAlign = 'center';
+            ctx.fillText(b.label, b.x + btnW / 2, btnY + 22);
             ctx.textAlign = 'left';
-        }
+        });
+    }
 
-        // ── Bottom input bar (cosmetic, real input is HTML overlay) ──────────
-        const barY = winY + winH - FOOTER_H;
-        ctx.fillStyle = 'rgba(255,255,255,0.05)';
-        ctx.beginPath();
-        ctx.moveTo(winX, barY);
-        ctx.lineTo(winX + winW, barY);
-        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    _drawChipsRow(ctx, winX, winW, chipsY, chipsH) {
+        ctx.fillStyle = 'rgba(11, 15, 28, 0.96)';
+        ctx.fillRect(winX + 1, chipsY, winW - 2, chipsH);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
         ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(winX, chipsY);
+        ctx.lineTo(winX + winW, chipsY);
         ctx.stroke();
 
-        ctx.fillStyle = 'rgba(14,18,34,0.90)';
-        ctx.fillRect(winX, barY, winW, FOOTER_H);
+        ctx.font = `600 15px ${BODY_FONT}`;
+        const gap = 10;
+        const padX = 28;
+        const chipWidths = QUICK_CHIPS.map((c) => Math.ceil(ctx.measureText(c.label).width) + padX);
+        const totalRowW = chipWidths.reduce((a, b) => a + b, 0) + gap * (QUICK_CHIPS.length - 1);
 
-        // Input pill
-        ctx.fillStyle = 'rgba(255,255,255,0.07)';
+        let cx = winX + Math.max(18, (winW - totalRowW) / 2);
+        const cy = chipsY + 6;
+        const ch = 32;
+
+        this.hitTargets.chips = [];
+        QUICK_CHIPS.forEach((chip, idx) => {
+            const cw = chipWidths[idx];
+            const isHover = this.hoverId === `chip:${idx}`;
+            const rect = { x: cx, y: cy, w: cw, h: ch };
+            this.hitTargets.chips.push(rect);
+
+            ctx.fillStyle = isHover ? 'rgba(224, 82, 156, 0.28)' : 'rgba(255, 255, 255, 0.06)';
+            ctx.beginPath();
+            ctx.roundRect(cx, cy, cw, ch, 16);
+            ctx.fill();
+
+            ctx.strokeStyle = isHover ? '#e0529c' : 'rgba(224, 82, 156, 0.36)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.font = `600 15px ${BODY_FONT}`;
+            ctx.fillStyle = isHover ? '#ffffff' : '#e2e8f0';
+            ctx.textAlign = 'center';
+            ctx.fillText(chip.label, cx + cw / 2, cy + 21);
+            ctx.textAlign = 'left';
+
+            cx += cw + gap;
+        });
+    }
+
+    _drawInputFooter(ctx, winX, winW, footY, footH) {
+        ctx.fillStyle = 'rgba(13, 18, 34, 0.99)';
         ctx.beginPath();
-        ctx.roundRect(winX + 18, barY + 10, winW - 100, 30, 15);
+        ctx.roundRect(winX, footY, winW, footH, [0, 0, 16, 16]);
         ctx.fill();
-        ctx.strokeStyle = 'rgba(224,82,156,0.30)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.10)';
         ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(winX, footY);
+        ctx.lineTo(winX + winW, footY);
         ctx.stroke();
 
-        ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.35)';
-        ctx.fillText('Ask Rutvik AI anything...', winX + 36, barY + 29);
+        const sendW = 138;
+        const pillH = 48;
+        const pillY = footY + (footH - pillH) / 2;
+        const pillX = winX + 18;
+        const pillW = winW - 36 - sendW - 14;
+        const sendX = pillX + pillW + 14;
+
+        this.hitTargets.input = { x: pillX, y: pillY, w: pillW, h: pillH };
+        this.hitTargets.send = { x: sendX, y: pillY, w: sendW, h: pillH };
+
+        // Input box background + focus glow
+        ctx.save();
+        if (this.isInputFocused) {
+            ctx.shadowColor = 'rgba(224, 82, 156, 0.40)';
+            ctx.shadowBlur = 14;
+        }
+        ctx.fillStyle = this.isInputFocused ? 'rgba(22, 29, 52, 0.95)' : 'rgba(255, 255, 255, 0.07)';
+        ctx.beginPath();
+        ctx.roundRect(pillX, pillY, pillW, pillH, 24);
+        ctx.fill();
+        ctx.restore();
+
+        ctx.strokeStyle = this.isInputFocused
+            ? '#e0529c'
+            : this.hoverId === 'input'
+                ? 'rgba(224, 82, 156, 0.72)'
+                : 'rgba(224, 82, 156, 0.42)';
+        ctx.lineWidth = this.isInputFocused ? 2 : 1.5;
+        ctx.stroke();
+
+        // Live typed text or placeholder + blinking caret inside input box
+        const innerLeft = pillX + 24;
+        const innerMaxW = pillW - 44;
+        const textBaselineY = pillY + 31;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(innerLeft - 2, pillY + 2, innerMaxW + 4, pillH - 4);
+        ctx.clip();
+
+        ctx.font = `500 20px ${BODY_FONT}`;
+        if (this.inputText.length > 0) {
+            ctx.fillStyle = '#ffffff';
+            const fullW = ctx.measureText(this.inputText).width;
+            const drawX = fullW > innerMaxW - 8 ? innerLeft + (innerMaxW - 8 - fullW) : innerLeft;
+            ctx.fillText(this.inputText, drawX, textBaselineY);
+
+            if (this.isInputFocused && this.cursorBlink) {
+                ctx.fillStyle = '#e0529c';
+                ctx.fillRect(drawX + fullW + 3, pillY + 12, 2.5, 24);
+            }
+        } else {
+            if (this.isInputFocused && this.cursorBlink) {
+                ctx.fillStyle = '#e0529c';
+                ctx.fillRect(innerLeft, pillY + 12, 2.5, 24);
+            }
+            ctx.fillStyle = this.isInputFocused ? 'rgba(255, 255, 255, 0.48)' : 'rgba(255, 255, 255, 0.40)';
+            const placeholder = this.isInputFocused
+                ? 'Type your question & press Enter...'
+                : 'Click here to write your question...';
+            ctx.fillText(placeholder, innerLeft + 10, textBaselineY);
+        }
+        ctx.restore();
 
         // Send button
-        ctx.fillStyle = 'rgba(224,82,156,0.85)';
+        const sendHovered = this.hoverId === 'send';
+        const sendGrad = ctx.createLinearGradient(sendX, pillY, sendX + sendW, pillY + pillH);
+        sendGrad.addColorStop(0, sendHovered ? '#f472b6' : '#e0529c');
+        sendGrad.addColorStop(1, sendHovered ? '#e879f9' : '#c026d3');
+        ctx.fillStyle = sendGrad;
         ctx.beginPath();
-        ctx.roundRect(winX + winW - 72, barY + 10, 58, 30, 15);
+        ctx.roundRect(sendX, pillY, sendW, pillH, 24);
         ctx.fill();
-        ctx.font = '600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+
+        if (sendHovered) {
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
+
+        ctx.font = `700 18px ${BODY_FONT}`;
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
-        ctx.fillText('Send ➤', winX + winW - 43, barY + 29);
+        ctx.fillText(this.isThinking ? 'Wait...' : 'Send ➤', sendX + sendW / 2, pillY + 30);
         ctx.textAlign = 'left';
     }
 
-    // ── Build message rendering items ─────────────────────────────────────────
-    _buildMessageItems(ctx, maxBubbleW) {
+    // ── Rich Text Parsing & Measurement ─────────────────────────────────────
+    _buildItems(ctx, winW) {
         const items = [];
-        ctx.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        const maxUserW = Math.min(820, winW - 140);
+        const maxAssistantW = Math.min(1040, winW - 88);
 
         this.messages.forEach((msg, idx) => {
             const isUser = msg.role === 'user';
-            const isLast = idx === this.messages.length - 1;
-            const isLastAssistant = !isUser && isLast;
+            const isLastAI = !isUser && idx === this.messages.length - 1;
 
-            let cleanText = this._cleanText(msg.text);
-            if (isLastAssistant && this.displayedCharIndex < cleanText.length) {
-                cleanText = cleanText.substring(0, this.displayedCharIndex);
+            let rawText = msg.text || '';
+            if (isLastAI && this.displayedCharIndex < rawText.length) {
+                rawText = rawText.substring(0, this.displayedCharIndex);
             }
 
-            const lines = this._wrapText(ctx, cleanText, maxBubbleW - 28);
-            const h = 36 + lines.length * 18; // 30px for label + padding, 18px per line
-            items.push({ isUser, lines, h });
+            const maxBubbleW = isUser ? maxUserW : maxAssistantW;
+            const minBubbleW = isUser ? 260 : 420;
+            const { rows, maxLineWidth } = this._layoutRichMessage(ctx, rawText, maxBubbleW - 44);
+
+            const boxW = Math.max(minBubbleW, Math.min(maxBubbleW, Math.ceil(maxLineWidth) + 46));
+            let contentH = 0;
+            rows.forEach((r) => {
+                contentH += r.type === 'spacer' ? 12 : r.height;
+            });
+
+            // Header badge baseline + message rows + bottom padding
+            const h = 38 + Math.max(28, contentH) + 18;
+            items.push({ isUser, lines: rows, boxW, h });
         });
 
         return items;
     }
 
-    // ── Text helpers ─────────────────────────────────────────────────────────
-    _cleanText(text) {
-        if (!text) return '';
-        let t = text
+    _layoutRichMessage(ctx, rawText, maxW) {
+        const cleaned = (rawText || '')
             .replace(/<br\s*\/?>/gi, '\n')
             .replace(/<\/?[^>]+(>|$)/g, '');
 
-        const lines = t.split('\n');
-        const out = [];
-        for (const raw of lines) {
-            const line = raw.trim();
-            if (/^\|[-:\s|]+\|$/.test(line)) continue; // MD table divider
-            if (line.startsWith('|') && line.endsWith('|')) {
-                const cells = line.split('|').map(c => c.trim()).filter(Boolean);
-                out.push(cells.length === 2 ? `• ${cells[0]}: ${cells[1]}` : `• ${cells.join(' | ')}`);
+        const rawLines = cleaned.split('\n');
+        const rows = [];
+        let maxLineWidth = 0;
+
+        for (let i = 0; i < rawLines.length; i++) {
+            const trimmed = rawLines[i].trim();
+
+            if (!trimmed) {
+                if (rows.length > 0 && rows[rows.length - 1].type !== 'spacer') {
+                    rows.push({ type: 'spacer', height: 12 });
+                }
                 continue;
             }
-            out.push(line.replace(/^#{1,6}\s+/, ''));
-        }
 
-        return out.join('\n')
-            .replace(/\*\*(.*?)\*\*/g, '$1')
-            .replace(/\*(.*?)\*/g, '$1')
-            .replace(/__([^_]+)__/g, '$1')
-            .replace(/_([^_]+)_/g, '$1')
-            .replace(/`([^`]+)`/g, '$1')
-            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-    }
+            // Skip markdown table divider rows and normalize any pipe table row cleanly
+            if (/^\|[-:\s|]+\|$/.test(trimmed)) continue;
 
-    _wrapText(ctx, text, maxW) {
-        const paras = text.split('\n');
-        const all = [];
-        for (const raw of paras) {
-            const para = raw.trim();
-            if (!para) {
-                if (all.length > 0 && all[all.length - 1] !== '') all.push('');
-                continue;
-            }
-            const words = para.split(/\s+/);
-            let cur = words[0] || '';
-            for (let i = 1; i < words.length; i++) {
-                const test = cur + ' ' + words[i];
-                if (ctx.measureText(test).width <= maxW) {
-                    cur = test;
-                } else {
-                    all.push(cur);
-                    cur = words[i];
+            let kind = 'para';
+            let marker = '';
+            let body = trimmed;
+
+            if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+                const cells = trimmed.split('|').map((c) => c.trim()).filter(Boolean);
+                body = cells.length >= 2 ? `**${cells[0]}:** ${cells.slice(1).join(' • ')}` : (cells[0] || '');
+                kind = 'bullet';
+                marker = '•';
+            } else {
+                const hMatch = trimmed.match(/^#{1,6}\s+(.*)$/);
+                const bMatch = trimmed.match(/^(?:[-*•])\s+(.*)$/);
+                const nMatch = trimmed.match(/^(\d+[.)])\s+(.*)$/);
+
+                if (hMatch) {
+                    kind = 'heading';
+                    body = hMatch[1];
+                } else if (bMatch) {
+                    kind = 'bullet';
+                    marker = '•';
+                    body = bMatch[1];
+                } else if (nMatch) {
+                    kind = 'bullet';
+                    marker = nMatch[1];
+                    body = nMatch[2];
                 }
             }
-            if (cur) all.push(cur);
+
+            const indentX = kind === 'bullet' ? 24 : 0;
+            const availW = Math.max(120, maxW - indentX);
+            const runs = this._parseInlineRuns(body);
+            const wrappedLines = this._wrapStyledRuns(ctx, runs, availW, kind === 'heading');
+
+            wrappedLines.forEach((segments, lineIdx) => {
+                const w = segments.reduce((sum, seg) => sum + seg.width, 0) + indentX;
+                if (w > maxLineWidth) maxLineWidth = w;
+
+                rows.push({
+                    type: kind,
+                    marker: lineIdx === 0 ? marker : '',
+                    indentX,
+                    segments,
+                    height: kind === 'heading' ? 32 : 28
+                });
+            });
         }
-        return all.length ? all : [''];
+
+        while (rows.length > 0 && rows[rows.length - 1].type === 'spacer') {
+            rows.pop();
+        }
+
+        if (rows.length === 0) {
+            rows.push({ type: 'para', marker: '', indentX: 0, segments: [], height: 28 });
+        }
+
+        return { rows, maxLineWidth };
+    }
+
+    _parseInlineRuns(str) {
+        const cleanLinks = str.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1');
+        const runs = [];
+        const pattern = /(\*\*[^*]+\*\*|__[^_]+__|`[^`]+`|\*[^*]+\*)/g;
+        let lastIdx = 0;
+        let m;
+
+        while ((m = pattern.exec(cleanLinks)) !== null) {
+            if (m.index > lastIdx) {
+                runs.push({ text: cleanLinks.slice(lastIdx, m.index), style: 'normal' });
+            }
+            const token = m[0];
+            if (token.startsWith('**') || token.startsWith('__')) {
+                runs.push({ text: token.slice(2, -2), style: 'bold' });
+            } else if (token.startsWith('`')) {
+                runs.push({ text: token.slice(1, -1), style: 'code' });
+            } else if (token.startsWith('*')) {
+                runs.push({ text: token.slice(1, -1), style: 'bold' });
+            }
+            lastIdx = pattern.lastIndex;
+        }
+
+        if (lastIdx < cleanLinks.length) {
+            runs.push({ text: cleanLinks.slice(lastIdx), style: 'normal' });
+        }
+        return runs;
+    }
+
+    _setStyleFont(ctx, style, isHeading) {
+        if (isHeading) {
+            ctx.font = `700 21px ${BODY_FONT}`;
+            return;
+        }
+        if (style === 'bold') {
+            ctx.font = `700 20px ${BODY_FONT}`;
+        } else if (style === 'code') {
+            ctx.font = `600 18px ${MONO_FONT}`;
+        } else {
+            ctx.font = `400 20px ${BODY_FONT}`;
+        }
+    }
+
+    _wrapStyledRuns(ctx, runs, maxW, isHeading) {
+        // Tokenize into words & whitespace while preserving style
+        const tokens = [];
+        runs.forEach((run) => {
+            const parts = run.text.split(/(\s+)/);
+            parts.forEach((part) => {
+                if (part.length > 0) {
+                    tokens.push({ text: part, style: run.style, isSpace: /^\s+$/.test(part) });
+                }
+            });
+        });
+
+        const lines = [];
+        let curLine = [];
+        let curW = 0;
+
+        tokens.forEach((tok) => {
+            if (tok.isSpace && curLine.length === 0) return;
+
+            this._setStyleFont(ctx, tok.style, isHeading);
+            const w = ctx.measureText(tok.text).width;
+
+            // Break overlong unspaced tokens (URLs, emails, paths) cleanly at character boundary
+            if (!tok.isSpace && w > maxW) {
+                if (curLine.length > 0) {
+                    while (curLine.length > 0 && curLine[curLine.length - 1].isSpace) curLine.pop();
+                    lines.push(curLine);
+                    curLine = [];
+                    curW = 0;
+                }
+                let chunk = '';
+                for (let ci = 0; ci < tok.text.length; ci++) {
+                    const nextChunk = chunk + tok.text[ci];
+                    if (ctx.measureText(nextChunk).width > maxW && chunk.length > 0) {
+                        const cw = ctx.measureText(chunk).width;
+                        lines.push([{ text: chunk, style: tok.style, isSpace: false, width: cw }]);
+                        chunk = tok.text[ci];
+                    } else {
+                        chunk = nextChunk;
+                    }
+                }
+                if (chunk.length > 0) {
+                    curW = ctx.measureText(chunk).width;
+                    curLine.push({ text: chunk, style: tok.style, isSpace: false, width: curW });
+                }
+                return;
+            }
+
+            if (!tok.isSpace && curW + w > maxW && curLine.length > 0) {
+                while (curLine.length > 0 && curLine[curLine.length - 1].isSpace) {
+                    curLine.pop();
+                }
+                lines.push(curLine);
+                curLine = [];
+                curW = 0;
+            }
+
+            if (tok.isSpace && curLine.length === 0) return;
+            curLine.push({ text: tok.text, style: tok.style, isSpace: tok.isSpace, width: w });
+            curW += w;
+        });
+
+        while (curLine.length > 0 && curLine[curLine.length - 1].isSpace) {
+            curLine.pop();
+        }
+        if (curLine.length > 0 || lines.length === 0) {
+            lines.push(curLine);
+        }
+
+        return lines;
+    }
+
+    _drawRichRow(ctx, row, startX, baselineY, isUser) {
+        const isHeading = row.type === 'heading';
+        if (row.marker) {
+            ctx.font = `700 20px ${BODY_FONT}`;
+            ctx.fillStyle = row.marker === '•' ? '#e0529c' : '#38bdf8';
+            ctx.fillText(row.marker, startX, baselineY);
+        }
+
+        let x = startX + row.indentX;
+        row.segments.forEach((seg) => {
+            if (!seg.text) return;
+            if (seg.style === 'code' && !isHeading) {
+                ctx.fillStyle = 'rgba(56, 189, 248, 0.14)';
+                ctx.beginPath();
+                ctx.roundRect(x - 2, baselineY - 19, seg.width + 4, 24, 5);
+                ctx.fill();
+            }
+            this._setStyleFont(ctx, seg.style, isHeading);
+            if (isHeading) {
+                ctx.fillStyle = '#f9a8d4';
+            } else if (seg.style === 'code') {
+                ctx.fillStyle = '#38bdf8';
+            } else if (seg.style === 'bold') {
+                ctx.fillStyle = '#ffffff';
+            } else {
+                ctx.fillStyle = isUser ? '#e0f2fe' : '#e2e8f0';
+            }
+            ctx.fillText(seg.text, x, baselineY);
+            x += seg.width;
+        });
     }
 
     destroy() {

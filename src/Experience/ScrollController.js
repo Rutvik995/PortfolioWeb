@@ -31,6 +31,7 @@ export default class ScrollController {
         this.mouse = new THREE.Vector2(-999, -999)
         this.mouseDownPos = { x: 0, y: 0 }
         this.hoveredZone = null
+        this.hoveredMacUv = null
 
         this.initDOM()
         this.initHUDDock()
@@ -92,35 +93,23 @@ export default class ScrollController {
     }
 
     initLaptopChatBar() {
+        // Off-screen keyboard/IME proxy so visitors type directly onto the 3D laptop display
+        // without an HTML bar covering the zoomed-in laptop screen.
         let bar = document.getElementById('laptop-chat-bar')
         if (!bar) {
             bar = document.createElement('div')
             bar.id = 'laptop-chat-bar'
-            bar.className = 'laptop-chat-bar hidden'
+            bar.className = 'laptop-chat-bar laptop-input-proxy hidden'
             bar.innerHTML = `
-                <div class="laptop-chips-row">
-                    <button class="laptop-chip" data-q="Tell me about Cortex Multi-Agent Platform">🤖 Cortex Platform</button>
-                    <button class="laptop-chip" data-q="What is your professional work experience?">💼 Work Experience</button>
-                    <button class="laptop-chip" data-q="What is your technical skill stack?">🛠️ Technical Skills</button>
-                    <button class="laptop-chip" data-q="Explain the Solar Power Agentic Analytics System">☀️ Solar Power System</button>
-                    <button class="laptop-chip" data-q="What is your education background?">🎓 Education</button>
-                    <button class="laptop-chip" data-q="How can I contact or hire Rutvik?">📬 Contact & Hire</button>
-                </div>
                 <form id="laptop-chat-form" class="laptop-chat-form">
-                    <div class="laptop-input-box">
-                        <span class="laptop-input-icon">💬</span>
-                        <input 
-                            type="text" 
-                            id="laptop-chat-input" 
-                            class="laptop-chat-input" 
-                            placeholder="Ask Rutvik AI anything — answers appear directly on the 3D laptop screen..." 
-                            autocomplete="off"
-                        />
-                        <button type="submit" id="laptop-chat-send" class="laptop-chat-send">
-                            <span>Send</span>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                        </button>
-                    </div>
+                    <input
+                        type="text"
+                        id="laptop-chat-input"
+                        class="laptop-chat-input"
+                        aria-label="Ask Rutvik AI a question"
+                        placeholder="Ask Rutvik AI a question..."
+                        autocomplete="off"
+                    />
                 </form>
             `
             document.body.appendChild(bar)
@@ -129,25 +118,65 @@ export default class ScrollController {
         this.laptopChatBar = bar
         this.laptopChatInput = bar.querySelector('#laptop-chat-input')
         const form = bar.querySelector('#laptop-chat-form')
+
+        const syncInputToScreen = () => {
+            if (!this.laptopChatInput) return
+            screenSync.emit('chat:input-change', {
+                value: this.laptopChatInput.value,
+                focused: document.activeElement === this.laptopChatInput
+            })
+        }
+
+        const submitCurrentInput = () => {
+            if (!this.laptopChatInput || this.isAiThinking) return
+            const val = this.laptopChatInput.value.trim()
+            if (val) {
+                this.laptopChatInput.value = ''
+                syncInputToScreen()
+                this.handleUserChatMessage(val)
+            }
+        }
+
         if (form && this.laptopChatInput) {
             form.addEventListener('submit', (e) => {
                 e.preventDefault()
-                const val = this.laptopChatInput.value.trim()
-                if (val) {
-                    this.laptopChatInput.value = ''
-                    this.handleUserChatMessage(val)
+                submitCurrentInput()
+            })
+
+            this.laptopChatInput.addEventListener('input', syncInputToScreen)
+            this.laptopChatInput.addEventListener('focus', syncInputToScreen)
+            this.laptopChatInput.addEventListener('blur', syncInputToScreen)
+            this.laptopChatInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    e.preventDefault()
+                    this.goToZone('overview', false)
                 }
             })
         }
 
-        const chips = bar.querySelectorAll('.laptop-chip')
-        chips.forEach(chip => {
-            chip.addEventListener('click', () => {
-                const q = chip.dataset.q
-                if (q) {
-                    this.handleUserChatMessage(q)
-                }
-            })
+        screenSync.on('chat:submit', () => {
+            submitCurrentInput()
+            this.focusLaptopInput()
+        })
+
+        screenSync.on('chat:send', (data) => {
+            if (data?.text && !this.isAiThinking) {
+                this.handleUserChatMessage(data.text)
+            }
+            this.focusLaptopInput()
+        })
+    }
+
+    focusLaptopInput() {
+        if (!this.laptopChatInput || this.currentZone !== 'experience') return
+        try {
+            this.laptopChatInput.focus({ preventScroll: true })
+        } catch (err) {
+            this.laptopChatInput.focus()
+        }
+        screenSync.emit('chat:input-change', {
+            value: this.laptopChatInput.value || '',
+            focused: document.activeElement === this.laptopChatInput
         })
     }
 
@@ -155,14 +184,17 @@ export default class ScrollController {
         if (!this.laptopChatBar) return
         if (show) {
             this.laptopChatBar.classList.remove('hidden')
-            if (this.laptopChatInput) {
-                setTimeout(() => this.laptopChatInput.focus(), 300)
-            }
+            this.focusLaptopInput()
+            setTimeout(() => this.focusLaptopInput(), 120)
         } else {
             this.laptopChatBar.classList.add('hidden')
             if (this.laptopChatInput) {
                 this.laptopChatInput.blur()
             }
+            screenSync.emit('chat:input-change', {
+                value: this.laptopChatInput ? this.laptopChatInput.value : '',
+                focused: false
+            })
         }
     }
 
@@ -826,7 +858,19 @@ export default class ScrollController {
             }
         })
 
+        // Sync focus inside native click event so touch keyboards also open reliably when tapping the 3D laptop input
+        if (this.targetElement) {
+            this.targetElement.addEventListener('click', () => {
+                if (this.currentZone === 'experience' && this.hoveredZone === 'experience') {
+                    this.focusLaptopInput()
+                }
+            })
+        }
+
         window.addEventListener('dblclick', (e) => {
+            if (this.currentZone === 'experience' && this.hoveredZone === 'experience') {
+                return
+            }
             if (!e.target.closest('#hud-dock, #context-card, #tv-music-player, .btn-reopen-card, .bottom-bar-container')) {
                 this.goToZone('overview', false)
             }
@@ -847,6 +891,7 @@ export default class ScrollController {
         const intersects = this.raycaster.intersectObjects(meshesOnly, true)
 
         let detectedZone = null
+        let macHitUv = null
 
         if (intersects.length > 0) {
             const hit = intersects[0]
@@ -856,6 +901,7 @@ export default class ScrollController {
                 detectedZone = 'projects'
             } else if (this.world?.macScreen?.mesh && hit.object === this.world.macScreen.mesh) {
                 detectedZone = 'experience'
+                macHitUv = hit.uv ? hit.uv.clone() : null
             } else if (pt.x < -1.8 && pt.z < 0 && pt.y > 0.5) {
                 detectedZone = 'skills'
             } else if (pt.x >= -1.2 && pt.x <= 1.4 && pt.z < -3.0 && pt.y > 2.0) {
@@ -870,12 +916,20 @@ export default class ScrollController {
         }
 
         this.hoveredZone = detectedZone
+        this.hoveredMacUv = macHitUv
 
-        // Update cursor style only (no text tooltip)
-        if (detectedZone) {
-            document.body.style.cursor = 'pointer'
+        // Update cursor style & live hover feedback on the 3D laptop UI
+        if (detectedZone === 'experience' && macHitUv && this.world?.macScreen) {
+            document.body.style.cursor = this.world.macScreen.getHoverCursor(macHitUv)
         } else {
-            document.body.style.cursor = 'default'
+            if (this.world?.macScreen) {
+                this.world.macScreen.clearHover()
+            }
+            if (detectedZone) {
+                document.body.style.cursor = 'pointer'
+            } else {
+                document.body.style.cursor = 'default'
+            }
         }
     }
 
@@ -890,10 +944,15 @@ export default class ScrollController {
                 screenSync.emit('run:code', { index: this.currentProjectIndex })
                 this.goToZone('projects', true)
             } else if (this.hoveredZone === 'experience') {
-                screenSync.emit('chat:open')
-                this.goToZone('experience', false)
-                if (this.laptopChatInput) {
-                    this.laptopChatInput.focus()
+                if (this.currentZone === 'experience' && this.world?.macScreen?.isChatOpen && this.hoveredMacUv) {
+                    const action = this.world.macScreen.handleCanvasClick(this.hoveredMacUv)
+                    if (action === 'focus-input') {
+                        this.focusLaptopInput()
+                    }
+                } else {
+                    screenSync.emit('chat:open')
+                    this.goToZone('experience', false)
+                    this.focusLaptopInput()
                 }
             } else {
                 this.goToZone(this.hoveredZone, true)

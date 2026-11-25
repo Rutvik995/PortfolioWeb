@@ -49,17 +49,17 @@ export const portfolioData = {
     experience: {
       name: "experience",
       alias: "macScreen",
-      look: [2.20, 2.70, -4.25], // Whole laptop framed large and center stage for direct in-room chat
-      size: [1.8, 1.2],
-      normal: [0.06, 0.28, 0.96], // Elevated view from right of chair looking straight into laptop screen
-      padding: 1.20
+      look: [2.23, 2.99, -4.32], // Direct display framing matching PC monitor style
+      size: [1.34, 0.83],
+      normal: [-0.22, 0.08, 0.97], // Orthogonal to MacBook lid normal with clean bottom dock clearance
+      padding: 1.24
     },
     macScreen: {
       name: "macScreen",
-      look: [2.20, 2.70, -4.25],
-      size: [1.8, 1.2],
-      normal: [0.06, 0.28, 0.96],
-      padding: 1.20
+      look: [2.23, 2.99, -4.32],
+      size: [1.34, 0.83],
+      normal: [-0.22, 0.08, 0.97],
+      padding: 1.24
     },
     skills: {
       name: "skills",
@@ -148,8 +148,8 @@ export const portfolioData = {
       look: [0.306, 3.416, -4.511]
     },
     experience: {
-      pos: [2.36, 3.45, -1.68],
-      look: [2.20, 2.70, -4.25]
+      pos: [1.82, 3.14, -2.53],
+      look: [2.23, 2.99, -4.32]
     },
     skills: {
       pos: [1.34, 3.87, 2.52],

@@ -1359,28 +1359,28 @@ html, body {
 }
 
 /* ==========================================================================
-   Direct In-Room 3D Laptop Chat Controller Bar
+   Direct In-Room 3D Laptop Chat Input Proxy (Visually Hidden, Full IME/Mobile Support)
    ========================================================================== */
-.laptop-chat-bar {
+.laptop-chat-bar.laptop-input-proxy {
     position: fixed;
-    bottom: 80px;
+    bottom: 84px;
     left: 50%;
-    transform: translateX(-50%);
-    z-index: 120;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    width: 92%;
-    max-width: 680px;
-    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    pointer-events: auto;
-}
-
-.laptop-chat-bar.hidden {
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
     opacity: 0;
     pointer-events: none;
-    transform: translateX(-50%) translateY(24px);
+    z-index: -1;
+}
+
+.laptop-chat-bar.laptop-input-proxy.hidden {
+    display: none;
+}
+
+.laptop-chat-bar.laptop-input-proxy .laptop-chat-input {
+    width: 1px;
+    height: 1px;
+    font-size: 16px;
 }
 
 .laptop-chips-row {
