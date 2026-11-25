@@ -59,10 +59,10 @@ export default class PcScreen {
         this.texture.minFilter = THREE.LinearFilter;
         this.texture.magFilter = THREE.LinearFilter;
 
-        // Material & Mesh
+        // Material & Mesh (FrontSide only so wallpaper never renders on the backside)
         this.material = new THREE.MeshBasicMaterial({
             map: this.texture,
-            side: THREE.DoubleSide
+            side: THREE.FrontSide
         });
 
         if (this.mesh) {

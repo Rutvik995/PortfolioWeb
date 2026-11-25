@@ -56,7 +56,7 @@ export default class LaptopScreen {
 
         this.material = new THREE.MeshBasicMaterial({
             map: this.texture,
-            side: THREE.DoubleSide,
+            side: THREE.FrontSide,
             toneMapped: false
         });
 
