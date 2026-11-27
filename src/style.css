@@ -516,29 +516,6 @@ html, body {
     margin-bottom: 12px;
 }
 
-.problem-box {
-    background: rgba(239, 68, 68, 0.08);
-    border-left: 3px solid #ef4444;
-    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-    padding: 10px 12px;
-    margin-bottom: 12px;
-}
-
-.box-label {
-    display: block;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 700;
-    color: #f87171;
-    margin-bottom: 4px;
-}
-
-.problem-text {
-    font-size: 12px;
-    color: #e2e8f0;
-    line-height: 1.45;
-}
-
 .pane-project-desc {
     font-size: 13px;
     color: var(--text-secondary);

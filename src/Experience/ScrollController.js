@@ -320,9 +320,11 @@ export default class ScrollController {
         const tabsHtml = projects.map((p, idx) => `
             <button class="project-tab-pill ${idx === this.currentProjectIndex ? 'active' : ''}" data-project-idx="${idx}">
                 <span class="tab-dot"></span>
-                <span class="tab-title">${p.title.split('—')[0].trim()}</span>
+                <span class="tab-title">${p.shortTitle || p.title.split('—')[0].trim()}</span>
             </button>
         `).join('')
+
+        const hasExternalLive = activeProject.liveUrl && activeProject.liveUrl !== activeProject.githubUrl
 
         this.cardBody.innerHTML = `
             <div class="projects-tabs-bar">
@@ -335,11 +337,6 @@ export default class ScrollController {
                 </div>
 
                 <h3 class="pane-project-title">${activeProject.title}</h3>
-
-                <div class="problem-box">
-                    <span class="box-label">ENGINEERING PROBLEM</span>
-                    <p class="problem-text">${activeProject.problem}</p>
-                </div>
 
                 <p class="pane-project-desc">${activeProject.description}</p>
 
@@ -356,6 +353,11 @@ export default class ScrollController {
                         <span>GitHub</span>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
                     </a>
+                    ${hasExternalLive ? `
+                    <a href="${activeProject.liveUrl}" target="_blank" rel="noopener noreferrer" class="btn-external-link">
+                        <span>Live</span>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+                    </a>` : ''}
                 </div>
             </div>
         `
@@ -403,10 +405,10 @@ export default class ScrollController {
         if (!this.cardBody) return
 
         const quickQuestions = [
-            "🤖 Tell me about Cortex Multi-Agent Engine",
+            "☀️ Tell me about Solar Power Plant Analysis",
             "💼 What is your work experience?",
             "⚡ What is your core tech stack?",
-            "☀️ Explain the Solar Fault detector",
+            "🤖 What public AI projects are on Rutvik's GitHub?",
             "📬 How can I contact or hire Rutvik?",
             "🎓 What is your education background?"
         ]

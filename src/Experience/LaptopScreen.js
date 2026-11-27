@@ -3,10 +3,10 @@ import Experience from './Experience.js';
 import screenSync from './ScreenSync.js';
 
 const QUICK_CHIPS = [
-    { label: '🤖 Projects', q: 'Tell me about Cortex Multi-Agent Platform and your featured projects.' },
+    { label: '🤖 Projects', q: "Tell me about Rutvik's public GitHub projects." },
     { label: '💼 Experience', q: 'What is your professional work experience?' },
     { label: '🛠️ Skills', q: 'What is your technical skill stack?' },
-    { label: '☀️ Solar AI', q: 'Explain the Solar Power Agentic Analytics System.' },
+    { label: '☀️ Solar AI', q: 'Explain the Solar-Power-Plant-Analysis GitHub project.' },
     { label: '🎓 Education', q: 'What is your education background?' },
     { label: '📬 Contact', q: 'How can I contact or hire Rutvik?' }
 ];

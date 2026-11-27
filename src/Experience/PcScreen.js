@@ -183,96 +183,48 @@ export default class PcScreen {
     }
 
     getSnippetForProject(project) {
-        // High-impact, clean ~12-14 lines of code per project that fit the editor window
-        if (project.id === 'cortex' || this.activeTabIndex === 0) {
-            return `from langgraph.graph import StateGraph, END
-from cortex.agent import Supervisor, ToolHarness
-
-# Autonomous multi-agent state graph
-graph = StateGraph(AgentState)
-graph.add_node("supervisor", Supervisor.route)
-graph.add_node("researcher", ToolHarness.retrieve)
-graph.add_node("validator", Schema.verify)
-
-graph.add_edge("supervisor", "researcher")
-graph.add_edge("researcher", "validator")
-graph.add_edge("validator", END)
-
-app = graph.compile()
-response = app.invoke({"task": "optimize_pipeline"})`;
-        } else if (project.id === 'solar-fault' || this.activeTabIndex === 1) {
-            return `import torch
-from timescaledb import StreamClient
-
-# Telemetry anomaly classification agent
-detector = torch.jit.load("models/solar_ensemble.pt")
-client = StreamClient(timeout_ms=50)
-
-async def monitor_inverter(string_id: str):
-    raw_v, raw_i = await client.read(string_id)
-    tensor_in = torch.tensor([[raw_v, raw_i]])
-    score = detector(tensor_in).item()
-    if score > 0.85:
-        await dispatch_drone(string=string_id, fault="DIODE_DEGRADE")`;
-        } else if (project.id === 'sales-orchestrator' || this.activeTabIndex === 2) {
-            return `from langchain.agents import AgentExecutor
-from vectorstore import ChromaStore
-
-# 5-Agent crawl & synthesis orchestrator
-kb = ChromaStore.connect("registry_embeddings")
-crawler = DomainCrawler(headless=True)
-
-async def synthesize_brief(domain: str):
-    signals = await crawler.extract_signals(domain)
-    context = kb.query(signals.tech_stack, top_k=5)
-    return await AgentExecutor.draft(signals, context)`;
-        } else {
-            return `from paho.mqtt import client as mqtt_client
-from whisper import parse_voice_command
-
-# Natural language to register write bridge
-mqtt = mqtt_client.Client("edge_bridge")
-mqtt.connect("broker.local", 1883)
-
-def execute_override(instruction: str):
-    cmd = parse_voice_command(instruction)
-    topic = f"factory/cell_3/{cmd.device_id}/control"
-    mqtt.publish(topic, cmd.to_binary(), qos=2)
-    return {"status": "ACKNOWLEDGED", "id": cmd.device_id}`;
+        if (project && project.monitorSnippet) {
+            return project.monitorSnippet;
         }
+        return `from langgraph.graph import StateGraph, END
+# Public GitHub Portfolio Showcase
+graph = StateGraph(AgentState)
+graph.set_entry_point("supervisor")
+graph.add_edge("supervisor", END)`;
     }
 
     executeTerminalStep(now, project) {
+        const repoName = (project.githubUrl || '').split('/').pop() || 'project';
         const steps = [
             {
                 delay: 450,
-                line: `$ python ${project.tabName || 'agent_job.py'} --execute`,
+                line: `$ git clone https://github.com/Rutvik995/${repoName}`,
                 color: '#38bdf8',
                 emit: () => screenSync.emit('run:start', { tabName: project.tabName })
             },
             {
                 delay: 500,
-                line: `[ROUTER] StateGraph supervisor initialized -> dispatching workers`,
+                line: `[SOURCE] Loaded ${project.tabName || 'app.py'} (${project.shortTitle || project.title})`,
                 color: '#94a3b8',
-                emit: () => screenSync.emit('node:active', { name: 'supervisor', status: 'Decomposing task' })
+                emit: () => screenSync.emit('node:active', { name: 'supervisor', status: 'Initialized module' })
             },
             {
                 delay: 550,
-                line: `[WORKER] supervisor -> researcher [tool_harness: active]`,
+                line: `[STACK] ${(project.stack || []).slice(0, 4).join(' • ')}`,
                 color: '#c084fc',
-                emit: () => screenSync.emit('node:active', { name: 'researcher', status: 'Context retrieved' })
+                emit: () => screenSync.emit('node:active', { name: 'researcher', status: 'Dependencies ready' })
             },
             {
                 delay: 550,
-                line: `[VALIDATOR] researcher -> validator [PASS ✓]`,
+                line: `[BUILD] Public GitHub repository verified [PASS ✓]`,
                 color: '#34d399',
-                emit: () => screenSync.emit('node:active', { name: 'verifier', status: 'Contract verified' })
+                emit: () => screenSync.emit('node:active', { name: 'verifier', status: 'Verified output' })
             },
             {
                 delay: 600,
-                line: `✓ Execution cycle completed [Memory: 42MB | Exit: 0]`,
+                line: `✓ Ready: github.com/Rutvik995/${repoName} [Exit: 0]`,
                 color: '#10b981',
-                emit: () => screenSync.emit('run:complete', { duration: '1.42s' })
+                emit: () => screenSync.emit('run:complete', { duration: '1.25s' })
             }
         ];
 
@@ -521,9 +473,17 @@ def execute_override(instruction: str):
         ctx.beginPath(); ctx.arc(winX + 52, dotY, 5, 0, Math.PI * 2); ctx.fill();
 
         // Window Title
+        const tabFile = project.tabName || 'graph.py';
+        const langLabel = tabFile.endsWith('.kt')
+            ? 'Kotlin'
+            : tabFile.endsWith('.dax')
+                ? 'Power BI DAX'
+                : tabFile.endsWith('.js')
+                    ? 'JavaScript'
+                    : 'Python 3.12';
         ctx.font = '600 13px monospace';
         ctx.fillStyle = '#e2e8f0';
-        ctx.fillText(`${project.tabName || 'agent_supervisor.py'} — Python 3.11`, winX + 75, winY + 24);
+        ctx.fillText(`${tabFile} — ${langLabel}`, winX + 75, winY + 24);
 
         // 2. Code Area (Height: 310px)
         const editorTop = winY + headerH;
@@ -626,13 +586,14 @@ def execute_override(instruction: str):
     renderSyntaxLine(ctx, lineText, startX, startY) {
         ctx.font = 'bold 13px "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace';
 
-        if (lineText.trim().startsWith('#')) {
+        const trimmed = lineText.trim();
+        if (trimmed.startsWith('#') || trimmed.startsWith('//') || trimmed.startsWith('--')) {
             ctx.fillStyle = '#64748b';
             ctx.fillText(lineText, startX, startY);
             return;
         }
 
-        const regex = /("""[\s\S]*?"""|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|@\w+|\b(?:def|class|from|import|return|async|await|if|else|elif|in|and|or|not|is|with|as|for|while)\b|\b(?:StateGraph|TypedDict|Annotated|END|torch|StreamClient|BaseModel|Field|ChatOpenAI|int|str|list|dict|float|bool|True|False|None|\d+(?:\.\d+)?)\b|[a-zA-Z_]\w*|[^\s\w]+|\s+)/g;
+        const regex = /("""[\s\S]*?"""|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|@\w+|\b(?:def|class|from|import|return|async|await|if|else|elif|in|and|or|not|is|with|as|for|while|fun|val|private|suspend|const|VAR|RETURN)\b|\b(?:StateGraph|Agent|END|Flask|Crew|Scene|Raycaster|Result|SUM|CALCULATE|DIVIDE|SAMEPERIODLASTYEAR|int|str|float|bool|True|False|None|\d+(?:\.\d+)?)\b|[a-zA-Z_]\w*|[^\s\w]+|\s+)/g;
 
         let match;
         let currentX = startX;
@@ -645,9 +606,9 @@ def execute_override(instruction: str):
                 color = '#c084fc'; // Purple strings
             } else if (token.startsWith('@')) {
                 color = '#d8b4fe'; // Lavender decorators
-            } else if (/^(def|class|from|import|return|async|await|if|else|elif|in|and|or|not|is|with|as|for|while)$/.test(token)) {
+            } else if (/^(def|class|from|import|return|async|await|if|else|elif|in|and|or|not|is|with|as|for|while|fun|val|private|suspend|const|VAR|RETURN)$/.test(token)) {
                 color = '#38bdf8'; // Cyan keywords
-            } else if (/^(StateGraph|TypedDict|Annotated|END|torch|StreamClient|BaseModel|Field|ChatOpenAI|int|str|list|dict|float|bool|True|False|None|\d+(\.\d+)?)$/.test(token)) {
+            } else if (/^(StateGraph|Agent|END|Flask|Crew|Scene|Raycaster|Result|SUM|CALCULATE|DIVIDE|SAMEPERIODLASTYEAR|int|str|float|bool|True|False|None|\d+(\.\d+)?)$/.test(token)) {
                 color = '#fb923c'; // Soft orange types & numbers
             }
 
