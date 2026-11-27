@@ -6,7 +6,8 @@
   "scripts": {
     "build": "webpack --config ./bundler/webpack.prod.js",
     "dev": "webpack serve --config ./bundler/webpack.dev.js",
-    "start": "webpack serve --config ./bundler/webpack.dev.js"
+    "start": "webpack serve --config ./bundler/webpack.dev.js",
+    "sync:github": "node scripts/sync-github.mjs"
   },
   "dependencies": {
     "@babel/core": "^7.14.6",

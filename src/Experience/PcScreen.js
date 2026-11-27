@@ -96,6 +96,16 @@ export default class PcScreen {
                 this.setTab(data.index);
             }
         });
+
+        screenSync.on('projects:updated', (projects) => {
+            if (Array.isArray(projects) && projects.length > 0) {
+                this.projects = projects;
+                if (this.activeTabIndex >= this.projects.length) {
+                    this.activeTabIndex = 0;
+                }
+                this.render();
+            }
+        });
     }
 
     startCodeRun(index = null) {

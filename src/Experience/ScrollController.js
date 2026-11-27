@@ -39,6 +39,16 @@ export default class ScrollController {
         this.initLaptopChatBar()
         this.initRaycasting()
         this.initKeyboardControls()
+
+        screenSync.on('projects:updated', () => {
+            const count = portfolioData.projects.length
+            if (this.currentProjectIndex >= count) {
+                this.currentProjectIndex = 0
+            }
+            if (this.isCardOpen && this.currentZone === 'projects') {
+                this.renderProjectsView()
+            }
+        })
     }
 
     initDOM() {

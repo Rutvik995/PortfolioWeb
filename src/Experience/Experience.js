@@ -11,6 +11,7 @@ import Camera from './Camera.js'
 import World from './World.js'
 import Navigation from './Navigation.js'
 import ScrollController from './ScrollController.js'
+import { syncPublicReposDaily } from './GitHubSync.js'
 
 import assets from './assets.js'
 
@@ -47,6 +48,7 @@ export default class Experience
         this.setWorld()
         this.setNavigation()
         this.setScrollController()
+        syncPublicReposDaily()
         
         this.sizes.on('resize', () =>
         {
